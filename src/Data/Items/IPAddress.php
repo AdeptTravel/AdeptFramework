@@ -1,33 +1,33 @@
 <?php
 
 /**
- * \AdeptCMS\Model\Item\IPAddress
+ * \Adept\Model\Item\IPAddress
  *
  * IP Address object
  *
- * @package AdeptCMS
+ * @package Adept
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Model\Items;
+namespace Adept\Model\Items;
 
 defined('_ADEPT_INIT') or die();
 
 /**
- * \AdeptCMS\Model\Item\IPAddress
+ * \Adept\Model\Item\IPAddress
  *
  * IP Address object
  *
- * @package AdeptCMS
+ * @package Adept
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
-class IPAddress extends \AdeptCMS\Base\Model\Item
+class IPAddress extends \Adept\Abstract\Model\Item
 {
-  public function __construct(\AdeptCMS\Application\Database &$db, string $ipaddress = '')
+  public function __construct(\Adept\Application\Database &$db, string $ipaddress = '')
   {
     parent::__construct($db);
 
@@ -117,7 +117,7 @@ class IPAddress extends \AdeptCMS\Base\Model\Item
     return !empty($this->data->ipaddress);
   }
 
-  public function validate(): bool
+  protected function validate(): bool
   {
     return $this->isEmpty();
   }

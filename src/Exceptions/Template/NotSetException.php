@@ -4,11 +4,11 @@
  * Template Not Set Exception
  *
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Exceptions\Template;
+namespace Adept\Exceptions\Template;
 
 defined('_ADEPT_INIT') or die();
 
@@ -16,9 +16,9 @@ defined('_ADEPT_INIT') or die();
  * Template Not Set Exception
  *
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
-class NotSetException extends \AdeptCMS\Exceptions\Exception
+class NotSetException extends \Adept\Exceptions\Exception
 {
 }

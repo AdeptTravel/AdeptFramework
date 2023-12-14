@@ -1,120 +1,117 @@
 <?php
 
-namespace AdeptCMS\Data\Item;
+namespace Adept\Data\Item;
 
 defined('_ADEPT_INIT') or die('No Access');
 
-class Url extends \AdeptCMS\Base\Data\Item
+use \Adept\Application\Database;
+
+class Url extends \Adept\Abstract\Data\Item
 {
-  use \AdeptCMS\Traits\Asset;
+  protected string $name = 'Url';
 
   /**
    * The full url with QueryString
    *
    * @var string
    */
-  public $raw = '';
+  public string $raw = '';
 
   /**
    * The filtered URL
    *
    * @var string
    */
-  public $url = '';
+  public string $url = '';
 
   /**
    * The scheme ie. HTTP|HTTPS
    *
    * @var string
    */
-  public $scheme = '';
+  public string $scheme = '';
 
   /**
    * The host name
    *
    * @var string
    */
-  public $host = '';
+  public string $host = '';
 
   /**
    * The path
    *
    * @var string
    */
-  public $path = '';
+  public string $path = '';
 
   /**
    * The path seperated into an array
    *
    * @var array
    */
-  public $parts = [];
+  public array $parts = [];
 
   /**
    * The file for the request, index.html is default
    *
    * @var string
    */
-  public $file = '';
+  public string $file = '';
 
   /**
    * The extension of the request ie. html|css etc.
    *
    * @var string
    */
-  public $extension = '';
+  public string $extension = '';
 
   /**
    * Type of request 
    *
    * @var string
    */
-  public $type = '';
+  public string $type = '';
 
   /**
    * Mime type of the request
    *
    * @var string
    */
-  public $mime = '';
+  public string $mime = '';
 
   /**
    * Is the URL blocked
    *
    * @var bool
    */
-  public $block = false;
+  public bool $block = false;
 
   /**
    * The datetime the url was created
    *
    * @var \DateTime
    */
-  public $created;
-
-
-  /**
-   * Undocumented variable
-   *
-   * @var array
-   */
-  public $querystring = [];
+  public \DateTime $created;
 
   /**
    * Undocumented function
    *
-   * @param \AdeptCMS\Application\Database $db
+   * @param \Adept\Application\Database $db
    * @param integer $id
    */
-  public function __construct(\AdeptCMS\Application\Database $db, int|string $id = 0)
+  public function __construct(Database $db, int|string $id = 0)
   {
-    $this->excludeField[] = 'raw';
+    $this->excludeKeys[] = 'raw';
 
-    parent::__construct($db, $id);
+    //parent::__construct($db, $id);
+    $url = '';
 
     // URL or ID was not specificed, get the current URL
     if (empty($id)) {
-      $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
+      $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
+        ? "https"
+        : "http";
 
       $host = (!empty($_SERVER['HTTP_HOST']))
         ? $_SERVER['HTTP_HOST']
@@ -135,7 +132,7 @@ class Url extends \AdeptCMS\Base\Data\Item
       $url = filter_var($url, FILTER_SANITIZE_URL);
 
       if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        throw new \AdeptCMS\Exceptions\InvalidUrl();
+        throw new \Adept\Exceptions\InvalidUrl();
       }
 
       // Remove anchor
@@ -146,43 +143,31 @@ class Url extends \AdeptCMS\Base\Data\Item
       // Remove query
       if ($pos = strpos($url, '?')) {
         $url = substr($url, 0, $pos);
-        $this->querystring = filter_input_array(INPUT_GET);
+      }
+
+      // Remove trailing /
+      if (substr($url, -1) == '/') {
+        $url = substr($url, 0, -1);
       }
     }
 
-    $this->raw = $this->url;
+    //$this->raw = $this->url;
 
-    if (!empty($this->querystring)) {
-      $this->raw .= '?' . http_build_query($this->querystring);
-    }
-
-    parent::__construct($db, (is_numeric($id)) ? $id : $url);
+    //parent::__construct($db, (empty($url)) ? $id : $url);
+    parent::__construct($db, (((is_numeric($id) && $id > 0) || !empty($id)) ? $id : $url));
 
     if ($this->id == 0) {
-
       // Set URL
       $this->url = $url;
 
-      // Set scheme
-      $pos = strpos($url, '://');
-      $this->scheme = substr($url, 0, $pos);
+      $parsed = parse_url($url);
 
-
-      // Set host
-      $pos += 3;
-
-      $this->host = substr($url, $pos, strpos($url, '/', $pos) - $pos);
-
-      // Set path
-      $pos += strlen($this->host) + 1;
-      $this->path = substr($url, $pos);
-
-      if (substr($this->path, -1, 1) == '/') {
-        $this->path = substr($this->path, 0, strlen($this->path) - 1);
-      }
+      $this->scheme = $parsed['scheme'];
+      $this->host = $parsed['host'];
+      $this->path = (!empty($parsed['path'])) ?  substr($parsed['path'], 1) : '';
 
       // Set parts array
-      if (strlen($this->path) > 1) {
+      if (!empty($this->path)) {
         $this->parts = explode('/', $this->path);
       }
 
@@ -204,39 +189,148 @@ class Url extends \AdeptCMS\Base\Data\Item
         $this->mime = $info->mime;
       } else {
         // TODO: Format error
-        die('Url::__construct() Format Error');
+        // Generated on .php and other unknown files.  Within this system it's
+        // most likly they are trying to somthing bad.  Let's kill everything
+        // and maybe mark the URL as blocked for future bad actors.
+        //\Adept\error(debug_backtrace(), 'URL format error', "No idea");
+        \Adept\Error::halt(E_ERROR, 'No idea whats going on', __FILE__, __LINE__);
       }
 
       $this->save();
     }
   }
 
-  public function toString(): string
+  public function getFormatInfo(string $extension): object|bool
   {
-    return $this->url;
-  }
+    $info = (object)[
+      'type' => '',
+      'mime' => '',
+    ];
 
-  public function getQuery(string $key): string
-  {
-    $out = '';
+    $fa = [ //fas or fab
+      'Archive' => 'fa-file-archive',
+      'Audio' => 'fa-file-audio',
+      'CSS' => 'fa-css3-alt',
+      'CSV' => 'fa-file-csv',
+      'Font' => 'fa-font',
+      'HTML' => 'fa-html5',
+      'Image' => 'fas fa-image',
+      'JSON' => 'fa-js',
+      'JavaScript' => 'fa-js',
+      'PDF' => 'fa-file-pdf',
+      'Text' => 'fa-file-alt',
+      'Video' => 'fa-file-video',
+      'XML' => 'fa-file-code'
+    ];
 
-    if (array_key_exists($key, $this->querystring)) {
-      $out = filter_var($this->querystring[$key], FILTER_UNSAFE_RAW);
+    // Set type & mime
+    switch ($extension) {
+      case "css":
+        $info->type = "CSS";
+        $info->mime = "text/css";
+        break;
+
+      case "csv":
+        $info->type = "CSV";
+        $info->mime = "text/csv";
+        break;
+
+      case "eot":
+        $info->type = "Font";
+        $info->mime = "application/vnd.ms-fontobject";
+        break;
+
+      case "gif":
+        $info->type = "Image";
+        $info->mime = "image/gif";
+        break;
+
+      case "html":
+        $info->type = "HTML";
+        $info->mime = "text/html";
+        break;
+
+      case "ico":
+        $info->type = "Image";
+        $info->mime = "image/vnd.microsoft.icon";
+        break;
+
+      case "jpg":
+      case "jpeg":
+        $info->type = "Image";
+        $info->mime = "image/jpeg";
+        break;
+
+      case "js":
+        $info->type = "JavaScript";
+        $info->mime = "text/javascript";
+        break;
+
+      case "json":
+        $info->type = "JSON";
+        $info->mime = "application/json";
+        break;
+
+      case "otf":
+        $info->type = "Font";
+        $info->mime = "font/otf";
+        break;
+
+      case "pdf":
+        $info->type = "PDF";
+        $info->mime = "application/pdf";
+        break;
+
+      case "png":
+        $info->type = "Image";
+        $info->mime = "image/png";
+        break;
+
+      case "svg":
+        $info->type = "Image";
+        $info->mime = "image/svg+xml";
+        break;
+
+      case "ttf":
+        $info->type = "Font";
+        $info->mime = "font/ttf";
+        break;
+
+      case "txt":
+        $info->type = "Text";
+        $info->mime = "text/plain";
+        break;
+
+      case "webp":
+        $info->type = "Image";
+        $info->mime = "image/webp";
+        break;
+
+      case "woff":
+        $info->type = "Font";
+        $info->mime = "font/woff";
+        break;
+
+      case "woff2":
+        $info->type = "Font";
+        $info->mime = "font/woff2";
+        break;
+
+      case "xml":
+        $info->type = "XML";
+        $info->mime = "application/xml";
+        break;
+
+      default:
+        $info = false;
+        break;
     }
 
-    return $out;
-  }
-
-  public function setQuery(string $key, string $value)
-  {
-    $this->querystring[$key] = $value;
-    $this->raw = $this->url . '?' . http_build_query($this->querystring);
-  }
-
-  public function delQuery(string $key)
-  {
-    if (array_key_exists($key, $this->querystring)) {
-      unset($this->querystring[$key]);
+    if ($info !== false) {
+      $info->fa = $fa[$info->type];
     }
+
+
+    return $info;
   }
 }

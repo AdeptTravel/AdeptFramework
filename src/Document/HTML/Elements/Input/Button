@@ -1,0 +1,9 @@
+<?php
+
+namespace Adept\Document\HTML\Body\Element\Input;
+
+defined('_ADEPT_INIT') or die();
+
+class Button extends \Adept\Document\HTML\Body\Element\Input
+{
+}

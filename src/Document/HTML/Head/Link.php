@@ -1,6 +1,6 @@
 <?php
 
-namespace AdeptCMS\Document\HTML\Head;
+namespace Adept\Document\HTML\Head;
 
 defined('_ADEPT_INIT') or die();
 
@@ -28,7 +28,7 @@ class Link
     }
   }
 
-  public function getHTML(): string
+  public function getBuffer(): string
   {
     $html = '';
 

@@ -10,7 +10,7 @@
  * @license BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Exceptions;
+namespace Adept\Exceptions;
 
 defined('_ADEPT_INIT') or die();
 

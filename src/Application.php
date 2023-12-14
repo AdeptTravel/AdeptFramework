@@ -1,28 +1,35 @@
 <?php
 
 /**
- * \AdeptCMS\Application
+ * \Adept\Application
  *
  * The application object
  *
- * @package    AdeptCMS
+ * @package    AdeptFramework
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS;
+namespace Adept;
 
 defined('_ADEPT_INIT') or die();
 
+require_once('Global.php');
+
+use \Adept\Abstract\Configuration;
+use \Adept\Application\Database;
+use \Adept\Application\Email;
+use \Adept\Application\Session;
+
 /**
- * \AdeptCMS\Application
+ * \Adept\Application
  *
  * The application object
  *
- * @package    AdeptCMS
+ * @package    AdeptFramework
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 class Application
@@ -30,32 +37,39 @@ class Application
   /**
    * The configuration object
    * 
-   * @var \AdeptCMS\Base\Configuration
+   * @var \Adept\Abstract\Configuration;
    */
-  public $conf;
+  public Configuration $conf;
 
   /**
    * The database object
    *
-   * @var \AdeptCMS\Application\Database
+   * @var \Adept\Application\Database
    */
-  public $db;
+  public Database $db;
+
+  /**
+   * Undocumented variable
+   *
+   * @var \Adept\Application\Email
+   */
+  public Email $email;
 
   /**
    * The session object
    *
-   * @var \AdeptCMS\Application\Session
+   * @var \Adept\Application\Session
    */
-  public $session;
+  public Session $session;
 
   /**
    * Constructor
    *
-   * @param \AdeptCMS\Base\Configuration $conf
-   * @param \AdeptCMS\Application\Database $this->db
-   * @param \AdeptCMS\Application\Session $this->session
+   * @param \Adept\Abstract\Configuration $conf
+   * @param \Adept\Application\Database $this->db
+   * @param \Adept\Application\Session $this->session
    */
-  public function __construct(\AdeptCMS\Base\Configuration $conf)
+  public function __construct(Configuration $conf)
   {
     $this->conf = $conf;
 
@@ -63,6 +77,7 @@ class Application
     // host matches the site conf.  It might not because of a misconfigured
     // webserver, or the user is being "cute".  Whatever the reason we won't
     // waste time on them.
+
     $url = filter_var((!empty($_SERVER['HTTP_HOST']))
       ? $_SERVER['HTTP_HOST']
       : $_SERVER['SERVER_NAME'], FILTER_SANITIZE_URL);
@@ -70,31 +85,41 @@ class Application
     // If the requiested url dosn't match the configured url we stop
     if ($url !== $conf->site->url) {
       http_response_code(400);
-      \AdeptCMS\error(get_class($this), __FUNCTION__, 'URL doesnt match');
+      \Adept\Error::halt(
+        E_ERROR,
+        "The URL $url doesn't match the allowed url " . $conf->site->url,
+        __FILE__,
+        __LINE__
+      );
+      //\Adept\error(debug_backtrace(), 'Invalid URL', "The URL $url doesn't match the allowed url $conf->site->url");
     }
 
-    $this->db = new \AdeptCMS\Application\Database($conf);
-    $this->session = new \AdeptCMS\Application\Session($this->db, $conf);
+    $this->db = new Database($conf);
+    $this->session = new Session($this->db, $conf);
 
-    /*
+    if ($this->session->request->route->email) {
+      $this->email = new \Adept\Application\Email($conf);
+    }
+
     // Check various block lists
     if (
       $this->session->block
+      || $this->session->request->ip->block
       || $this->session->request->route->block
       || $this->session->request->url->block
-      || $this->session->request->ip->block
-      || $this->session->useragent->block
+      || $this->session->request->useragent->block
     ) {
       $message  = '<div>Session ' . $this->session->block . '</div>';
       $message .= '<div>Route  ' . $this->session->request->route->block . '</div>';
       $message .= '<div>Url ' . $this->session->request->url->block . '</div>';
       $message .= '<div>IPAddress ' . $this->session->request->ip->block . '</div>';
       $message .= '<div>UserAgent ' . $this->session->useragent->block . '</div>';
-      \AdeptCMS\error(get_class($this), __FUNCTION__, $message);
+
+      \Adept\error(debug_backtrace(), 'Blocked', $message);
+
       $this->session->setBlock(true);
       $this->session->request->setStatus(400);
       die();
     }
-    */
   }
 }

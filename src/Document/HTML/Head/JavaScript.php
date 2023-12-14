@@ -1,13 +1,11 @@
 <?php
 
-namespace AdeptCMS\Document\HTML\Head;
+namespace Adept\Document\HTML\Head;
 
 defined('_ADEPT_INIT') or die();
 
-class JavaScript extends \AdeptCMS\Base\Document\HTML\Head\Asset
+class JavaScript extends \Adept\Abstract\Document\HTML\Head\Asset
 {
-  use \AdeptCMS\Traits\JavaScript;
-
   public function getFileTag(string $file, \stdClass $args = null): string
   {
     $tag  = '<script';
@@ -30,5 +28,28 @@ class JavaScript extends \AdeptCMS\Base\Document\HTML\Head\Asset
   public function addJavaScript(string $js)
   {
     $this->addInline($js);
+  }
+
+  public function minify(string $js): string
+  {
+    // Remove preceeding and trailing spaces
+    $js = trim($js);
+
+    // Nomalize linebreaks
+    str_replace(["\r\n", "\r"], "\n", $js);
+
+    // Remove comments
+    $pattern = '/(?:(?:\/\*(?:[^*]|(?:\*+[^*\/]))*\*+\/)|(?:(?<!\:|\\\|\'|\")\/\/.*))/';
+    $js = preg_replace($pattern, '', $js);
+
+    // Minify 
+    $minifier = new \MatthiasMullie\Minify\JS();
+    $minifier->add($js);
+    $js = $minifier->minify();
+
+    // Final trim
+    $js = trim($js);
+
+    return $js;
   }
 }

@@ -1,39 +1,49 @@
 <?php
 
 /**
- * \AdeptCMS\Data\Item\IPAddress
+ * \Adept\Data\Item\IPAddress
  *
  * IP Address object
  *
- * @package    AdeptCMS
+ * @package    AdeptFramework
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Data\Item;
+namespace Adept\Data\Item;
 
 defined('_ADEPT_INIT') or die();
 
+use \Adept\Application\DataBase;
+
 /**
- * \AdeptCMS\Data\Item\IPAddress
+ * \Adept\Data\Item\IPAddress
  *
  * IP Address object
  *
- * @package    AdeptCMS
+ * @package    AdeptFramework
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
-class IPAddress extends \AdeptCMS\Base\Data\Item
+class IPAddress extends \Adept\Abstract\Data\Item
 {
 
-  public $ipaddress = '';
-  public $encoded;
-  public $block = false;
-  public $created = '0000-00-00 00:00:00';
+  protected string $name = 'IP Address';
 
-  public function __construct(\AdeptCMS\Application\DataBase &$db, int|string $id = 0)
+  public string $ipaddress = '';
+  public string $encoded;
+  public bool $block = false;
+  public string $created = '0000-00-00 00:00:00';
+
+  /**
+   * Undocumented function
+   *
+   * @param  \Adept\Application\DataBase $db
+   * @param  int                         $id
+   */
+  public function __construct(DataBase &$db, int|string $id = 0)
   {
     if (empty($id)) {
       $ipaddress = '';
@@ -71,23 +81,21 @@ class IPAddress extends \AdeptCMS\Base\Data\Item
       $ipaddress = filter_var($ipaddress, FILTER_VALIDATE_IP);
     }
 
-    parent::__construct(
-      $db,
-      (is_numeric($id)) ? $id : $ipaddress
-    );
+    parent::__construct($db, (((is_numeric($id) && $id > 0) || !empty($id)) ? $id : $ipaddress));
 
-    if (!$this->loadCache()) {
-      if (!empty($ipaddress)) {
-        $this->ipaddress = $ipaddress;
-        $this->encoded = inet_pton($ipaddress);
+    //if (!$this->loadCache()) {
+    //if (!empty($ipaddress)) {
+    if ($this->id == 0) {
+      $this->ipaddress = $ipaddress;
+      $this->encoded = inet_pton($ipaddress);
 
-        $this->save();
-      }
+      $this->save();
     }
+    //}
   }
 
-  public function toString(): string
+  protected function validate(): bool
   {
-    return $this->ipaddress;
+    return true;
   }
 }

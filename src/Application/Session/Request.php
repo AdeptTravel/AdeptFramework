@@ -1,116 +1,128 @@
 <?php
 
 /**
- * \AdeptCMS\Application\Session\Request
+ * \Adept\Application\Session\Request
  *
  * Stores information about the current request
  *
- * @package AdeptCMS
+ * @package Adept
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Application\Session;
+namespace Adept\Application\Session;
 
 defined('_ADEPT_INIT') or die();
 
+use \Adept\Abstract\Configuration;
+use \Adept\Application\Session\Request\Data;
+use \Adept\Application\Database;
+use \Adept\Data\Item\IPAddress;
+use \Adept\Application\Session\Request\Route;
+use \Adept\Data\Item\Url;
+use \Adept\Data\Item\UserAgent;
+
 /**
- * \AdeptCMS\Application\Session\Request
+ * \Adept\Application\Session\Request
  *
  * Stores information about the current request
  *
- * @package AdeptCMS
+ * @package Adept
  * @author Brandon J. Yaniz (brandon@adept.travel)
- * @copyright 2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright 2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
 class Request
 {
-
-  /**
-   * @var \AdeptCMS\Application\Database
-   */
-  protected $db;
-
   /**
    * A reference to the site configuration
    *
-   * @var \AdeptCMS\Base\Configuration
+   * @var \Adept\Abstract\Configuration
    */
-  protected $conf;
+  protected Configuration $conf;
 
   /**
-   * @var \AdeptCMS\Application\Session\Request\Data
+   * @var \Adept\Application\Database
    */
-  public $data;
+  protected Database $db;
 
   /**
-   * @var \AdeptCMS\Data\Item\IPAddress
+   * The current session id
+   *
+   * @var \Adept\Application\Session\Request\Data
    */
-  public $ip;
+  public Data $data;
 
   /**
-   * @var int
-   */
-  public $order;
-
-  /**
-   * @var \AdeptCMS\Application\Session\Request\Route
-   */
-  public $route;
-
-  /**
-   * Total request bandwidth
+   * Current session ID
    *
    * @var int
    */
-  public $size;
+  protected int $session;
+
+  /**
+   * @var \Adept\Data\Item\IPAddress
+   */
+  public IPAddress $ip;
+
+  /**
+   * @var \Adept\Application\Session\Request\Route
+   */
+  public Route $route;
 
   /**
    * HTTP Status Code
    * 
    * @var int
    */
-  public $status;
+  public int $status;
 
   /**
    * The URL the request came in on
    *
-   * @var \AdeptCMS\Data\Item\Url
+   * @var \Adept\Data\Item\Url
    */
-  public $url;
+  public Url $url;
+
+  public int $milisec = 0;
+
+  /**
+   * The useragent used for the current request.  This is in Request and not
+   * Session because we have don't log me out features and app integration.
+   * As browsers and apps get updated we can track the changes over time.
+   * TODO: Use this data to verify that the browser family andOS hasn't
+   *  changed, if so set a session block.
+   *
+   * @var \Adept\Data\Item\UserAgent
+   */
+  public \Adept\Data\Item\UserAgent $useragent;
 
   /**
    * Constructor
    *
-   * @param \AdeptCMS\Application\Database $db
-   * @param \AdeptCMS\Base\Configuration $conf
+   * @param \Adept\Application\Database $db
+   * @param \Adept\Abstract\Configuration $conf
    */
   public function __construct(
-    \AdeptCMS\Application\Database &$db,
-    \AdeptCMS\Base\Configuration &$conf,
+    Database &$db,
+    Configuration &$conf,
+    int $session
   ) {
 
     $this->conf = $conf;
     $this->db = $db;
-
-    if (isset($_SESSION['request.order'])) {
-      $_SESSION['request.order']++;
-    } else {
-      $_SESSION['request.order'] = 0;
-    }
-
-    $this->url = new \AdeptCMS\Data\Item\Url($db);
-
-    $this->data = new \AdeptCMS\Application\Session\Request\Data($db);
-    $this->ip = new \AdeptCMS\Data\Item\IPAddress($db);
-    $this->order = $_SESSION['request.order'];
-    $this->size = 0;
-    $this->route = new \AdeptCMS\Application\Session\Request\Route($db, $conf, $this->url);
+    $this->session = $session;
+    $this->url = new Url($db);
+    $this->ip = new IPAddress($db);
+    $this->useragent = new UserAgent($db);
+    $this->route = new Route($db, $conf, $this->url);
+    $this->data = new Data();
     $this->status = 200;
+    $this->milisec = floor((microtime(true) - time()) * 1000);
 
-    if (empty($this->route->route) || $this->route->type == 'Error') {
+    //if (empty($this->route->route)) {
+    if ($this->route->id == 0) {
       $this->setStatus(404);
     }
   }
@@ -118,42 +130,50 @@ class Request
   public function __destruct()
   {
     $query = "INSERT INTO `request`";
-    $query .= '(`session`, `ipaddress`, `route`, `url`, `data`, `size`, `code`, `order`)';
+    $query .= '(`session`, `ipaddress`, `useragent`, `route`, `url`, `code`, `milisec`)';
     $query .= 'VALUES';
-    $query .= '(?,?,?,?,?,?,?,?)';
+    $query .= '(?,?,?,?,?,?,?)';
 
     $params = [
-      $_SESSION['session.id'],
+      $this->session,
       $this->ip->id,
+      $this->useragent->id,
       $this->route->id,
       $this->url->id,
-      $this->data->id,
-      $this->size,
       $this->status,
-      $this->order
+      $this->milisec
     ];
 
-    try {
-      $this->db->insert($query, $params);
-    } catch (\Exception $e) {
-      $msg = "Query\n\n" . $query . "\n\n" . print_r($params, true) . "\n\nError: " . $e->getMessage();
-      file_put_contents(FS_LOG . 'application.session.request.log', $msg);
-      die('Request failed');
-    }
+    $this->db->insert($query, $params);
+  }
+
+  public function redirect(string $url, bool $permanent = true)
+  {
+    $this->status = ($permanent) ? 301 : 302;
+    $this->__destruct();
+    http_response_code($this->status);
+    header('Location:' . $url, true, $this->status);
+    die();
   }
 
   public function setStatus(int $status)
   {
     $this->status = $status;
 
-    if (http_response_code() != 200) {
-      http_response_code($status);
+    if ($status != 200) {
+      $this->route->category = 'Core';
+      $this->route->component = 'Error';
+      $this->route->option = $status;
 
+      http_response_code($status);
+      /*
       if ($this->format == 'HTML') {
         header('Location: https://' . $this->conf->site->url . '/' . $status);
       } else {
-        \AdeptCMS\error(get_class($this), __FUNCTION__, 'Status Error');
+        \Adept\error(get_class($this), __FUNCTION__, __LINE__, 'Status Error');
+        \Adept\error(debug_backtrace(), 'Status error');
       }
+      */
     }
   }
 }

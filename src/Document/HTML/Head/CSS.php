@@ -1,19 +1,17 @@
 <?php
 
-namespace AdeptCMS\Document\HTML\Head;
+namespace Adept\Document\HTML\Head;
 
 defined('_ADEPT_INIT') or die();
 
-class CSS extends \AdeptCMS\Base\Document\HTML\Head\Asset
+class CSS extends \Adept\Abstract\Document\HTML\Head\Asset
 {
-
-  use \AdeptCMS\Traits\CSS;
-
   public function getFileTag(string $file, \stdClass $args = null): string
   {
     $tag  = '<link';
     $tag .= ' rel="stylesheet"';
-    $tag .= ' href="' . str_replace(FS_CACHE, '', $file) . '"';
+    //$tag .= ' href="' . str_replace(FS_CACHE, '/', $file) . '"';
+    $tag .= ' href="' . str_replace(FS_CACHE, '/', $file) . '"';
     $tag .= $this->formatArgs($args);
     $tag .= '>';
 
@@ -32,5 +30,12 @@ class CSS extends \AdeptCMS\Base\Document\HTML\Head\Asset
   public function addCSS(string $css)
   {
     $this->addInline($css);
+  }
+
+  public function minify(string $file): string
+  {
+    $parser = new \Sabberworm\CSS\Parser(file_get_contents($file));
+    $document = $parser->parse();
+    return $document->render(\Sabberworm\CSS\OutputFormat::createCompact());
   }
 }

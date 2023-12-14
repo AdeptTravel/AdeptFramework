@@ -1,144 +1,149 @@
 <?php
 
 /**
- * \AdeptCMS\Data\Item\Route
+ * \Adept\Data\Item\Route
  *
  * The route data item
  *
- * @package    AdeptCMS.Data
+ * @package    AdeptFramework.Data
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Data\Item;
+namespace Adept\Data\Item;
 
 defined('_ADEPT_INIT') or die();
 
+use \Adept\Application\Database;
+
 /**
- * \AdeptCMS\Data\Item\Route
+ * \Adept\Data\Item\Route
  *
  * The route data item
  *
- * @package    AdeptCMS.Data
+ * @package    AdeptFramework.Data
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
-class Route extends \AdeptCMS\Base\Data\Item
+class Route extends \Adept\Abstract\Data\Item
 {
-  /**
-   * The type of route ie. Compoennt|Redirect|Asset
-   *
-   * @param string
-   */
-  public $type = '';
 
-  /**
-   * The area, ie. Admin|Site
-   *
-   * @param string
-   */
-  public $area = '';
+  protected string $name = 'Route';
+  protected string $table = 'route';
 
   /**
    * The route
    *
    * @param string
    */
-  public $route = '';
+  public string $route = '';
+
+  /**
+   * Undocumented variable
+   *
+   * @var string
+   */
+  public string $redirect = '';
+
+  public string $category = '';
 
   /**
    * The component
    *
    * @var string
    */
-  public $component = '';
-
-  /**
-   * Undocumented variable
-   *
-   * @var int
-   */
-  public $itemid;
+  public string $component = '';
 
   /**
    * The component option aka what area of the component should be loaded
    *
    * @var string
    */
-  public $option = '';
+  public string $option = '';
 
   /**
-   * URL to redirect the request to
+   * The view template
    *
    * @var string
    */
-  public $redirect = '';
-
-  public $robots = '';
+  public string $template = '';
 
   /**
    * Is the route in the sitemap
    *
    * @param bool
    */
-  public $sitemap = false;
+  public bool $sitemap = false;
 
   /**
-   * Status of the route, ie. Published|Unpublished
+   * Allow get data
    *
-   * @param bool
+   * @var bool
    */
-  public $status = false;
+  public bool $get = false;
 
   /**
-   * Undocumented variable
+   * Allow post data
    *
-   * @var string
+   * @var bool
    */
-  public $created;
+  public bool $post = false;
+
+  /**
+   * Allow the route to send emails
+   *
+   * @var bool
+   */
+  public bool $email = false;
+
+  /**
+   * Is the route publically viewable
+   *
+   * @var bool
+   */
+  public bool $public = false;
+
+  /**
+   * State of the route, ie. Published|Unpublished
+   *
+   * @param int
+   */
+  public int $status = 0;
 
   /**
    * The route is in the block list
    *
    * @param bool
    */
-  public $block = false;
+  public bool $block = false;
 
-  public function __construct(\AdeptCMS\Application\Database $db, int|string $id = 0, object|null $obj = null)
-  {
-    $this->table = 'route';
-
-    parent::__construct($db, $id, $obj);
-  }
-
-  public function isRoute(string $route): bool
+  protected function isDuplicate(string $table = ''): bool
   {
     return ($this->db->getInt(
-      "SELECT COUNT(*) FROM route WHERE route = ?",
-      [$route]
-    ) == 1);
+      'SELECT `id` FROM `route` WHERE `route` = ?',
+      [$this->route]
+    ) > 0);
   }
 
-  public function loadFromRoute(string $route)
+  public function formatSegment(string $segment): string
   {
-  }
+    $segment = strtolower($segment);
+    $segment = preg_replace('/[^0-9a-z-]/', '-', $segment);
+    $segment = str_replace('--', '-', $segment);
 
-  public function save(): bool
-  {
-    // Cleanup any unnecessary public variables before save
-    if ($this->type == 'Component') {
-      unset($this->redirect);
-    } else if ($this->type == 'Redirect') {
-      unset($this->component);
-      unset($this->option);
-    } else if ($this->type == 'Error') {
-      unset($this->redirect);
-    } else {
-      die(get_class($this) . '::save() - Route type unsupported.<pre>' . print_r($this, true));
+    $parts = explode('-', $segment);
+    $count = count($parts);
+
+    for ($i = 0; $i < $count; $i++) {
+      if (empty($parts[$i])) {
+        unset($parts[$i]);
+      }
     }
 
-    return parent::save();
+    $segment = implode('-', $parts);
+
+    return $segment;
   }
 }

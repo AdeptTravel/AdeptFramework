@@ -1,13 +1,13 @@
 <?php
 
-namespace AdeptCMS\Data\Items;
+namespace Adept\Data\Items;
 
 defined('_ADEPT_INIT') or die();
 
-class Route extends \AdeptCMS\Base\Data\Items
+class Route extends \Adept\Abstract\Data\Items
 {
   public function __construct(
-    \AdeptCMS\Application\Database &$db,
+    \Adept\Application\Database &$db,
     int|string $id = 0,
     array $filter = []
   ) {

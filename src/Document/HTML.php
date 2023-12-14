@@ -1,91 +1,85 @@
 <?php
 
-namespace AdeptCMS\Document;
+namespace Adept\Document;
 
 defined('_ADEPT_INIT') or die();
 
-class HTML extends \AdeptCMS\Base\Document
+use \Adept\Application;
+use \Adept\Document\HTML\Controls;
+use \Adept\Document\HTML\Head;
+use \Adept\Document\HTML\Body\Menu;
+//use \Adept\Error;
+
+class HTML extends \Adept\Abstract\Document
 {
-  /**
-   * Undocumented variable
-   *
-   * @var array
-   */
-
-  protected $controls;
-
   /**
    * Template HTML
    *
    * @var string
    */
-  protected $html;
+  protected string $html;
 
-  /**
-   * Array containing all forms to be rendered in the document (HTML only)
-   *
-   * @var array
-   */
-  public $forms;
+
+  public \Adept\Document\HTML\Controls $controls;
 
   /**
    * The head object (HTML only)
    * 
-   * @var \AdeptCMS\Document\HTML\Head
+   * @var \Adept\Document\HTML\Head
    */
-  public $head;
-
+  public Head $head;
 
   /**
    * The menu object (HTML only)
    *
-   * @var \AdeptCMS\Menu
+   * @var \Adept\Document\HTML\Body\Menu
    */
-  public $menu;
+  public Menu $menu;
 
   /**
    * Init
    */
-  public function __construct(\AdeptCMS\Application &$app)
+  public function __construct(Application &$app)
   {
     $conf = $app->conf;
 
     $session = $app->session;
-    $auth = $session->auth;
     $request = $session->request;
-    $head = new \AdeptCMS\Document\HTML\Head($conf, $request);
-    $menu = new \AdeptCMS\Document\HTML\Body\Menu($app);
+    //$auth = $session->auth;
 
-    $this->controls = [];
-    $this->forms = [];
     $this->html = '';
 
-    // Uncomment to allow template to be defined via querystring
-    //$template = strtolower($request->getData()->getString('template', INPUT_GET));
+    $template = $request->route->template;
 
-    $template = ($request->route->area == 'Admin') ? 'Admin' : 'Site';
+    //if (empty($template)) {
+    //  $template = $conf->site->template;
+    //}
 
-    if (!empty($path = $this->matchDir(FS_TEMPLATE, $template))) {
+    $path = FS_TEMPLATE . $template;
+    $file = $path . '/Template.php';
 
+    if (!file_exists($file)) {
       $template = str_replace(FS_TEMPLATE, '', $path);
       $template = substr($template, 0, strlen($template) - 1);
 
-      $file = $path . '/Template.php';
-
-      if (file_exists($file)) {
-        ob_start();
-        include($file);
-        $this->html = ob_get_contents();
-        ob_end_clean();
-      }
-
-      $this->head = $head;
-      $this->menu = $menu;
-
-      parent::__construct($app);
-    } else {
-      die('Template Error.');
+      \Adept\Error::halt(
+        E_ERROR,
+        'Template Error ' . $path . ' - ' . $template,
+        __FILE__,
+        __LINE__
+      );
     }
+
+    $this->head = new Head($conf, $request);
+    $this->controls = new Controls($this->head);
+    $this->menu = new Menu($app);
+
+    ob_start();
+    include($file);
+    $this->html = ob_get_contents();
+    ob_end_clean();
+
+    parent::__construct($app);
   }
 
   public function getTitle(): string
@@ -100,7 +94,7 @@ class HTML extends \AdeptCMS\Base\Document
 
   public function getDescription(): string
   {
-    return $this->head->meta->description;
+    return $this->head->description;
   }
 
   public function setDescription(string $description)
@@ -108,35 +102,11 @@ class HTML extends \AdeptCMS\Base\Document
     $this->head->meta->description = $description;
   }
 
-  public function getForm(string $alias): \AdeptCMS\Document\HTML\Body\Form
-  {
-    if (!key_exists($alias, $this->forms)) {
-
-      $this->forms[$alias] = new \AdeptCMS\Document\HTML\Body\Form(
-        $this->app->db,
-        $this->app->session,
-        $this->head,
-        $alias
-      );
-    }
-
-    return $this->forms[$alias];
-  }
-
   public function getBuffer(): string
   {
+    //$head = $this->head;
 
     $html = $this->html;
-
-    if (strpos($html, '{{toolbar}}') !== false) {
-      $toolbar = '';
-
-      foreach ($this->controls as $control) {
-        $toolbar .= $control;
-      }
-
-      $html = str_replace('{{toolbar}}', $toolbar, $html);
-    }
 
     // Title
     $html = str_replace('{{title}}', $this->head->meta->title, $html);
@@ -144,27 +114,27 @@ class HTML extends \AdeptCMS\Base\Document
     // Component
     $html = str_replace('{{component}}', $this->component->getBuffer(), $html);
 
+    // Menus
+
+    preg_match_all('/\{\{menu.+?\}\}/', $html, $matches);
+
+    foreach ($matches[0] as $match) {
+      $obj = $this->parseTag($match);
+      $html = str_replace($match, $this->menu->getBuffer($obj->name, $obj->args), $html);
+    }
+
     // Modules
-    $modules = new \AdeptCMS\Document\HTML\Body\Modules($this->app, $this);
+    $modules = new \Adept\Document\HTML\Body\Modules($this->app, $this);
 
     preg_match_all('/\{\{module.+?\}\}/', $html, $matches);
 
     foreach ($matches[0] as $match) {
-      $tag = substr($match, 2, strlen($match) - 4);
-      $parts = explode(':', $tag);
-      $name = $parts[1];
-      $args = [];
-
-      if (count($parts) > 2) {
-        unset($parts[0]);
-        unset($parts[1]);
-        $args = array_values($parts);
-      }
-
-      $module = $modules->getModule($name, $args);
-      $html = str_replace($match, ($module !== false) ? $module->getHTML() : '', $html);
+      $obj = $this->parseTag($match);
+      $module = $modules->getModule($obj->name, $obj->args);
+      $html = str_replace($match, ($module !== false) ? $module->getBuffer() : '', $html);
     }
 
+    /*
     preg_match_all('/\{\{form.+?\}\}/', $html, $matches);
 
     foreach ($matches[0] as $match) {
@@ -179,13 +149,17 @@ class HTML extends \AdeptCMS\Base\Document
         $args = array_values($parts);
       }
 
-      $form = $this->getForm($alias);
+      //$form = $this->getForm($alias);
 
-      $html = str_replace($match, $form->getHTML(), $html);
+      //$html = str_replace($match, $form->getBuffer(), $html);
     }
+    */
 
     // Head
-    $html = str_replace('{{head}}', $this->head->getHTML(), $html);
+    $html = str_replace('{{head}}', $this->head->getBuffer(), $html);
+
+    // Controls
+    $html = str_replace('{{controls}}', $this->controls->getBuffer(), $html);
 
     return $html;
   }
@@ -195,33 +169,26 @@ class HTML extends \AdeptCMS\Base\Document
     //$html5->save($dom, 'out.html');
   }
 
-  public function addControl(int $type)
+  protected function parseTag(string $tag): object
   {
-    switch ($type) {
-      case CONTROL_SAVE:
-        $this->controls[$type] = '<input id="save" type="button" value="Save">';
-        break;
-      case CONTROL_SAVE_CLOSE:
-        $this->controls[$type] = '<input id="save_close" type="button" value="Save & Close">';
-        break;
-      case CONTROL_SAVE_COPY:
-        $this->controls[$type] = '<input id="save_copy" type="button" value="Save as Copy">';
-        break;
-      case CONTROL_CLOSE:
-        $this->controls[$type] = '<input id="close" type="button" value="Close">';
-        break;
-      case CONTROL_PUBLISH:
-        $this->controls[$type] = '<input id="publish" type="button" value="Publish">';
-        break;
-      case CONTROL_UNPUBLISH:
-        $this->controls[$type] = '<input id="unpublish" type="button" value="Unpublish">';
-        break;
-      case CONTROL_NEW:
-        $this->controls[$type] = '<input id="new" type="button" value="New">';
-        break;
-      case CONTROL_DELETE:
-        $this->controls[$type] = '<input id="delete" type="button" value="Delete">';
-        break;
+    $obj = new \stdClass();
+
+    // Remove {{}}
+    $tag = substr($tag, 2, strlen($tag) - 4);
+
+    // Break apart
+    $parts = explode(':', $tag);
+
+    $obj->type = $parts[0];
+    $obj->name = $parts[1];
+    $obj->args = [];
+
+    if (count($parts) > 2) {
+      unset($parts[0]);
+      unset($parts[1]);
+      $obj->args = (object)array_values($parts);
     }
+
+    return $obj;
   }
 }

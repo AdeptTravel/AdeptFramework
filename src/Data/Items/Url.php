@@ -1,14 +1,13 @@
 <?php
 
-namespace AAdeptCMS\Model\Items;
+namespace Adept\Model\Items;
 
 defined('_ADEPT_INIT') or die('No Access');
 
-class Url extends \AdeptCMS\Base\Model\Item
+class Url extends \Adept\Abstract\Model\Item
 {
-  use \AdeptCMS\Traits\Asset;
 
-  public function __construct(\AdeptCMS\Application\Database &$db, string $url = '')
+  public function __construct(\Adept\Application\Database &$db, string $url = '')
   {
     parent::__construct($db);
 
@@ -38,7 +37,7 @@ class Url extends \AdeptCMS\Base\Model\Item
     $url = filter_var($url, FILTER_SANITIZE_URL);
 
     if (!filter_var($url, FILTER_VALIDATE_URL)) {
-      throw new \AdeptCMS\Exceptions\InvalidUrl();
+      throw new \Adept\Exceptions\InvalidUrl();
     }
 
     // Remove anchor
@@ -194,7 +193,7 @@ class Url extends \AdeptCMS\Base\Model\Item
     return $this->getUrl();
   }
 
-  public function validate(): bool
+  protected function validate(): bool
   {
     return $this->isEmpty();
   }

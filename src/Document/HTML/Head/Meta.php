@@ -1,34 +1,57 @@
 <?php
 
-namespace AdeptCMS\Document\HTML\Head;
+namespace Adept\Document\HTML\Head;
 
 defined('_ADEPT_INIT') or die();
 
+use \Adept\Abstract\Configuration;
+use \Adept\Application\Session\Request;
+
 class Meta
 {
+  /**
+   * Undocumented variable
+   *
+   * @var Configuration
+   */
+  protected Configuration $conf;
 
-  protected $conf;
-  protected $meta;
-  protected $key;
+  /**
+   * Undocumented variable
+   *
+   * @var array
+   */
+  protected array $meta;
+
+  /**
+   * Undocumented variable
+   *
+   * @var array
+   */
+  protected array $key;
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public $title = '';
+  public string $title = '';
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public $description = '';
+  public string $description = '';
 
-  public function __construct(
-    \AdeptCMS\Base\Configuration &$conf,
-    \AdeptCMS\Application\Session\Request &$request
-  ) {
+  /**
+   * Undocumented function
+   *
+   * @param  Configuration $conf
+   * @param  Request       $request
+   */
+  public function __construct(Configuration &$conf, Request &$request)
+  {
     $this->conf = $conf;
 
     $this->meta = [];
@@ -39,7 +62,7 @@ class Meta
       'name' => [],
       'property' => []
     ];
-
+    //charset = "utf-8"
     $this->key['http-equiv'] = ['content-type'];
 
     $this->key['itemprop'] = ['name'];
@@ -85,13 +108,15 @@ class Meta
     ];
 
     $this->add('content-type', 'text/html; charset=utf-8');
-    $this->add('generator', 'AdeptCMS Content Management System (YCMS)');
+    $this->add('generator', $this->conf->app->name);
     $this->add('og:locale', 'en_US');
     $this->add('og:type', 'website');
-    $this->add('twitter:site:id', '@' . $conf->share->twitter->username);
-    $this->add('twitter:url', $request->url->url);
-  }
 
+    if (isset($conf->share)) {
+      $this->add('twitter:site:id', '@' . $conf->share->twitter->username);
+      $this->add('twitter:url', $request->url->url);
+    }
+  }
 
   public function add(string $name, string $content)
   {
@@ -99,21 +124,28 @@ class Meta
   }
 
 
-  public function getHTML(): string
+  public function getBuffer(): string
   {
     $html = '';
 
     if (!empty($this->title)) {
       $title = $this->title . ' - ' . $this->conf->site->name;
-      $this->add('og:title', $title);
-      $this->add('twitter:title', $this->trimToChar($title, 70));
+      if (isset($this->conf->share)) {
+        $this->add('og:title', $title);
+        $this->add('twitter:title', $this->trimToChar($title, 70));
+      }
     }
 
     if (!empty($this->description)) {
       $this->add('description', $this->trimToChar($this->description, 160));
-      $this->add('og:description', $this->trimToChar($this->description, 110));
-      $this->add('twitter:description', $this->trimToChar($this->description, 200));
+
+      if (isset($this->conf->share)) {
+        $this->add('og:description', $this->trimToChar($this->description, 110));
+        $this->add('twitter:description', $this->trimToChar($this->description, 200));
+      }
     }
+
+    $html .= '<meta charset="utf-8">';
 
     foreach ($this->meta as $key => $value) {
       $html .= '<meta';

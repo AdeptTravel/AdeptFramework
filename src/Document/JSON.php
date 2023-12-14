@@ -1,13 +1,24 @@
 <?php
 
-namespace AdeptCMS\Document;
+namespace Adept\Document;
 
 defined('_ADEPT_INIT') or die();
 
-class JSON extends \AdeptCMS\Base\Document
+use \Adept\Application;
+
+class JSON extends \Adept\Abstract\Document
 {
+  /**
+   * Init
+   */
+  public function __construct(Application &$app)
+  {
+    parent::__construct($app);
+  }
+
   public function getBuffer(): string
   {
+
     return $this->component->getBuffer();
   }
 }

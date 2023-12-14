@@ -8,7 +8,7 @@
  * @license BSD 2-Clause; See LICENSE.txt
  */
 
-namespace AdeptCMS\Exceptions;
+namespace Adept\Exceptions;
 
 defined('_ADEPT_INIT') or die();
 
@@ -19,7 +19,7 @@ defined('_ADEPT_INIT') or die();
  * @copyright 2016-2018 The Adept Traveler, Inc., All Rights Reserved.
  * @license BSD 2-Clause; See LICENSE.txt
  */
-class ConfigFileException extends \AdeptCMS\Exceptions\Exception
+class ConfigFileException extends \Adept\Exceptions\Exception
 {
   public function __construct($message = null, $code = 0, Exception $previous = null)
   {

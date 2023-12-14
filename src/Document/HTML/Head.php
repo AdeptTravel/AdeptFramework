@@ -1,57 +1,77 @@
 <?php
 
-namespace AdeptCMS\Document\HTML;
+namespace Adept\Document\HTML;
 
 defined('_ADEPT_INIT') or die();
+
+use \Adept\Abstract\Configuration;
+use \Adept\Application\Session\Request;
+use \Adept\Document\HTML\Head\CSS;
+use \Adept\Document\HTML\Head\JavaScript;
+use \Adept\Document\HTML\Head\Link;
+use \Adept\Document\HTML\Head\Meta;
+
 
 class Head
 {
   /**
    * Undocumented variable
    *
-   * @var \AdeptCMS\Base\Configuration
+   * @var \Adept\Abstract\Configuration
    */
-  protected $conf;
+  protected Configuration $conf;
 
   /**
    * Undocumented variable
    *
-   * @var \AdeptCMS\Document\HTML\Head\CSS
+   * @var \Adept\Document\HTML\Head\CSS
    */
-  public $css;
+  public CSS $css;
 
   /**
    * Undocumented variable
    *
-   * @var \AdeptCMS\Document\HTML\Head\JavaScript
+   * @var string
    */
-  public $javascript;
+  public string $description;
 
   /**
    * Undocumented variable
    *
-   * @var \AdeptCMS\Document\HTML\Head\Link
+   * @var \Adept\Document\HTML\Head\JavaScript
    */
-  public $link;
+  public JavaScript $javascript;
 
   /**
    * Undocumented variable
    *
-   * @var \AdeptCMS\Document\HTML\Head\Meta
+   * @var \Adept\Document\HTML\Head\Link
    */
-  public $meta;
+  public Link $link;
 
-  public $title;
+  /**
+   * Undocumented variable
+   *
+   * @var \Adept\Document\HTML\Head\Meta
+   */
+  public Meta $meta;
 
-  public function __construct(
-    \AdeptCMS\Base\Configuration &$conf,
-    \AdeptCMS\Application\Session\Request &$request
-  ) {
+  /**
+   * Undocumented variable
+   *
+   * @var string
+   */
+  public string $title;
+
+  public function __construct(&$conf, &$request)
+  {
     $this->conf = $conf;
-    $this->meta = new \AdeptCMS\Document\HTML\Head\Meta($conf, $request);
-    $this->link = new \AdeptCMS\Document\HTML\Head\Link($conf, $request);
-    $this->css = new \AdeptCMS\Document\HTML\Head\CSS($conf, $request);
-    $this->javascript = new \AdeptCMS\Document\HTML\Head\JavaScript($conf, $request);
+    $this->title = '';
+    $this->description = '';
+    $this->meta = new Meta($conf, $request);
+    $this->link = new Link($conf, $request);
+    $this->css = new CSS($conf, $request);
+    $this->javascript = new JavaScript($conf, $request);
 
     // TODO: Add checks to see if files exist before adding
     $this->link->add('/favicon.ico', 'icon', ['size' => 'any']);
@@ -60,15 +80,15 @@ class Head
     $this->meta->add('viewport', 'width=device-width, initial-scale=1, minimum-scale=1.0, user-scalable=yes');
   }
 
-  public function getHTML(): string
+  public function getBuffer(): string
   {
     $html = '<base href="https://' . $this->conf->site->url . '">';
     $html .= '<title>' . $this->meta->title . ' - ' . $this->conf->site->name . '</title>';
 
-    $html .= $this->meta->getHTML();
-    $html .= $this->link->getHTML();
-    $html .= $this->css->getHTML();
-    $html .= $this->javascript->getHTML();
+    $html .= $this->meta->getBuffer();
+    $html .= $this->link->getBuffer();
+    $html .= $this->css->getBuffer();
+    $html .= $this->javascript->getBuffer();
 
     $html = str_replace('><', ">\n  <", $html);
 
