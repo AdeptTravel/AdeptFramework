@@ -59,8 +59,9 @@ class HTML extends \Adept\Abstract\Document
     $file = $path . '/Template.php';
 
     if (!file_exists($file)) {
+
       $template = str_replace(FS_TEMPLATE, '', $path);
-      $template = substr($template, 0, strlen($template) - 1);
+      //$template = substr($template, 0, strlen($template) - 1);
 
       \Adept\Error::halt(
         E_ERROR,

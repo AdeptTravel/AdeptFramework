@@ -57,6 +57,10 @@ class Component
     $this->app = $app;
     $this->doc = $doc;
 
+    if ($this->app->session->request->url->type == 'HTML') {
+      $this->status = new Status();
+    }
+
     /*
     $get     = $this->app->session->request->get;
     $post    = $this->app->session->request->post;
@@ -67,6 +71,7 @@ class Component
   public function getBuffer(string $template = ''): string
   {
     $buffer = '';
+
 
     $file  = FS_COMPONENT
       . $this->app->session->request->route->category . '/'
@@ -80,7 +85,7 @@ class Component
 
     $file .= '.php';
 
-    if (file_exists($file)) {
+    if ($this->app->session->request->url->type == 'HTML' && file_exists($file)) {
 
       ob_start();
 

@@ -36,17 +36,17 @@ abstract class Document
     $component  = $app->session->request->route->component;
     $option     = $app->session->request->route->option;
     $type       = $this->app->session->request->url->type;
-    $namespace  = "\\Adept\\Component\\$category\\$component\\$type\\$option";
+    $namespace  = "\\Component\\$category\\$component\\$type\\$option";
     $controller = FS_COMPONENT . "$category/$component/$type/$option.php";
     $template   = FS_COMPONENT . "$category/$component/$type/Template/$option.php";
 
     if (!class_exists($namespace)) {
-
       if ($type == 'HTML' && file_exists($template)) {
         // Used for HTML only, this means that there is a template file but no
         // component file.  We will load a generic component class to allow the
         // template to load.
         $namespace = "\\Adept\\Abstract\\Component";
+        die('Controller not found.');
       } else {
         //$namespace = "\\Adept\\Component\\Core\\Error\\$type\\Error";
         $namespace = "\\Adept\\Abstract\\Component";

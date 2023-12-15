@@ -1,5 +1,5 @@
 {
-    "name": "adepttravel/adeptframework",
+    "name": "adept/framework",
     "description": "A PHP framework for creating websites, content management systems, consumer resource management systems, etc.",
     "type": "library",
     "require": {
