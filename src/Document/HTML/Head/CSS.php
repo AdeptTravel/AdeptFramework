@@ -10,8 +10,8 @@ class CSS extends \Adept\Abstract\Document\HTML\Head\Asset
   {
     $tag  = '<link';
     $tag .= ' rel="stylesheet"';
-    //$tag .= ' href="' . str_replace(FS_CACHE, '/', $file) . '"';
-    $tag .= ' href="' . str_replace(FS_CACHE, '/', $file) . '"';
+    //$tag .= ' href="' . str_replace(FS_SITE_CACHE, '/', $file) . '"';
+    $tag .= ' href="' . str_replace(FS_SITE_CACHE, '/', $file) . '"';
     $tag .= $this->formatArgs($args);
     $tag .= '>';
 

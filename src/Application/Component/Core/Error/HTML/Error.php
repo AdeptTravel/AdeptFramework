@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Core\Error\HTML;
+namespace Component\Core\Error\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 

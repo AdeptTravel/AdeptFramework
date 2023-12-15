@@ -26,7 +26,7 @@ abstract class Cache
 
   public function __construct(string $namespace)
   {
-    $this->path = FS_CACHE . str_replace("\\", '/', $namespace) . '/';
+    $this->path = FS_SITE_CACHE . str_replace("\\", '/', $namespace) . '/';
 
     if (!file_exists($this->path)) {
       mkdir($this->path, 0755, true);

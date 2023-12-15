@@ -17,7 +17,7 @@ define('FS_JS',                     FS_PATH . 'js/');
 define('FS_IMG',                    FS_PATH . 'img/');
 define('FS_SRC',                    FS_PATH . 'src/');
 
-define('FS_CACHE',                  FS_SRC . 'Cache/');
+define('FS_SITE_CACHE',                  FS_SRC . 'Cache/');
 define('FS_COMPONENT',              FS_SRC . 'Component/');
 define('FS_LOG',                    FS_SRC . 'Log/');
 define('FS_CSV',                    FS_SRC . 'Resources/CSV/');

@@ -70,23 +70,22 @@ class Component
 
   public function getBuffer(string $template = ''): string
   {
-    $buffer = '';
-
-
-    $file  = FS_COMPONENT
-      . $this->app->session->request->route->category . '/'
-      . $this->app->session->request->route->component . '/'
-      . $this->app->session->request->url->type . '/Template/'
-      . $this->app->session->request->route->option;
+    $buffer     = '';
+    $category   = $this->app->session->request->route->category;
+    $component  = $this->app->session->request->route->component;
+    $option     = $this->app->session->request->route->option;
+    $type       = $this->app->session->request->url->type;
 
     if (!empty($template)) {
-      $file .= '_' . $template;
+      $template = '_' . $template;
     }
 
-    $file .= '.php';
-
-    if ($this->app->session->request->url->type == 'HTML' && file_exists($file)) {
-
+    // Loaded the base class, now we need to find the template file.
+    if (
+      $type == 'HTML'
+      && (file_exists($file = FS_SYS_COMPONENT . "$category/$component/$type/Template/$option$template.php")
+        || file_exists($file = FS_SITE_COMPONENT . "$category/$component/$type/Template/$option$template.php"))
+    ) {
       ob_start();
 
       include($file);
@@ -102,22 +101,23 @@ class Component
       }
     }
 
-
     return $buffer;
   }
 
+  // This is here for maybe loading sub-templates from a template file.  Might
+  // just get rid of it, not sure yet.
   public function getHTMLTemplate(string $template): string
   {
-    $file  = FS_COMPONENT
-      . $this->app->session->request->route->component . '/'
-      . $this->app->session->request->url->type . '/'
-      . $this->app->session->request->route->option
-      . '_' . $template . '.php';
+    $buffer     = '';
+    $category   = $this->app->session->request->route->category;
+    $component  = $this->app->session->request->route->component;
+    $option     = $this->app->session->request->route->option;
+    $type       = $this->app->session->request->url;
 
-    $buffer = '';
-
-    if (file_exists($file)) {
-
+    if (
+      file_exists($file = FS_SYS_COMPONENT . "$category/$component/$type/Template/$option$template.php")
+      || file_exists($file = FS_SITE_COMPONENT . "$category/$component/$type/Template/$option$template.php")
+    ) {
       ob_start();
 
       include($file);

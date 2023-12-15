@@ -77,7 +77,7 @@ class Image extends \Adept\Abstract\Data\Item\Media
     //  return 'GD library is not available.';
     //}
 
-    $originalFile = FS_MEDIA . $this->file;
+    $originalFile = FS_SITE_MEDIA . $this->file;
 
     $newFile = FS_IMG . $this->getUrl($width, $height, $type, $dpi, $quality = 85, false);
 
@@ -105,7 +105,7 @@ class Image extends \Adept\Abstract\Data\Item\Media
     }
 
     if (file_exists($newFile)) {
-      //if (filemtime(FS_MEDIA . $))
+      //if (filemtime(FS_SITE_MEDIA . $))
     }
     */
 

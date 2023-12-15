@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Location;
+namespace Component\Location;
 
 defined('_ADEPT_INIT') or die('No Access');
 

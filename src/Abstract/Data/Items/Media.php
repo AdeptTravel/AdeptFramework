@@ -138,11 +138,11 @@ class Media extends \Adept\Abstract\Data\Items
     //die('<pre>' . print_r($this->items, true));
     // Get new files uploaded to the users media collection
 
-    $files = new \DirectoryIterator(FS_MEDIA . $this->path);
+    $files = new \DirectoryIterator(FS_SITE_MEDIA . $this->path);
 
     foreach ($files as $file) {
       $filename = $this->path . '/' . $file->getFilename();
-      $mime = ucfirst(substr(mime_content_type(FS_MEDIA . $filename), 0, 5));
+      $mime = ucfirst(substr(mime_content_type(FS_SITE_MEDIA . $filename), 0, 5));
 
       if (
         !$file->isDot()

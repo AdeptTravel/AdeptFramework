@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Dashboard\Controller;
+namespace Component\Dashboard\Controller;
 
 defined('_ADEPT_INIT') or die('No Access');
 

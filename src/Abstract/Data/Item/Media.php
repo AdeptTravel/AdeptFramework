@@ -158,7 +158,7 @@ class Media extends \Adept\Abstract\Data\Item
       $file = $id;
       $path = substr($file, 0, strrpos($file, '/'));
 
-      $fullpath = FS_MEDIA . $file;
+      $fullpath = FS_SITE_MEDIA . $file;
       $extension = substr($file, strrpos($file, '.') + 1);
 
       // Get mimetype of file
@@ -179,7 +179,7 @@ class Media extends \Adept\Abstract\Data\Item
         $title = substr($file, strrpos($file, '/') + 1);
         $title = substr($title, 0, strrpos($title, '.'));
 
-        //$alias = str_replace(FS_MEDIA . 'Image/', FS_IMG, $file);
+        //$alias = str_replace(FS_SITE_MEDIA . 'Image/', FS_IMG, $file);
         $alias = substr($file, 6);
         $alias = substr($alias, 0, strrpos($alias, '.'));
         $alias = strtolower($alias);

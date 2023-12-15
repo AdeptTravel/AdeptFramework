@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Travel\User\JSON;
+namespace Component\Travel\User\JSON;
 
 defined('_ADEPT_INIT') or die('No Access');
 

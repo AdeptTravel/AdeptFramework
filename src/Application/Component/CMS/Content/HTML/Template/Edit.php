@@ -1,6 +1,6 @@
 <?php
 
-use Adept\Component\Content\Controller\Category;
+use Component\Content\Controller\Category;
 use \Adept\Document\HTML\Elements\Div;
 use Adept\Document\HTML\Elements\Fieldset;
 use \Adept\Document\HTML\Elements\Form;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Core\Route\HTML;
+namespace Component\Core\Route\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 

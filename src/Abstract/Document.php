@@ -5,7 +5,7 @@ namespace Adept\Abstract;
 defined('_ADEPT_INIT') or die();
 
 use \Adept\Application;
-use \Adept\Component;
+use \Component;
 
 abstract class Document
 {
@@ -24,7 +24,7 @@ abstract class Document
   /**
    * The component object
    *
-   * @var \Adept\Component
+   * @var \Component
    */
   public $component;
 
@@ -36,20 +36,28 @@ abstract class Document
     $component  = $app->session->request->route->component;
     $option     = $app->session->request->route->option;
     $type       = $this->app->session->request->url->type;
-    $namespace  = "\\Component\\$category\\$component\\$type\\$option";
-    $controller = FS_COMPONENT . "$category/$component/$type/$option.php";
-    $template   = FS_COMPONENT . "$category/$component/$type/Template/$option.php";
+    $namespace  = null;
 
-    if (!class_exists($namespace)) {
-      if ($type == 'HTML' && file_exists($template)) {
+    if (
+      !class_exists($namespace = "\\Adept\\Component\\$category\\$component\\$type\\$option")
+      && !class_exists($namespace = "\\Component\\$category\\$component\\$type\\$option")
+    ) {
+
+      if (
+        $type == 'HTML'
+        && (
+          file_exists($template = FS_SYS_COMPONENT . "$category/$component/$type/Template/$option.php")
+          || file_exists($template = FS_SITE_COMPONENT . "$category/$component/$type/Template/$option.php")
+        )
+      ) {
         // Used for HTML only, this means that there is a template file but no
         // component file.  We will load a generic component class to allow the
         // template to load.
         $namespace = "\\Adept\\Abstract\\Component";
-        die('Controller not found.');
       } else {
         //$namespace = "\\Adept\\Component\\Core\\Error\\$type\\Error";
         $namespace = "\\Adept\\Abstract\\Component";
+
         $this->app->session->request->setStatus(404);
       }
     }

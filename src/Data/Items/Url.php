@@ -50,7 +50,7 @@ class Url extends \Adept\Abstract\Model\Item
       $url = substr($url, 0, $pos);
     }
 
-    $this->cache = FS_CACHE . 'Url/' . hash('md5', $url) . '.json';
+    $this->cache = FS_SITE_CACHE . 'Url/' . hash('md5', $url) . '.json';
 
     if ($this->loadCache()) {
       $this->data->parts = json_decode($this->data->parts);

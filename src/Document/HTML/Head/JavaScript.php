@@ -9,7 +9,7 @@ class JavaScript extends \Adept\Abstract\Document\HTML\Head\Asset
   public function getFileTag(string $file, \stdClass $args = null): string
   {
     $tag  = '<script';
-    $tag .= ' src="' . str_replace(FS_CACHE, '', $file) . '"';
+    $tag .= ' src="' . str_replace(FS_SITE_CACHE, '', $file) . '"';
     $tag .= $this->formatArgs($args);
     $tag .= '></script>';
 

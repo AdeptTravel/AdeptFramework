@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Content\Controller;
+namespace Component\Content\Controller;
 
 defined('_ADEPT_INIT') or die('No Access');
 

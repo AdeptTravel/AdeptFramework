@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Travel\User\HTML;
+namespace Component\Travel\User\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\CMS\Media\HTML;
+namespace Component\CMS\Media\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 
@@ -21,7 +21,7 @@ class Image extends \Adept\Abstract\Component
   {
     parent::__construct($app, $doc);
 
-    $path = FS_MEDIA . \urldecode($app->session->request->data->get->getString('path', ''));
+    $path = FS_SITE_MEDIA . \urldecode($app->session->request->data->get->getString('path', ''));
 
     $this->data = new \Adept\Data\Items\Image($app->db);
     $this->data->type = 'Image';

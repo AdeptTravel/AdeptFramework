@@ -64,7 +64,7 @@ class IPAddress extends \Adept\Abstract\Model\Item
       }
     }
 
-    $this->cache = FS_CACHE . 'IpAddress/' . hash('md5', $ipaddress) . '.json';
+    $this->cache = FS_SITE_CACHE . 'IpAddress/' . hash('md5', $ipaddress) . '.json';
 
     if (!$this->loadCache()) {
       if (!empty($ipaddress) && filter_var($ipaddress, FILTER_VALIDATE_IP)) {

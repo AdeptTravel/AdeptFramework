@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Component\Core\Auth\HTML;
+namespace Component\Core\Auth\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 

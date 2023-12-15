@@ -51,21 +51,29 @@ class HTML extends \Adept\Abstract\Document
 
     $template = $request->route->template;
 
-    //if (empty($template)) {
-    //  $template = $conf->site->template;
-    //}
+    // We currently look in two different paths for the template file, using
+    // an array will allow us to expand this if we are feeling stupid.  I mean,
+    // this is already stupid since we are wasting a small amount of resources
+    // by not just using an if statement.  And this commentary is way to long.
+    $files = [
+      FS_SYS_TEMPLATE . $template .  '/Template.php',
+      FS_SITE_TEMPLATE . $template .  '/Template.php',
+    ];
 
-    $path = FS_TEMPLATE . $template;
-    $file = $path . '/Template.php';
+    $file = null;
 
-    if (!file_exists($file)) {
+    for ($i = 0; $i < count($files); $i++) {
+      if (file_exists($files[$i])) {
+        $file = $files[$i];
+        break;
+      }
+    }
 
-      $template = str_replace(FS_TEMPLATE, '', $path);
-      //$template = substr($template, 0, strlen($template) - 1);
+    if (!isset($file)) {
 
       \Adept\Error::halt(
         E_ERROR,
-        'Template Error ' . $path . ' - ' . $template,
+        'Template Error ' . $template . ' - <pre>' . print_r($files, true) . '</pre>',
         __FILE__,
         __LINE__
       );
