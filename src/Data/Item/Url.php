@@ -8,8 +8,6 @@ use \Adept\Application\Database;
 
 class Url extends \Adept\Abstract\Data\Item
 {
-  protected string $name = 'Url';
-
   /**
    * The full url with QueryString
    *
@@ -90,25 +88,24 @@ class Url extends \Adept\Abstract\Data\Item
   /**
    * The datetime the url was created
    *
-   * @var \DateTime
+   * @var string
    */
-  public \DateTime $created;
+  public string $created;
 
   /**
    * Undocumented function
    *
    * @param \Adept\Application\Database $db
-   * @param integer $id
+   * @param integer $val
    */
-  public function __construct(Database $db, int|string $id = 0)
+  public function __construct(int|string|object $val = 0, bool $cache = true)
   {
     $this->excludeKeys[] = 'raw';
 
-    //parent::__construct($db, $id);
     $url = '';
 
     // URL or ID was not specificed, get the current URL
-    if (empty($id)) {
+    if (empty($val)) {
       $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
         ? "https"
         : "http";
@@ -153,8 +150,7 @@ class Url extends \Adept\Abstract\Data\Item
 
     //$this->raw = $this->url;
 
-    //parent::__construct($db, (empty($url)) ? $id : $url);
-    parent::__construct($db, (((is_numeric($id) && $id > 0) || !empty($id)) ? $id : $url));
+    parent::__construct((((is_numeric($val) && $val > 0) || !empty($val)) ? $val : $url));
 
     if ($this->id == 0) {
       // Set URL

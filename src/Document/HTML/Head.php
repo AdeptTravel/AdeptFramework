@@ -17,13 +17,6 @@ class Head
   /**
    * Undocumented variable
    *
-   * @var \Adept\Abstract\Configuration
-   */
-  protected Configuration $conf;
-
-  /**
-   * Undocumented variable
-   *
    * @var \Adept\Document\HTML\Head\CSS
    */
   public CSS $css;
@@ -33,7 +26,7 @@ class Head
    *
    * @var string
    */
-  public string $description;
+  public string $description = '';
 
   /**
    * Undocumented variable
@@ -61,17 +54,14 @@ class Head
    *
    * @var string
    */
-  public string $title;
+  public string $title = '';
 
-  public function __construct(&$conf, &$request)
+  public function __construct()
   {
-    $this->conf = $conf;
-    $this->title = '';
-    $this->description = '';
-    $this->meta = new Meta($conf, $request);
-    $this->link = new Link($conf, $request);
-    $this->css = new CSS($conf, $request);
-    $this->javascript = new JavaScript($conf, $request);
+    $this->meta = new Meta();
+    $this->link = new Link();
+    $this->css = new CSS();
+    $this->javascript = new JavaScript();
 
     // TODO: Add checks to see if files exist before adding
     $this->link->add('/favicon.ico', 'icon', ['size' => 'any']);
@@ -82,8 +72,11 @@ class Head
 
   public function getBuffer(): string
   {
-    $html = '<base href="https://' . $this->conf->site->url . '">';
-    $html .= '<title>' . $this->meta->title . ' - ' . $this->conf->site->name . '</title>';
+    $app = \Adept\Application::getInstance();
+    $conf = $app->conf->site;
+
+    $html = '<base href="https://' . $conf->url . '">';
+    $html .= '<title>' . $this->meta->title . ' - ' . $conf->name . '</title>';
 
     $html .= $this->meta->getBuffer();
     $html .= $this->link->getBuffer();

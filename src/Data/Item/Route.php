@@ -15,8 +15,6 @@ namespace Adept\Data\Item;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application\Database;
-
 /**
  * \Adept\Data\Item\Route
  *
@@ -29,9 +27,9 @@ use \Adept\Application\Database;
  */
 class Route extends \Adept\Abstract\Data\Item
 {
-
-  protected string $name = 'Route';
-  protected string $table = 'route';
+  protected array $uniqueKeys = [
+    'route'
+  ];
 
   /**
    * The route
@@ -46,9 +44,6 @@ class Route extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $redirect = '';
-
-  public string $category = '';
-
   /**
    * The component
    *
@@ -69,6 +64,48 @@ class Route extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $template = '';
+
+  /**
+   * Allow access to the HTML component
+   *
+   * @var bool
+   */
+  public bool $html = false;
+
+  /**
+   * Allow access to the JSON component
+   *
+   * @var bool
+   */
+  public bool $json = false;
+
+  /**
+   * Allow access to the XML component
+   *
+   * @var bool
+   */
+  public bool $xml = false;
+
+  /**
+   * Allow access to the CSV component
+   *
+   * @var bool
+   */
+  public bool $csv = false;
+
+  /**
+   * Allow access to the PDF component
+   *
+   * @var bool
+   */
+  public bool $pdf = false;
+
+  /**
+   * Allow access to the ZIP component
+   *
+   * @var bool
+   */
+  public bool $zip = false;
 
   /**
    * Is the route in the sitemap
@@ -103,14 +140,14 @@ class Route extends \Adept\Abstract\Data\Item
    *
    * @var bool
    */
-  public bool $public = false;
+  public bool $secure = false;
 
   /**
    * State of the route, ie. Published|Unpublished
    *
    * @param int
    */
-  public int $status = 0;
+  public int $status = 1;
 
   /**
    * The route is in the block list
@@ -119,12 +156,19 @@ class Route extends \Adept\Abstract\Data\Item
    */
   public bool $block = false;
 
-  protected function isDuplicate(string $table = ''): bool
+  /**
+   * Undocumented variable
+   *
+   * @var string
+   */
+  public string $created;
+
+  public function save(string $table = ''): bool
   {
-    return ($this->db->getInt(
-      'SELECT `id` FROM `route` WHERE `route` = ?',
-      [$this->route]
-    ) > 0);
+    // Remove the / from the begining and end of a string
+    $this->route = trim($this->route, '/');
+
+    return parent::save($table);
   }
 
   public function formatSegment(string $segment): string

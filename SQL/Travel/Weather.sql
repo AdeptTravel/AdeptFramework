@@ -1,0 +1,26 @@
+DROP TABLE IF EXISTS `WeatherGrid`;
+CREATE TABLE `WeatherGrid` (
+  `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `o` CHAR(3) NOT NULL,
+  `x` TINYINT UNSIGNED NOT NULL,
+  `y` TINYINT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `WeatherGrid` (`o`, `x`, `y`) VALUES
+('LOT', 66, 77);
+
+DROP TABLE IF EXISTS `Weather`;
+CREATE TABLE `Weather` (
+  `grid` SMALLINT UNSIGNED NOT NULL,
+  `start` DATETIME,
+  `end` DATETIME,
+  `gap` TINYINT UNSIGNED NOT NULL,
+  `temperature` TINYINT UNSIGNED NOT NULL,
+  `precipitation` TINYINT UNSIGNED,
+  `humiditity` TINYINT UNSIGNED,
+  `wind_speed` VARCHAR(16),
+  `wind_direction` CHAR(3),
+  `description` VARCHAR(1024),
+  PRIMARY KEY (`grid`, `start`, `gap`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

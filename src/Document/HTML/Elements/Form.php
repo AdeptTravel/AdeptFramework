@@ -11,8 +11,6 @@ class Form extends \Adept\Abstract\Document\HTML\Element
 	protected string $tag = 'form';
 	protected bool $edit = false;
 
-
-
 	// Element Specific Attributes
 	public string $acceptcharset;
 	public string $action;
@@ -29,19 +27,17 @@ class Form extends \Adept\Abstract\Document\HTML\Element
 		parent::__construct($attr, $children);
 
 		$_SESSION['form_token'] = md5('adept_' . microtime());
-
-		$this->children[] = new Hidden(
-			[
-				'name' => 'form_token',
-				'value' => $_SESSION['form_token']
-			]
-		);
 	}
 
 	public function getBuffer(): string
 	{
-
-		for ($i = 0; $i < count($this->tabs); $i++) {
+		if (!empty($this->method) && strtolower($this->method) != 'get') {
+			$this->children[] = new Hidden(
+				[
+					'name' => 'form_token',
+					'value' => $_SESSION['form_token']
+				]
+			);
 		}
 
 		return parent::getBuffer();

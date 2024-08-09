@@ -17,7 +17,7 @@ class Tab extends \Adept\Abstract\Document\HTML\Element
 
   public function getBuffer(): string
   {
-    array_unshift($this->children, new H3(['text' => $this->title]));
+    //array_unshift($this->children, new H3(['text' => $this->title]));
 
     $this->title = '';
 

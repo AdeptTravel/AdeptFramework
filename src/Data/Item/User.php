@@ -8,15 +8,36 @@ defined('_ADEPT_INIT') or die('No Access');
 
 use \Adept\Application\Session\Authentication;
 use \Adept\Application\Session\Request\Data\Post;
-use \Adept\Application\Database;
-use \Adept\Data\Item\Location;
-use \Adept\Data\Item\Phone;
+//use \Adept\Data\Item\Location;
+//use \Adept\Data\Item\Phone;
 
 class User extends \Adept\Abstract\Data\Item
 {
+  protected bool $cache = false;
 
-  protected string $name = 'User';
-  protected string $table = 'user';
+  protected array $connections = [
+    'address',
+    'phone'
+  ];
+
+  protected array $uniqueKeys = [
+    'username'
+  ];
+
+  protected array $excludeKeys = [
+    'success'
+  ];
+
+  protected array $excludeKeysOnNew = [
+    'created',
+    'verified',
+    'validated',
+    'success'
+  ];
+
+  protected array $postFilters = [
+    'username' => 'email',
+  ];
 
   /**
    * Undocumented variable
@@ -38,6 +59,13 @@ class User extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $password = '';
+
+  /**
+   * Undocumented variable
+   *
+   * @var string
+   */
+  public string $token = '';
 
   //public string $prefix = '';
 
@@ -65,72 +93,37 @@ class User extends \Adept\Abstract\Data\Item
   /**
    * Undocumented variable
    *
+   * @var string
+   */
+  public string $dob;
+
+  /**
+   * The status of the data object: published, unpublished, trashed, lost, archived, etc.
+   *
+   * @var int
+   */
+  public int $status = 1;
+
+  /**
+   * public string $dob;
+   *
    * @var DateTime
    */
-  public DateTime $dob;
+  public string $created;
 
   /**
    * public DateTime $dob;
    *
-   * @var DateTime
+   * @var string
    */
-  public DateTime $created;
+  public string $verified;
 
   /**
    * public DateTime $dob;
    *
-   * @var DateTime
+   * @var string
    */
-  public DateTime $verified;
-
-  /**
-   * public DateTime $dob;
-   *
-   * @var DateTime
-   */
-  public DateTime $validated;
-
-  /**
-   * Undocumented variable
-   *
-   * @var bool
-   */
-  public bool $status = false;
-
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\Database $db
-   * @param  int                         $id
-   */
-  public function __construct(Database $db, int $id = 0)
-  {
-    parent::__construct($db, $id);
-
-    $this->connections = [
-      'address',
-      'phone'
-    ];
-
-    $this->duplicateKeys = [
-      'username'
-    ];
-
-    $this->excludeKeys = [
-      'success'
-    ];
-
-    $this->excludeKeysOnNew = [
-      'created',
-      'verified',
-      'validated',
-      'success'
-    ];
-
-    $this->postFilters = [
-      'username' => 'email',
-    ];
-  }
+  public string $validated;
 
   /**
    * Undocumented function
@@ -150,8 +143,8 @@ class User extends \Adept\Abstract\Data\Item
 
     $this->username = $post->getEmail($prefix . 'email');
     $this->password = $this->setPassword(
-      $post->getRaw($prefix . 'password0', ''),
-      $post->getRaw($prefix . 'password1', '')
+      $post->get($prefix . 'password0', ''),
+      $post->get($prefix . 'password1', '')
     );
 
     $this->firstname = $post->getName($prefix . 'firstname');
@@ -169,13 +162,14 @@ class User extends \Adept\Abstract\Data\Item
 
   public function loadFromEmail(string $username, \DateTime $dob): bool
   {
+    $app = \Adept\Application::getInstance();
     //$status = $this->loadCache();
     $status = false;
 
     $query  = 'SELECT * FROM `' . $this->table . '` AS a';
     $query .= ' WHERE `username` = ? AND `dob` = ?';
 
-    if (($obj = $this->db->getObject(
+    if (($obj = $app->db->getObject(
       $query,
       [$username, $dob->format('Y-m-d 00:00:00')]
     )) !== false) {
@@ -231,11 +225,13 @@ class User extends \Adept\Abstract\Data\Item
 
   public function addToken(string $type): string
   {
+    $app = \Adept\Application::getInstance();
+
     $this->delToken($type);
 
     $token = Authentication::newToken(32,);
 
-    $this->db->insert(
+    $app->db->insert(
       'INSERT INTO `user_token` (`user`, `type`, `token`) VALUES (?, ?, ?)',
       [$this->id, $type, $token]
     );
@@ -245,7 +241,9 @@ class User extends \Adept\Abstract\Data\Item
 
   public function delToken(string $type)
   {
-    $this->db->update(
+    $app = \Adept\Application::getInstance();
+
+    $app->db->update(
       'DELETE FROM user_token WHERE user = ? AND type = ?',
       [$this->id, $type]
     );
@@ -253,7 +251,9 @@ class User extends \Adept\Abstract\Data\Item
 
   protected function isDuplicate(string $table = ''): bool
   {
-    $count = $this->db->getInt(
+    $app = \Adept\Application::getInstance();
+
+    $count = $app->db->getInt(
       'SELECT COUNT(*) FROM `user` WHERE `username` = ?',
       [$this->username]
     );

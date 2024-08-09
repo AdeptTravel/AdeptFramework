@@ -6,7 +6,6 @@ defined('_ADEPT_INIT') or die();
 
 class Input extends \Adept\Abstract\Document\HTML\Element
 {
-
 	protected string $tag = 'input';
 	protected bool $close = false;
 
@@ -43,15 +42,4 @@ class Input extends \Adept\Abstract\Document\HTML\Element
 	public string $usemap;
 	public string $value;
 	public int    $width;
-
-	function getBuffer(): string
-	{
-		$html = parent::getBuffer();
-
-		if (!empty($this->list)) {
-			$html .= '<datalist id="' . $this->list . '"></datalist>';
-		}
-
-		return $html;
-	}
 }

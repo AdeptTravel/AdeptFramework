@@ -5,11 +5,11 @@ $this->head->link->add('https://fonts.googleapis.com', 'preconnect');
 $this->head->link->add('https://fonts.gstatic.com', 'preconnect', ['crossorigin' => '']);
 $this->head->css->addFile('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;500&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap');
 
-$this->head->css->addFile('/css/fa.min.css');
-//$this->head->css->addFile('/css/global.css');
-//$this->head->css->addFile('/css/template.minimal.css');
-//$this->head->css->addFile('/css/form.css');
-//$this->head->css->addFile('/css/type.css');
+$this->head->css->addFile('fa.min.css');
+//$this->head->css->addFile('global.css');
+//$this->head->css->addFile('template.minimal.css');
+//$this->head->css->addFile('form.css');
+//$this->head->css->addFile('type.css');
 
 echo '<!DOCTYPE html>';
 echo '<html lang="en-us" dir="ltr">';

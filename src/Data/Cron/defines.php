@@ -11,11 +11,11 @@ ini_set('display_errors', 1);
 define('DEBUG',                    true);
 
 // Get's the current working directory for defines.php.  This is the root dir
-define('FS_PATH',                   getcwd() . '/');
-define('FS_CSS',                    FS_PATH . 'css/');
-define('FS_JS',                     FS_PATH . 'js/');
-define('FS_IMG',                    FS_PATH . 'img/');
-define('FS_SRC',                    FS_PATH . 'src/');
+define('FS_SITE',                   getcwd() . '/');
+define('FS_CSS',                    FS_SITE . 'css/');
+define('FS_JS',                     FS_SITE . 'js/');
+define('FS_IMG',                    FS_SITE . 'img/');
+define('FS_SRC',                    FS_SITE . 'src/');
 
 define('FS_SITE_CACHE',                  FS_SRC . 'Cache/');
 define('FS_COMPONENT',              FS_SRC . 'Component/');
@@ -29,9 +29,9 @@ define('STATUS_SUCCESS',            0);
 define('STATUS_WARN',               0);
 
 // Frequently used SQL 
-define('SQL_PUBLISHED',             " AND publish = 1 AND publish_start < NOW() AND (publish_end > NOW() OR publish_end = '0000-00-00 00:00:00')");
-define('SQL_PUBLISHED_A',           " AND a.publish = 1 AND a.publish_start < NOW() AND (a.publish_end > NOW() OR a.publish_end = '0000-00-00 00:00:00')");
-define('SQL_PUBLISHED_B',           " AND b.publish = 1 AND b.publish_start < NOW() AND (b.publish_end > NOW() OR b.publish_end = '0000-00-00 00:00:00')");
+define('SQL_PUBLISHED',             " AND publish = 1 AND publish < NOW() AND (archive > NOW() OR archive = '0000-00-00 00:00:00')");
+define('SQL_PUBLISHED_A',           " AND a.publish = 1 AND a.publish < NOW() AND (a.archive > NOW() OR a.archive = '0000-00-00 00:00:00')");
+define('SQL_PUBLISHED_B',           " AND b.publish = 1 AND b.publish < NOW() AND (b.archive > NOW() OR b.archive = '0000-00-00 00:00:00')");
 // Defaults
 define('YCOMPONENT_SITE_DEFAULT',   'Default');
 

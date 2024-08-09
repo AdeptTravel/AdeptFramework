@@ -4,13 +4,13 @@ namespace Adept\Abstract\Data\Items;
 
 defined('_ADEPT_INIT') or die();
 
-require_once(FS_PATH . '/vendor/james-heinrich/getid3/getid3/getid3.php');
+require_once(FS_SITE . '/vendor/james-heinrich/getid3/getid3/getid3.php');
 
 use \Adept\Application\Database;
 
 class Media extends \Adept\Abstract\Data\Items
 {
-  protected string $name = 'Media';
+  protected string $errorName = 'Media';
   protected string $table = 'media';
 
   /**
@@ -35,20 +35,6 @@ class Media extends \Adept\Abstract\Data\Items
   public string $file;
 
   /**
-   * The formatted filename
-   *
-   * @var string
-   */
-  public string $alias;
-
-  /**
-   * Undocumented variable
-   *
-   * @var string
-   */
-  public string $extension;
-
-  /**
    * Undocumented variable
    *
    * @var int
@@ -67,10 +53,10 @@ class Media extends \Adept\Abstract\Data\Items
    *
    * @var int
    */
-  public int $duraction;
+  public int $duration;
 
   /**
-   * Undocumented variable
+   * Filesize of the object
    *
    * @var int
    */
@@ -100,13 +86,6 @@ class Media extends \Adept\Abstract\Data\Items
   /**
    * Undocumented variable
    *
-   * @var string
-   */
-  public string $description;
-
-  /**
-   * Undocumented variable
-   *
    * @var \DateTime
    */
   public \DateTime $created;
@@ -118,24 +97,18 @@ class Media extends \Adept\Abstract\Data\Items
    */
   public \DateTime $modified;
 
-  /**
-   * Undocumented variable
-   *
-   * @var bool
-   */
-  public bool $status = true;
 
   public function load(): bool
   {
 
-    if (empty($this->path)) {
-      $this->path = $this->type;
-    }
+    //if (empty($this->path)) {
+    //  $this->path = $this->type;
+    //}
 
     // Get files from the database
     $status = parent::load();
     $reload = false;
-    //die('<pre>' . print_r($this->items, true));
+
     // Get new files uploaded to the users media collection
 
     $files = new \DirectoryIterator(FS_SITE_MEDIA . $this->path);
@@ -151,7 +124,7 @@ class Media extends \Adept\Abstract\Data\Items
         && !$this->inItems('file', $filename)
       ) {
 
-        $namespace = "\\Adept\\Data\\Item\\" . $mime;
+        $namespace = "\\Adept\\Data\\Item\\Media\\" . $mime;
         $media = new $namespace($this->db);
         $media->load($filename, 'file');
 

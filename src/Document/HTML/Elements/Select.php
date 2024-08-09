@@ -19,18 +19,24 @@ class Select extends \Adept\Abstract\Document\HTML\Element
 	public bool   $required;
 	public int    $size;
 
-
 	public string $label = '';
 	public string $value = '';
-	public array $values = [];
+	public array  $values = [];
+
+	// Custom param
+	public bool   $allowEmpty = true;
+
 
 	public function getBuffer(): string
 	{
-		$this->children[] = new Option([
-			'value' => '',
-			'text' => $this->label,
-			'selected' => (empty($this->value))
-		]);
+
+		if (!empty($this->label) && $this->allowEmpty == true) {
+			$this->children[] = new Option([
+				'value' => '',
+				'text' => $this->label,
+				'selected' => (empty($this->value))
+			]);
+		}
 
 		foreach ($this->values as $k => $v) {
 

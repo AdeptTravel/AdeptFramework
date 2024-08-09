@@ -15,8 +15,6 @@ namespace Adept\Application\Session\Request\Data;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application\Session\Request\Route;
-
 /**
  * \Adept\Application\Session\Request\Data\Post
  *

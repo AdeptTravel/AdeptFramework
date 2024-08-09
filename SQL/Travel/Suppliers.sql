@@ -1,0 +1,63 @@
+DROP TABLE IF EXISTS `App`;
+CREATE TABLE IF NOT EXISTS `AppStore` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `title`       INT UNSIGNED DEFAULT 0,
+  `description` TEXT DEFAULT '',
+  `created`     DATETIME NOT NULL DEFAULT NOW(),
+  `status`      TINYINT DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `AppStore`;
+CREATE TABLE IF NOT EXISTS `AppStore` (
+  `app`     INT UNSIGNED NOT NULL,
+  `name`    VARCHAR(32) NOT NULL,
+  `url`     VARCHAR(128) NOT NULL,
+  `created` DATETIME NOT NULL DEFAULT NOW(),
+  `status`  TINYINT DEFAULT 1,
+  PRIMARY KEY (`id`. `name`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TravelSupplier`;
+CREATE TABLE IF NOT EXISTS `TravelSupplier` (
+  `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `owner`    INT UNSIGNED DEFAULT 0,
+  `app`      INT UNSIGNED DEFAULT 0,
+  `type`     ENUM('Airline', 'Hotel', 'Resort', 'Cruise', 'Tour', 'Transfer', 'Car Rental', 'Insurance'),
+  `title`    VARCHAR(64) NOT NULL,
+  `details`  INT UNSIGNED DEFAULT 0,  
+  `created`  DATETIME NOT NULL DEFAULT NOW(),
+  `status`   TINYINT DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TravelSupplierLocation`;
+CREATE TABLE IF NOT EXISTS `TravelSupplierLocation` (
+  `supplier` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `location` INT UNSIGNED DEFAULT 0,
+  `phone`    INT UNSIGNED DEFAULT 0,
+  `created`  DATETIME NOT NULL DEFAULT NOW(),
+  `status`   TINYINT DEFAULT 1,
+  PRIMARY KEY (`supplier`, `location`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TravelSupplierPhone`;
+CREATE TABLE IF NOT EXISTS `TravelSupplierPhone` (
+  `supplier` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type`     VARCHAR(16) NOT NULL,
+  `name`     VARCHAR(16) DEFAULT '',
+  `phone`    INT UNSIGNED DEFAULT 0,
+  `created`  DATETIME NOT NULL DEFAULT NOW(),
+  `status`   TINYINT DEFAULT 1,
+  PRIMARY KEY (`supplier`, `phone`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TravelSupplierUrl`;
+CREATE TABLE IF NOT EXISTS `TravelSupplierUrl` (
+  `supplier` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type`     VARCHAR(16) NOT NULL,
+  `url`      INT UNSIGNED DEFAULT 0,
+  `created`  DATETIME NOT NULL DEFAULT NOW(),
+  `status`   TINYINT DEFAULT 1,
+  PRIMARY KEY (`supplier`, `url`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

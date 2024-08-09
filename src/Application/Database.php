@@ -11,7 +11,7 @@ class Database
   /**
    * The database connection object
    *
-   * @var  \PDO $db
+   * @var  \PDO $connection
    */
   protected \PDO $connection;
 
@@ -65,7 +65,7 @@ class Database
    * 
    * @return bool
    **/
-  public function insert(string $query, array $params): bool
+  public function insert(string $query, array $params = []): bool
   {
     $result = false;
 
@@ -74,9 +74,7 @@ class Database
     }
 
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $result = $stmt->execute($params);
     } catch (\PDOException $e) {
       throw new \Adept\Exceptions\Database\PDOException(
@@ -99,14 +97,12 @@ class Database
    * 
    * @return bool
    **/
-  public function insertGetId(string $query, array $params): int
+  public function insertGetId(string $query, array $params = []): int
   {
     $result = 0;
 
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
 
       for ($i = 0; $i < count($params); $i++) {
 
@@ -193,9 +189,7 @@ class Database
     $result = false;
 
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $result = $stmt->execute($params);
     } catch (\PDOException $e) {
       throw new \Adept\Exceptions\Database\PDOException(
@@ -257,8 +251,7 @@ class Database
       $query .= " SET $set";
       $query .= " WHERE `id` = ?";
 
-      //$dump = "UPDATE `$table` SET $dump WHERE `id` = " . $data['id'];
-      //die($dump);
+      //die($this->getQueryDebug($query, $params));
 
       $status = $this->update($query, $params);
     } catch (\PDOException $e) {
@@ -274,7 +267,7 @@ class Database
     return $status;
   }
 
-  public function getString(string $query, array $params): string|bool
+  public function getString(string $query, array $params = []): string|bool
   {
     $result = $this->getValue($query, $params);
 
@@ -285,7 +278,7 @@ class Database
     return ($result === false) ? false : (string)$result;
   }
 
-  public function getInt(string $query, array $params): int
+  public function getInt(string $query, array $params = []): int
   {
     $result = $this->getValue($query, $params);
 
@@ -300,12 +293,10 @@ class Database
     return (int)$result;
   }
 
-  public function getValue(string $query, array $params): string|int|bool|null
+  public function getValue(string $query, array $params = []): string|int|bool|null
   {
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $stmt->execute($params);
       $result = $stmt->fetchColumn();
     } catch (\PDOException $e) {
@@ -331,9 +322,7 @@ class Database
   public function getValues(string $query, array $params = []): array|bool
   {
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $stmt->execute($params);
       $result = $stmt->fetchAll();
     } catch (\PDOException $e) {
@@ -353,9 +342,7 @@ class Database
   public function getObject(string $query, array $params = []): object|bool
   {
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $stmt->execute($params);
       $result = $stmt->fetchObject();
     } catch (\PDOException $e) {
@@ -381,9 +368,7 @@ class Database
   public function getObjects(string $query, array $params = []): array|bool
   {
     try {
-      $db = $this->connection;
-
-      $stmt = $db->prepare($query);
+      $stmt = $this->connection->prepare($query);
       $stmt->execute($params);
       $result = $stmt->fetchAll(PDO::FETCH_OBJ);
     } catch (\PDOException $e) {
@@ -400,6 +385,23 @@ class Database
     return $result;
   }
 
+  /**
+   * Delete a record
+   *
+   * @param  string     $table
+   * @param  int|string $id
+   * @param  string     $col
+   *
+   * @return void
+   */
+  public function delete(string $table, int|string $id, string $col = 'id')
+  {
+    return $this->update(
+      "DELETE FROM `$table` WHERE `$col` = ?",
+      [$id]
+    );
+  }
+
   public function getLastId(): int
   {
     return $this->connection->lastInsertId();
@@ -410,12 +412,15 @@ class Database
     $query = "SELECT count(*) FROM `$table` WHERE ";
     $params = [];
 
-    foreach ($data as $k => $v) {
-      $query .= "$k = ? AND ";
-      $params[] = $v;
-    }
+    if (count($data) > 0) {
+      foreach ($data as $k => $v) {
+        $query .= "`$k` = ? AND ";
+        $params[] = $v;
+      }
 
-    $query = substr($query, 0, strlen($query) - 4);
+      // Remove AND form end of Query after the foreach function
+      $query = substr($query, 0, strlen($query) - 4);
+    }
 
     return ($this->getInt($query, $params) > 0);
   }
@@ -430,6 +435,7 @@ class Database
 
     $out .= '<h3>Query</h3><p>' . $query . '</p>';
     $out .= '<h3>Params</h3><pre>' . print_r($params, true) . '</pre>';
+    $out .= '<h3>Debug Query</h3><p>' . $this->getQueryDebug($query, $params) . '</p>';
 
     return $out;
   }

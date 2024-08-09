@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS `Airline`;
+CREATE TABLE `Airline` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `iata` CHAR(2) NOT NULL UNIQUE,
+  `icao` CHAR(3) NOT NULL UNIQUE,
+  `title` VARCHAR(32) NOT NULL,
+  `loyalty` INT UNSIGNED,
+  `country` CHAR(2),
+  `summary` TEXT DEFAULT '',
+  `content` TEXT DEFAULT '',
+  `staralliance` TINYINT(1) DEFAULT 0,
+  `oneworld` TINYINT(1) DEFAULT 0,
+  `skyteam` TINYINT(1) DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

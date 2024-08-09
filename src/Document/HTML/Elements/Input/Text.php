@@ -53,7 +53,7 @@ class Text extends \Adept\Document\HTML\Body\Element\Input
         $html .= ' value = "' . $this->value . '"';
       }
 
-      $html .= $this->getAttributes($this->params);
+      $html .= $this->renderAttributes($this->params);
 
       if (isset($this->conditions)) {
         $html .= $this->getHTMLConditions($this->conditions);

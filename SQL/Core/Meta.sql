@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS `Meta`;
+CREATE TABLE `Meta` (
+  `route` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(256) NOT NULL,
+  `description` VARCHAR(256),
+  `robots` VARCHAR(64),
+  PRIMARY KEY (`route`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

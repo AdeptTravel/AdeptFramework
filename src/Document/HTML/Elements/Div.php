@@ -10,5 +10,4 @@ class Div extends \Adept\Abstract\Document\HTML\Element
 	protected string $tag = 'div';
 
 	// Element Specific Attributes
-
 }

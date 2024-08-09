@@ -26,11 +26,15 @@ class Row extends \Adept\Document\HTML\Elements\Div
 
   function getBuffer(): string
   {
-    $html  = "<div" . $this->getAttr() . '>';
+
+    $html = '';
 
     if (isset($this->label)) {
-      $html .= '<label>' . $this->label . '</label>';
+      $html = '<label>' . $this->label . '</label>';
+      unset($this->label);
     }
+
+    $html  = "<div" . $this->renderAttr() . '>' . $html;
 
     if (!empty($this->html)) {
       $html .= $this->html;
@@ -43,20 +47,7 @@ class Row extends \Adept\Document\HTML\Elements\Div
         $html .= $this->children[$i]->getBuffer();
       }
     }
-    /*
-    if (in_array('edit', $this->css)) {
-      $html .= '<div class="controls">';
-      $html .= '<i class="fa-solid fa-pen-to-square edit"></i>';
-      $html .= '<i class="fa-solid fa-circle-check save"></i>';
-      $html .= '<i class="fa-solid fa-circle-xmark cancel"></i>';
-      $html .= '</div>';
-    } else if (in_array('repeat', $this->css)) {
-      $html .= '<div class="controls">';
-      $html .= '<i class="fa-solid fa-circle-plus new"></i>';
-      $html .= '<i class="fa-solid fa-circle-minus del"></i>';
-      $html .= '</div>';
-    }
-    */
+
     $html .= "</div>";
 
     return $html;

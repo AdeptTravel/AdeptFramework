@@ -7,7 +7,7 @@
  *
  * @package    AdeptFramework.Application
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 
@@ -26,7 +26,7 @@ use \Adept\Data\Item\Url;
  *
  * @package    AdeptFramework.Application
  * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2022 The Adept Traveler, Inc., All Rights Reserved.
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
 class Client

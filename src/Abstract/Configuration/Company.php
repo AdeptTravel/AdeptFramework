@@ -28,6 +28,6 @@ class Company
   public function __construct()
   {
     $this->address = new Address();
-    $this->phone = new Phone();
+    $this->phone   = new Phone();
   }
 }

@@ -6,7 +6,7 @@ defined('_ADEPT_INIT') or die();
 
 use \Adept\Document\HTML\Elements\Input;
 
-class Name extends \Adept\Abstract\Document\HTML\Elements
+class Name extends \Adept\Abstract\Document\HTML\Element
 {
   public string $name = '';
   public bool $required = false;

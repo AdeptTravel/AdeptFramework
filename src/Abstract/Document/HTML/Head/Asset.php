@@ -4,12 +4,8 @@ namespace Adept\Abstract\Document\HTML\Head;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Abstract\Configuration;
-use \Adept\Application\Session\Request;
-
 class Asset
 {
-
   /**
    * Undocumented variable
    *
@@ -20,9 +16,9 @@ class Asset
   /**
    * Reference to the global configuration object
    *
-   * @var \Adept\Abstract\Configuration
+   * @var \Adept\Abstract\Configuration\Assets\Asset
    */
-  protected Configuration $conf;
+  protected \Adept\Abstract\Configuration\Assets\Asset $conf;
 
   /**
    * Extension (ie css, js, etc.)
@@ -46,11 +42,11 @@ class Asset
   protected array $inline;
 
   /**
-   * Reference to the Request object
+   * Absolute ath to the asset directory
    *
-   * @var \Adept\Application\Session\Request
+   * @var string
    */
-  protected Request $request;
+  protected string $path;
 
   /**
    * Asset type ie. CSS, JavaScript, etc.
@@ -72,61 +68,44 @@ class Asset
    * @param \Adept\Abstract\Configuration $conf
    * @param \Adept\Application\Session\Request $request
    */
-  public function __construct(Configuration &$conf, Request &$request)
+  public function __construct()
   {
+    $app       = \Adept\Application::getInstance();
     $classname = get_class($this);
+    $type      = substr($classname, strrpos($classname, '\\') + 1);
+    $ext       = $this->extension;
 
-    $this->request        = $request;
-    $this->conf           = $conf;
     $this->files          = new \stdClass();
     $this->files->foreign = [];
     $this->files->local   = [];
     $this->inline         = [];
-    $this->type           = substr($classname, strrpos($classname, '\\') + 1);
-    $this->template       = $request->route->template;
-
-    $dir        = '';
-
-    switch ($this->type) {
-      case 'CSS':
-        $this->extension = 'css';
-        $dir = FS_CSS;
-        break;
-
-      case 'JavaScript':
-        $this->extension = 'js';
-        $dir = FS_JS;
-        break;
-
-      default:
-        break;
-    }
-    //$this->conf = $conf->optimize->$extension;
+    $this->type           = $type;
+    $this->template       = $app->session->request->route->template;
+    $this->conf           = $app->conf->assets->$ext;
 
     // Autoload base asset files files
-    if ($this->conf->assets->autoload) {
+    if ($this->conf->autoload) {
 
-      if (file_exists($file = $dir . 'template.' . strtolower($this->template) . '.' . $this->extension)) {
+      if (file_exists($file = $this->path . 'template.' . strtolower($this->template) . '.' . $this->extension)) {
         $this->addFile($file);
       }
 
-      foreach (scandir($dir) as $file) {
-        if ($file == '.' || $file == '..' || is_dir($dir . $file)) {
+      foreach (scandir($this->path) as $file) {
+        if ($file == '.' || $file == '..' || is_dir($this->path . $file)) {
           continue;
         }
 
-        //if (preg_match('/^\d{2}-/', $file) && substr($file, - (strlen($this->extension)))) {
         if (preg_match('/^\d{2}-/', $file)) {
-          $this->addFile($dir . $file);
+          $this->addFile($this->path . $file);
         }
       }
 
-      $fileComponent = strtolower($dir . 'component/' .
-        $this->request->route->component . '/' .
-        $this->request->route->option . '.' . $this->extension);
+      $fileComponent = strtolower($this->path . 'component/' .
+        $app->session->request->route->component . '/' .
+        $app->session->request->route->option . '.' . $this->extension);
 
       if (file_exists($fileComponent)) {
-        $this->addFile(str_replace(FS_PATH, '', $fileComponent));
+        $this->addFile(str_replace(FS_SITE, '', $fileComponent));
       }
     }
   }
@@ -138,37 +117,40 @@ class Asset
 
   public function addFile(string $file, array $args = [])
   {
-    $absolute = (strpos($file, FS_PATH) !== false);
-    $local = (substr($file, 0, 4) != 'http' && substr($file, 0, 2) != '//');
+
+
+
+    $absolute = (strpos($file, FS_SITE) !== false);
+    $local    = (substr($file, 0, 4) != 'http' && substr($file, 0, 2) != '//');
 
     if (!$absolute && $local) {
-      if (substr($file, 0, 1) == '/') $file = substr($file, 1);
 
-      if (file_exists(FS_PATH . $file)) {
-        $file = FS_PATH . $file;
+      // Remove the first / if present
+      if (substr($file, 0, 1) == '/') {
+        $file = substr($file, 1);
+      }
+
+      if (file_exists($this->path . $file)) {
+        $file = $this->path . $file;
+      } else {
+        $file = '';
       }
     }
 
     if (!empty($file)) {
-      if (
-        ($local && !array_key_exists($file, $this->files->local))
-        || (!$local && !array_key_exists($file, $this->files->foreign))
-      ) {
+      $asset = new \stdClass();
+      $asset->file = $file;
 
-        $asset = new \stdClass();
-        $asset->file = $file;
+      $asset->args = new \stdClass();
 
-        $asset->args = new \stdClass();
+      foreach ($args as $key => $value) {
+        $asset->args->$key = $value;
+      }
 
-        foreach ($args as $key => $value) {
-          $asset->args->$key = $value;
-        }
-
-        if ($local) {
-          $this->files->local[$file] = $asset;
-        } else {
-          $this->files->foreign[$file] = $asset;
-        }
+      if ($local && !array_key_exists($file, $this->files->local)) {
+        $this->files->local[$file] = $asset;
+      } else if (!$local && !array_key_exists($file, $this->files->foreign)) {
+        $this->files->foreign[$file] = $asset;
       }
     }
   }
@@ -240,6 +222,7 @@ class Asset
 
   public function getBuffer(): string
   {
+
     $html = '';
 
     // Add foreign assets
@@ -255,12 +238,12 @@ class Asset
       $html .= $this->getFileTag($file);
     } else {
     */
+
     foreach ($this->files->local as $asset) {
-      $file = $asset->file;
-      $file = $this->absToRel($file);
+      $file = '/' . $this->absToRel($asset->file);
 
       // The the position of the last occurance of a slash
-      $pos = strrpos($file, '/') + 1;
+      //$pos = strrpos($file, '/') + 1;
 
       // Remove load order 
       //if (substr($file, $pos + 2, 1) == '-') {
@@ -292,6 +275,6 @@ class Asset
 
   public function absToRel(string $file): string
   {
-    return str_replace(FS_PATH, '', $file);
+    return str_replace(FS_SITE, '', $file);
   }
 }

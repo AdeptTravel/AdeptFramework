@@ -8,7 +8,7 @@ use \Adept\Document\HTML\Elements\Input;
 use \Adept\Document\HTML\Elements\Input\Hidden;
 use \Adept\Document\HTML\Elements\Select\Country;
 
-class Phone extends \Adept\Abstract\Document\HTML\Elements
+class Phone extends \Adept\Abstract\Document\HTML\Element
 {
   /**
    * Undocumented variable

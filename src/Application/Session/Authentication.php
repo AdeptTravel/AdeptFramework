@@ -6,16 +6,11 @@ defined('_ADEPT_INIT') or die('No Access');
 
 use \Adept\Application\Database;
 use \Adept\Application\Session\Data;
+use \Adept\Application\Session\Request;
 use \Adept\Data\Item\User;
 
 class Authentication
 {
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Application\Database
-   */
-  protected Database $db;
 
   /**
    * Undocumented variable
@@ -23,6 +18,13 @@ class Authentication
    * @var \Adept\Application\Session\Data
    */
   protected Data $data;
+
+  /**
+   * Failed login delay in seconds
+   *
+   * @var int
+   */
+  public int $delay = 0;
 
   /**
    * Undocumented variable
@@ -44,38 +46,109 @@ class Authentication
    * @param  \Adept\Application\Database      $db
    * @param  \Adept\Application\Session\Data  $data
    */
-  public function __construct(Database &$db, Data &$data)
+  public function __construct(Data &$data)
   {
-    $this->db = $db;
     $this->data = $data;
-    $this->user = new User($db, (($id = $data->server->getInt('auth.userid', 0)) > 0) ? $id : 0);
-    $this->status = ($this->user->id > 0 && $this->user->verified->format('Y') != '-0001');
+    $this->user = new User(
+      (($id = $data->server->getInt('auth.userid', 0)) > 0) ? $id : 0
+    );
+
+    $this->status = ($this->user->id > 0 && $this->user->verified != '0000-00-00 00:00:00');
   }
 
-  public function login(string $username, string $password): bool
+  /**
+   * Undocumented function
+   *
+   * @param  string                             $username
+   * @param  string                             $password
+   * @param  \Adept\Application\Session\Request $request
+   *
+   * @return bool
+   */
+  public function login(string $username, string $password, \Adept\Application\Session\Request &$request): bool
   {
-    $status = $this->status;
+    $result = 'Fail';
+    $failed = '';
 
     if (!$this->status) {
-      $db = $this->db;
 
+      $db = \Adept\Application::getInstance()->db;
       $params = [$username];
 
-      $query  = "SELECT `id`, `password` FROM `user`";
+      // Username isn't in a security hold (timeout)
+
+      // TODO: Move to \Adept\Data\Item\User
+      $query  = "SELECT * FROM `User`";
       $query .= " WHERE `username` = ?";
       $query .= " AND `password` <> ''";
-      $query .= " AND `verified` <> '0000-00-00 00:00:00'";
-      $query .= " AND `status` = 1";
 
       $user = $db->getObject($query, $params);
 
-      if (isset($user->password) && password_verify($password, $user->password)) {
-        $status = true;
-        $this->data->server->set('auth.userid', $user->id);
+      if (isset($user->id)) {
+        // Username exists
+
+        if ($user->status) {
+          // User status is active
+
+          if ($user->verified != '0000-00-00 00:00:00') {
+            // User has been verified
+
+            if (password_verify($password, $user->password)) {
+              // Password matches
+
+              $result = 'Success';
+              $session = $this->data->server->getInt('session.id', 0);
+
+              $this->data->server->set('auth.userid', $user->id);
+              $this->data->server->set('auth.token', '');
+
+              $db->update(
+                "UPDATE `Session` SET `token` = ? WHERE `id` = ?",
+                [$session, $this->newToken()]
+              );
+            } else {
+              // Password is incorrect
+
+              $result = 'Fail';
+              $failed = 'Password';
+            }
+          } else {
+            // User hasn't verified their email address
+
+            $result = 'Fail';
+            $failed = 'Verified';
+          }
+        } else {
+          // User is deactivated via the status value
+          $result = 'Fail';
+          $failed = 'Deactivated';
+        }
+      } else {
+        // No username exists
+        $result = 'Fail';
+        $failed = 'Nonexistent';
       }
+    } else {
+      // Username is in a timeout for being bad
+      $result = 'Delay';
     }
 
-    return $status;
+    $query = "INSERT INTO `LogAuth`";
+    $query .= " (`username`, `useragent`, `ipaddress`, `result`, `failed`)";
+    $query .= " VALUES";
+    $query .= " (?,?,?,?,?)";
+
+    $params = [
+      $username,
+      $request->useragent->id,
+      $request->ip->id,
+      $result,
+      $failed
+    ];
+
+    $db->insert($query, $params);
+
+    return ($result == 'Success');
   }
 
   public function logout()
@@ -84,7 +157,7 @@ class Authentication
   }
 
   public static function newToken(
-    $length = 32,
+    int $length = 32,
     bool $lower = true,
     bool $upper = true,
     bool $numbers = true
@@ -108,7 +181,6 @@ class Authentication
       \Adept\Error::halt(E_ERROR, 'Error generating a secure token.', __FILE__, __LINE__);
     }
 
-
     $count = strlen($seed);
     $token = '';
     // Generate initial random bytes
@@ -123,7 +195,9 @@ class Authentication
 
   public function tokenValid(string $type, string $token): bool
   {
-    return ($this->db->getInt(
+    $db = \Adept\Application::getInstance()->db;
+
+    return ($db->getInt(
       "SELECT COUNT(*) FROM `user_token` WHERE `type` = ? AND `token` = ? AND `expires` > NOW() ",
       [$type, $token]
     ) > 0);
@@ -132,6 +206,7 @@ class Authentication
   //public function tokenCheck(string $type, string $token, string $username, string $password, \DateTime $dob): bool
   public function tokenCheck(string $type, string $token, string $username, string $password): bool
   {
+    $db = \Adept\Application::getInstance()->db;
     $status = false;
 
     $query  = "SELECT a.id, a.password";
@@ -142,7 +217,7 @@ class Authentication
     $query .= " AND b.type = ? AND b.token = ? AND b.expires > NOW()";
 
     // Check DB for user
-    $user = $this->db->getObject(
+    $user = $db->getObject(
       $query,
       //[$username, $dob->format('Y-m-d 00:00:00'), $type, $token]
       [$username, $type, $token]
@@ -152,7 +227,7 @@ class Authentication
       if (password_verify($password, $user->password)) {
         // Login
         $this->data->server->set('auth.userid', $user->id);
-        $this->user = new User($this->db, $user->id);
+        $this->user = new User($db, $user->id);
         $this->user->delToken($type);
         $this->status = true;
 
@@ -166,7 +241,9 @@ class Authentication
 
   public function tokenExists(string $type, string $token): bool
   {
-    return ($this->db->getInt(
+    $db = \Adept\Application::getInstance()->db;
+
+    return ($db->getInt(
       "SELECT COUNT(*) FROM `user_token` WHERE `type` = ? AND `token` = ? AND `created` < NOW() AND `expires` > NOW()",
       [$type, $token]
     ) == 1);

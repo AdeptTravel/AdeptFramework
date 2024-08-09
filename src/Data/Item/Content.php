@@ -1,199 +1,101 @@
 <?php
 
+/**
+ * \Adept\Data\Item\Content
+ *
+ * The menu item data item
+ *
+ * @package    AdeptFramework.Data
+ * @author     Brandon J. Yaniz (brandon@adept.travel)
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
+ * @license    BSD 2-Clause; See LICENSE.txt
+ */
+
 namespace Adept\Data\Item;
 
-use DateTime;
+defined('_ADEPT_INIT') or die();
 
-defined('_ADEPT_INIT') or die('No Access');
-
-use \Adept\Application\Session\Request\Data\Post;
 use \Adept\Application\Database;
-use \Adept\Data\Item\Route;
-use \Adept\Data\Item\User;
+use \Adept\Application\Session\Request\Data\Post;
 
+/**
+ * \Adept\Data\Item\Content
+ *
+ * The menu item data item
+ *
+ * @package    AdeptFramework.Data
+ * @author     Brandon J. Yaniz (brandon@adept.travel)
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
+ * @license    BSD 2-Clause; See LICENSE.txt
+ */
 class Content extends \Adept\Abstract\Data\Item
 {
-  protected string $name = 'Content';
-  protected string $table = 'content';
 
-  /**
-   * Undocumented variable
-   *
-   * @var /Adept/Item/Content
-   */
-  public Content $parent;
+  protected array  $excludeKeys = ['path'];
 
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Data\Item\Route
-   */
-  public Route $route;
-
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Data\Item\User
-   */
-  public User $author;
-
-  public int $version = 0;
-  public string $type;
-  public string $subtype = '';
-  public string $title = '';
-  public string $summary = '';
-  public string $content = '';
-
-  public array $articles = [];
-  public array $categories = [];
-  public array $tags = [];
-
-  public object $seo;
-  public object $params;
-  public int $status;
-  public int $order;
-
+  public int       $parent = 0;
+  public int       $route;
+  public string    $type;
+  public string    $subtype;
+  public string    $title;
+  public string    $summary;
+  public string    $content;
+  public int       $image = 0;
+  public object    $seo;
+  public object    $media;
+  public object    $params;
+  public int       $status = 1;
+  public \DateTime $publish;
+  public \DateTime $archive;
   public \DateTime $created;
   public \DateTime $modified;
-  public \DateTime $publish;
-  public \DateTime $unpublish;
+  public int       $order;
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\Database $db
-   * @param  int                         $id
-   */
-  public function __construct(Database $db, int $id = 0)
+  public array     $path;
+
+  public function getParent(): \Adept\Data\Item\Content
   {
-    $this->excludeKeys = ['items'];
-
-    $this->excludeKeysOnNew = [
-      'created',
-      'modified',
-      'publish',
-      'unpublish'
-    ];
-
-    parent::__construct($db, $id);
+    return new \Adept\Data\Item\Content($this->db, $this->parent);
   }
 
-  public function load(int|string $id, string $col = 'id'): bool
+  public function getRoute(): \Adept\Data\Item\Route
   {
-    $status = parent::load($id, $col);
-
-    if ($this->type == 'Article') {
-      //
-    } else if ($this->type == 'Category') {
-      $this->articles = $this->getChildren('Article');
-      $this->categories = $this->getChildren('Category');
-    } else if ($this->type == 'Tag') {
-      $this->articles = $this->getChildren('Article');
-      $this->tags = $this->getChildren('Tag');
-    }
-
-    return $status;
+    return new \Adept\Data\Item\Route($this->route);
   }
 
-  public function save(string $table = ''): bool
+  public function generateRoute(string $title, string $path)
   {
-    if (!isset($this->route->id) || $this->route->id == 0) {
-      $route = '';
-
-      if (isset($this->parent)) {
-        $route = $this->parent->route->route . '/';
-      }
-
-      $route .= $this->createAlias();
-
-      $this->route = new Route($this->db);
-      $this->route->route = $route;
-      $this->route->component = 'Content';
-      $this->route->option = $this->type;
-
-      if (!isset($this->parent)) {
-        die(print_r($this->route));
-      }
-    }
-
-    // TODO: Save to version
-    parent::save($this->table . '_version');
-
-    // Increment the version number
-    $this->version++;
-
-    return parent::save();
   }
 
-  protected function isDuplicate(string $table = ''): bool
+  protected function getQuery(string $col = 'id'): string
   {
-    $isDup = false;
+    $query  = 'WITH RECURSIVE ContentPath AS (';
+    $query .= '  SELECT';
+    $query .= '    id,';
+    $query .= '    parent,';
+    $query .= "    JSON_ARRAY(CONCAT(route, ':', title)) AS path";
+    $query .= '  FROM';
+    $query .= '    Content';
+    $query .= '  WHERE';
+    $query .= '    parent = 0';
+    $query .= '  UNION ALL';
+    $query .= '  SELECT';
+    $query .= '    c.id,';
+    $query .= '    c.parent,';
+    $query .= "    JSON_ARRAY_APPEND(cp.path, '$', CONCAT(c.route, ':', c.title)) AS path";
+    $query .= '  FROM';
+    $query .= '    Content c';
+    $query .= '  INNER JOIN';
+    $query .= '    ContentPath cp ON c.parent = cp.id';
+    $query .= ')';
+    $query .= 'SELECT';
+    $query .= '  c.*,';
+    $query .= '  cp.path';
+    $query .= 'FROM';
+    $query .= '  Content c';
+    $query .= 'LEFT JOIN';
+    $query .= '  ContentPath cp ON c.id = cp.id;';
 
-    if ($this->id == 0) {
-      if ($this->route->id > 0) {
-        $count = $this->db->getInt(
-          'SELECT COUNT(*) FROM `content` WHERE `route` = ?',
-          [$this->route->route]
-        );
-
-        $isDup = ($count > 0);
-      }
-
-      if (!$isDup) {
-        if (!isset($this->parent)) {
-          die(print_r($this, true));
-        }
-
-        $count = $this->db->getInt(
-          "SELECT COUNT(*) FROM `content` WHERE `parent` = ? AND `title` = ?",
-          [$this->parent->id, $this->title]
-        );
-
-        $isDup = ($count > 0);
-      }
-    }
-
-    return $isDup;
-  }
-
-  protected function getChildren(string $type = 'Article'): array
-  {
-    $query  = 'SELECT a.id, b.route, c.title AS `parent`, d.route AS `parent_route`, a.title,';
-    $query .= ' a.type, a.subtype, a.summary, a.seo, a.params, a.status, a.publish_start,';
-    $query .= ' a.publish_end, a.created, a.modified, a.order';
-    $query .= ' FROM content AS a ';
-    $query .= ' INNER JOIN route AS b ON a.route = b.id';
-    $query .= ' LEFT JOIN content AS c on a.parent = c.id ';
-    $query .= ' LEFT JOIN route AS d ON c.route = d.id';
-    $query .= " WHERE a.type = ? AND a.parent = ?";
-
-    $params = [
-      $type,
-      $this->id
-    ];
-
-    $items = $this->db->getObjects($query, $params);
-
-    return ($items !== false) ? $items : [];
-  }
-
-  public function createAlias(): string
-  {
-    $alias = strtolower($this->title);
-    $alias = preg_replace('/[^0-9a-z-]/', '-', $alias);
-    $alias = str_replace('--', '-', $alias);
-
-    $parts = explode('-', $alias);
-    $count = count($parts);
-
-    for ($i = 0; $i < $count; $i++) {
-      if (empty($parts[$i])) {
-        unset($parts[$i]);
-      }
-    }
-
-    $alias = implode('-', $parts);
-
-    return $alias;
+    return $query;
   }
 }

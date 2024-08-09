@@ -15,14 +15,11 @@ namespace Adept\Application;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Abstract\Configuration;
 use \Adept\Application\Session\Authentication;
 use \Adept\Application\Database;
 use \Adept\Application\Session\Data;
 use \Adept\Application\Session\Request;
 use \Adept\Data\Item\Url;
-use \Adept\Data\Item\User;
-use \Adept\Data\Item\UserAgent;
 
 /**
  * \Adept\Application\Session
@@ -36,12 +33,6 @@ use \Adept\Data\Item\UserAgent;
  */
 class Session
 {
-  /**
-   * Reference to the database object
-   *
-   * @var \Adept\Application\Database
-   */
-  protected Database $db;
 
   /**
    * Reference to the Authentication object
@@ -91,20 +82,20 @@ class Session
    * @param \Adept\Application\Database $db
    * @param \Adept\Abstract\Configuration $conf
    */
-  public function __construct(Database &$db, Configuration &$conf)
+  public function __construct()
   {
     session_start();
 
-    $this->db     = $db;
     $this->data   = new Data();
-    $this->auth   = new Authentication($db, $this->data);
-    $this->token  = $this->data->server->getString('session.token', '', 32);
+    $this->auth   = new Authentication($this->data);
+    $this->token  = $this->data->server->getString('session.token', session_id(), 32);
 
-    $id   = $this->data->server->getInt('session.id', 0);
+    $db = \Adept\Application::getInstance()->db;
+    $id = $this->data->server->getInt('session.id', 0);
 
     if ($id == 0) {
       $id = $db->insertSingleTableGetId(
-        'session',
+        'Session',
         [
           'user' => $this->auth->user->id,
           'token' => $this->token
@@ -112,13 +103,20 @@ class Session
       );
 
       if ($id !== false) {
+
         $this->id = $id;
+
         $this->data->server->set('session.id', $id);
+        $this->data->server->set('session.token', $this->token);
         $this->data->server->set('session.block', false);
+
+        $this->request = new Request($id);
       } else {
         \Adept\error(debug_backtrace(), 'Session ID', 'No Session ID is available');
       }
     } else {
+
+      $this->request = new Request($id);
 
       $time = $this->data->server->getInt('session.timestamp', 0, 11);
 
@@ -132,19 +130,21 @@ class Session
         $url = new Url($db);
 
         $this->data->server->set('auth.userid', 0);
-        $this->data->server->set('redirect', $url->path);
-        header('Location: /login', true);
-        die();
+
+        $redirect = (!empty($this->request->url->path))
+          ? '?redirect=' . $this->request->url->path
+          : '';
+
+        $this->request->redirect('/login' . $redirect, false);
       }
     }
 
     $this->data->server->set('session.timestamp', time());
     $this->data->server->set('session.token', $this->token);
 
-    $this->request = new Request($db, $conf, $this->id);
-    $this->block = $this->data->server->getBool('session.block');
+    $this->block   = $this->data->server->getBool('session.block');
 
-    if (!$this->request->route->public && !$this->auth->status) {
+    if ($this->request->route->secure && !$this->auth->status) {
 
       $redirect = (!empty($this->request->url->path))
         ? '?redirect=' . $this->request->url->path
@@ -159,8 +159,7 @@ class Session
 
     if (
       !$this->request->route->get
-      || ($this->request->route->get
-        && !$this->request->route->public
+      || ($this->request->route->secure
         && !$this->auth->status)
     ) {
       $this->request->data->get->purge();
@@ -169,7 +168,7 @@ class Session
     if (
       !$this->request->route->post
       || ($this->request->route->post
-        && !$this->request->route->public
+        && $this->request->route->secure
         && !$this->auth->status)
     ) {
       $this->request->data->post->purge();
@@ -179,10 +178,13 @@ class Session
   public function setBlock(bool $block)
   {
     if ($this->data->server->getBool('session.block') != $block && $this->id > 0) {
+
+      $db = \Adept\Application::getInstance()->db;
+
       $this->data->server->set('session.block', $block);
 
       $this->db->update(
-        'UPDATE `session` SET `block` = ? WHERE `id` = ?',
+        'UPDATE `Session` SET `block` = ? WHERE `id` = ?',
         [$block, $this->id]
       );
     }

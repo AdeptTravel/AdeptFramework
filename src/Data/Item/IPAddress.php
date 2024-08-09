@@ -29,9 +29,6 @@ use \Adept\Application\DataBase;
  */
 class IPAddress extends \Adept\Abstract\Data\Item
 {
-
-  protected string $name = 'IP Address';
-
   public string $ipaddress = '';
   public string $encoded;
   public bool $block = false;
@@ -41,11 +38,11 @@ class IPAddress extends \Adept\Abstract\Data\Item
    * Undocumented function
    *
    * @param  \Adept\Application\DataBase $db
-   * @param  int                         $id
+   * @param  int                         $val
    */
-  public function __construct(DataBase &$db, int|string $id = 0)
+  public function __construct(int|string|object $val = 0, bool $cache = true)
   {
-    if (empty($id)) {
+    if (empty($val)) {
       $ipaddress = '';
 
       if (!empty($_SERVER["HTTP_CF_CONNECTING_IP"])) {
@@ -81,7 +78,7 @@ class IPAddress extends \Adept\Abstract\Data\Item
       $ipaddress = filter_var($ipaddress, FILTER_VALIDATE_IP);
     }
 
-    parent::__construct($db, (((is_numeric($id) && $id > 0) || !empty($id)) ? $id : $ipaddress));
+    parent::__construct((((is_numeric($val) && $val > 0) || !empty($val)) ? $val : $ipaddress));
 
     //if (!$this->loadCache()) {
     //if (!empty($ipaddress)) {

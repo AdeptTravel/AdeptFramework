@@ -1,19 +1,32 @@
 <?php
 
+/**
+ * \Adept\Abstract\Document
+ *
+ * The document object
+ *
+ * @package    AdeptFramework
+ * @author     Brandon J. Yaniz (brandon@adept.travel)
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
+ * @license    BSD 2-Clause; See LICENSE.txt
+ */
+
 namespace Adept\Abstract;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application;
-use \Component;
-
+/**
+ * \Adept\Abstract\Document
+ *
+ * The document object
+ *
+ * @package    AdeptFramework
+ * @author     Brandon J. Yaniz (brandon@adept.travel)
+ * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
+ * @license    BSD 2-Clause; See LICENSE.txt
+ */
 abstract class Document
 {
-  /**
-   * @var \Adept\Application
-   */
-  protected $app;
-
   /**
    * Undocumented variable
    *
@@ -28,43 +41,60 @@ abstract class Document
    */
   public $component;
 
-  public function __construct(Application &$app)
+  public function __construct()
   {
-    $this->app = $app;
+    $app = \Adept\Application::getInstance();
 
-    $category   = $app->session->request->route->category;
-    $component  = $app->session->request->route->component;
-    $option     = $app->session->request->route->option;
-    $type       = $this->app->session->request->url->type;
+    // Shortcuts
+    $request  = &$app->session->request;
+
+    // Set content type header
+    header('Content-type: ' . $request->url->mime);
+  }
+
+  protected function getComponentNamespace(): string
+  {
+    $app = \Adept\Application::getInstance();
+
+    // Shortcuts
+    $session  = &$app->session;
+    $request  = &$session->request;
+    $route    = &$request->route;
+    $url      = &$request->url;
+
+    // Used to determine the component, option, and format
+    $component  = $route->component;
+    $option     = $route->option;
+    $format     = $url->type;
     $namespace  = null;
 
-    if (
-      !class_exists($namespace = "\\Adept\\Component\\$category\\$component\\$type\\$option")
-      && !class_exists($namespace = "\\Component\\$category\\$component\\$type\\$option")
-    ) {
+    if (!class_exists($namespace = "\\Adept\\Component\\$component\\$format\\$option")) {
+      // TODO: Remove die and allow for 404 to do it's thing
+      die('Not found: ' . $namespace);
+      $namespace = "\\Adept\\Component\\Error\\$format\\Error";
+      $request->setStatus(404);
+    }
 
-      if (
-        $type == 'HTML'
-        && (
-          file_exists($template = FS_SYS_COMPONENT . "$category/$component/$type/Template/$option.php")
-          || file_exists($template = FS_SITE_COMPONENT . "$category/$component/$type/Template/$option.php")
-        )
-      ) {
-        // Used for HTML only, this means that there is a template file but no
-        // component file.  We will load a generic component class to allow the
-        // template to load.
-        $namespace = "\\Adept\\Abstract\\Component";
-      } else {
-        //$namespace = "\\Adept\\Component\\Core\\Error\\$type\\Error";
-        $namespace = "\\Adept\\Abstract\\Component";
+    return $namespace;
+  }
 
-        $this->app->session->request->setStatus(404);
+  public function loadComponent()
+  {
+    $component = $this->getComponentNamespace();
+    $this->component = new $component();
+  }
+
+  protected function getFile(array $paths, string $path): string|bool
+  {
+    $file = false;
+
+    for ($i = 0; $i < count($paths); $i++) {
+      if (file_exists($file = $paths[$i] . $path)) {
+        break;
       }
     }
 
-    $this->component = new $namespace($app, $this);
-
-    header('Content-type: ' . $app->session->request->url->mime);
+    return $file;
   }
 
   abstract public function getBuffer(): string;

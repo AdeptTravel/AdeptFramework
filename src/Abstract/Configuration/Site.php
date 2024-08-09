@@ -8,10 +8,10 @@ use \Adept\Abstract\Configuration\Site\Legal;
 
 class Site
 {
-  public string $name = 'My Travel';
+  public string $name;
   public Legal $legal;
   public string $url;
-  public string $template = 'Dashboard';
+  public string $template = 'Default';
   public string $images;
 
   public function __construct()

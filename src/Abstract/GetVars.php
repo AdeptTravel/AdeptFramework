@@ -15,8 +15,6 @@ namespace Adept\Abstract;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application\Session\Request\Route;
-
 /**
  * \Adept\Abstract\GetVars
  *
@@ -46,7 +44,6 @@ abstract class GetVars
    */
   public function set(string $key, bool|int|string $val)
   {
-    //echo "<p>Setting $this->type - $key = $val</p>";
     switch ($this->type) {
       case 'Server':
         $_SESSION[$key] = $val;
@@ -54,8 +51,6 @@ abstract class GetVars
       default:
         break;
     }
-
-    //die("Session: <pre>" . print_r($_SESSION, true));
   }
 
   /**
@@ -65,24 +60,27 @@ abstract class GetVars
    *
    * @return string
    */
-  public function getRaw(string $key, string $default, int $limit = 64): string
+  public function get(string $key, string $default, int $limit = 64, bool $html = false): string
   {
     $val = $default;
 
     switch ($this->type) {
       case 'Get':
+
         if (isset($_GET[$key])) {
           $val = $_GET[$key];
         }
         break;
 
       case 'Post':
+
         if (isset($_POST[$key])) {
           $val = $_POST[$key];
         }
         break;
 
       case 'Server':
+
         if (isset($_SESSION[$key])) {
           $val = $_SESSION[$key];
         }
@@ -93,16 +91,7 @@ abstract class GetVars
         break;
     }
 
-    // Security checks
-    if (strpos($val, '<?php')) {
-      $val = '';
-    }
-
-    $val = trim($val);
-
-    if ($limit > 0) {
-      $val = substr($val, 0, $limit);
-    }
+    $val = $this->clean($val, $limit, $html);
 
     return $val;
   }
@@ -113,14 +102,20 @@ abstract class GetVars
 
     switch ($this->type) {
       case 'Get':
+
         $empty = empty($_GET);
         break;
+
       case 'Post':
+
         $empty = empty($_POST);
         break;
+
       case 'Server':
+
         $empty = empty($_SESSION);
         break;
+
       default:
         break;
     }
@@ -130,23 +125,23 @@ abstract class GetVars
 
   public function exists(string $key): bool
   {
-    $empty = false;
+    $exists = false;
 
     switch ($this->type) {
       case 'Get':
-        $empty = !empty($_GET[$key]);
+        $exists = (isset($_GET[$key]) && (!empty($_GET[$key]) || $_GET[$key] == 0));
         break;
       case 'Post':
-        $empty = !empty($_POST[$key]);
+        $exists = !(empty($_POST[$key]) && $_GET[$key] != 0);
         break;
       case 'Server':
-        $empty = !empty($_SESSION[$key]);
+        $exists = !(empty($_SESSION[$key]) && $_GET[$key] != 0);
         break;
       default:
         break;
     }
 
-    return $empty;
+    return $exists;
   }
 
   public function purge()
@@ -193,7 +188,7 @@ abstract class GetVars
    */
   public function getLetters(string $key, string $default = '', int $limit = 64): string
   {
-    $raw = $this->getRaw($key, (string)$default, $limit);
+    $raw = $this->get($key, (string)$default, $limit);
 
     $val = strip_tags($raw);
     $val = addslashes($val);
@@ -207,15 +202,15 @@ abstract class GetVars
     return $val;
   }
 
-  public function getBool(string $key, bool $default = false, int $limit = 1): bool
+  public function getBool(string $key, bool $default = false, int $limit = 3): bool
   {
-    $raw = $this->getRaw($key, (string)$default, $limit);
+    $raw = $this->get($key, (string)$default, $limit);
 
     $val = $default;
 
-    if ($raw == '1' || $raw == 1) {
+    if ($raw == '1' || $raw == 1 || $raw == 'on') {
       $val = true;
-    } else if ($raw == '0' || $raw == 0) {
+    } else if ($raw == '0' || $raw == 0 || 'off') {
       $val = false;
     }
 
@@ -232,7 +227,12 @@ abstract class GetVars
    */
   public function getInt(string $key, int $default = 0, int $limit = 9): int
   {
-    $raw = $this->getRaw($key, (string)$default, $limit);
+    $raw = $this->get($key, (string)$default, $limit);
+
+    if ($raw == 'on') {
+      $raw = 1;
+    }
+
 
     $val = filter_var($raw, FILTER_SANITIZE_NUMBER_INT);
 
@@ -240,7 +240,7 @@ abstract class GetVars
       \Adept\Error::halt(E_ERROR, "Variable mismatch - $key - $raw != $val", __FILE__, __LINE__);
     }
 
-    return $val;
+    return (int)$val;
   }
 
   /**
@@ -253,7 +253,7 @@ abstract class GetVars
    */
   public function getAlphaNumeric(string $key, string $default = '', int $limit = 64): string
   {
-    $raw = $this->getRaw($key, (string)$default, $limit);
+    $raw = $this->get($key, (string)$default, $limit);
 
     $val = strip_tags($raw);
     $val = addslashes($val);
@@ -276,7 +276,7 @@ abstract class GetVars
    */
   public function getString(string $key, string $default = '', int $limit = 64): string
   {
-    $raw = $this->getRaw($key, $default, $limit);
+    $raw = $this->get($key, $default, $limit);
 
     $val = strip_tags($raw);
     $val = addslashes($val);
@@ -346,6 +346,35 @@ abstract class GetVars
   }
 
   /**
+   * Get's a date, time, or both and converts it to a DateTime object
+   *
+   * @param  string    $key
+   * @param  string    $default
+   *
+   * @return \DateTime
+   */
+  public function getDateTime(string $key, string $default = ''): \DateTime
+  {
+    $raw = $this->getString($key, $default);
+    $val = new \DateTime('0000-01-01 00:00:00');
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+      // Format: YYYY-MM-DD
+      $val = \DateTime::createFromFormat('Y-m-d', $raw);
+    } elseif (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $raw) && $raw != '0000-00-00 00:00:00') {
+      // Format: YYYY-MM-DD HH:MM:SS
+      $val = \DateTime::createFromFormat('Y-m-d H:i:s', $raw);
+    } elseif (preg_match('/^\d{2}:\d{2}:\d{2}$/', $raw)) {
+      // Format: HH:MM:SS
+      $val = \DateTime::createFromFormat('H:i:s', $raw);
+      // If the format is only time, we need to add a default date
+      $val->setDate(0000, 1, 1); // Set to Unix epoch start date
+    }
+
+    return $val;
+  }
+
+  /**
    * Get a filtered string for an email address
    *
    * @param  string $key
@@ -374,7 +403,7 @@ abstract class GetVars
 
   public function getUrl(string $key, string $default = '', int $limit = 256): string
   {
-    $raw = $this->getRaw($key, (string)$default, $limit);
+    $raw = $this->get($key, (string)$default, $limit);
 
     return filter_var(
       $raw,
@@ -386,5 +415,66 @@ abstract class GetVars
   {
     $raw = $this->getString($key, $default, $limit);
     return preg_replace('/[^A-Za-z0-9\/.\-_]/', '', $raw);
+  }
+
+  public function getArray(): array
+  {
+    $arr = [];
+    $raw = [];
+
+    switch ($this->type) {
+      case 'Get':
+        $raw = $_GET;
+        break;
+
+      case 'Post':
+        $raw = $_POST;
+        break;
+
+      case 'Server':
+        $raw = $_SESSION;
+        break;
+
+      default:
+        break;
+    }
+
+    foreach ($raw as $k => $v) {
+      $key = '';
+      $val = '';
+
+      $key = preg_replace("/[^A-Za-z0-9_]/", '', $k);
+      $val = $this->clean($v);
+
+      $arr[$key] = $val;
+    }
+
+    return $arr;
+  }
+
+  public function clean(
+    string $val,
+    int $limit = 0,
+    bool $html = false
+  ): string {
+
+    // Security checks
+    if (strpos($val, '<?php')) {
+      $val = '';
+    }
+
+    if ($html) {
+      $val = strip_tags($val);
+    } else {
+      // TODO: use http://htmlpurifier.org/docs
+    }
+
+    $val = trim($val);
+
+    if ($limit > 0) {
+      $val = substr($val, 0, $limit);
+    }
+
+    return $val;
   }
 }

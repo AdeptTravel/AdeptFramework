@@ -9,12 +9,6 @@ use \Adept\Application\Session\Request;
 
 class Meta
 {
-  /**
-   * Undocumented variable
-   *
-   * @var Configuration
-   */
-  protected Configuration $conf;
 
   /**
    * Undocumented variable
@@ -46,13 +40,13 @@ class Meta
 
   /**
    * Undocumented function
-   *
-   * @param  Configuration $conf
-   * @param  Request       $request
    */
-  public function __construct(Configuration &$conf, Request &$request)
+  public function __construct()
   {
-    $this->conf = $conf;
+
+    $app = \Adept\Application::getInstance();
+    $conf = $app->conf;
+    $request = $app->session->request;
 
     $this->meta = [];
 
@@ -108,7 +102,7 @@ class Meta
     ];
 
     $this->add('content-type', 'text/html; charset=utf-8');
-    $this->add('generator', $this->conf->app->name);
+    $this->add('generator', $conf->app->name);
     $this->add('og:locale', 'en_US');
     $this->add('og:type', 'website');
 
@@ -126,11 +120,12 @@ class Meta
 
   public function getBuffer(): string
   {
+    $conf = \Adept\Application::getInstance()->conf;
     $html = '';
 
     if (!empty($this->title)) {
-      $title = $this->title . ' - ' . $this->conf->site->name;
-      if (isset($this->conf->share)) {
+      $title = $this->title . ' - ' . $conf->site->name;
+      if (isset($conf->share)) {
         $this->add('og:title', $title);
         $this->add('twitter:title', $this->trimToChar($title, 70));
       }
@@ -139,7 +134,7 @@ class Meta
     if (!empty($this->description)) {
       $this->add('description', $this->trimToChar($this->description, 160));
 
-      if (isset($this->conf->share)) {
+      if (isset($conf->share)) {
         $this->add('og:description', $this->trimToChar($this->description, 110));
         $this->add('twitter:description', $this->trimToChar($this->description, 200));
       }

@@ -26,7 +26,9 @@ class Exception extends \Exception
     string $message,
     string $namespace = '',
     string $classname = '',
-    string $method = ''
+    string $method = '',
+    int $code = 0,
+    Exception $previous = null
   ) {
 
     if (DEBUG) {
@@ -59,7 +61,11 @@ class Exception extends \Exception
       echo '</dl>';
 
       if (!empty($this->getMessage())) {
-        echo '<p>' . $this->getMessage() . '</p>';
+        $parts = explode("\n", $this->getMessage());
+        for ($i = 0; $i < count($parts); $i++) {
+          echo '<div>' . $parts[$i] . '</div>';
+        }
+        //echo '<p>' . $this->getMessage() . '</p>';
       }
 
 
@@ -67,6 +73,7 @@ class Exception extends \Exception
     }
 
     //debug_print_backtrace();
+    echo '<pre>';
 
     parent::__construct();
   }

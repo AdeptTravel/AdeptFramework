@@ -6,6 +6,9 @@ defined('_ADEPT_INIT') or die();
 
 class JavaScript extends \Adept\Abstract\Document\HTML\Head\Asset
 {
+  protected string $extension = 'js';
+  protected string $path = FS_JS;
+
   public function getFileTag(string $file, \stdClass $args = null): string
   {
     $tag  = '<script';

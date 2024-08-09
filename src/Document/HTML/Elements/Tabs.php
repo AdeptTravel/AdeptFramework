@@ -4,6 +4,8 @@ namespace Adept\Document\HTML\Elements;
 
 defined('_ADEPT_INIT') or die();
 
+use \Adept\Application;
+
 class Tabs extends \Adept\Abstract\Document\HTML\Element
 {
   protected string $tag = 'div';
@@ -11,6 +13,11 @@ class Tabs extends \Adept\Abstract\Document\HTML\Element
   public function __construct(array $attr = [], array $children = [])
   {
     parent::__construct($attr);
+
+    $app = Application::getInstance();
+
+    $app->html->head->css->addFile('tabs.css');
+    $app->html->head->javascript->addFile('tabs.js');
 
     $this->css[] = 'tabs';
   }

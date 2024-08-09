@@ -34,6 +34,16 @@ use \Adept\Application\Session;
  */
 class Application
 {
+
+  private static Application $instance;
+
+  /**
+   * A system has been marked as block
+   *
+   * @var bool
+   */
+  public bool $block;
+
   /**
    * The configuration object
    * 
@@ -47,6 +57,13 @@ class Application
    * @var \Adept\Application\Database
    */
   public Database $db;
+
+  public \Adept\Document\CSV $csv;
+  public \Adept\Document\HTML $html;
+  public \Adept\Document\JSON $json;
+  public \Adept\Document\PDF $pdf;
+  public \Adept\Document\XML $xml;
+  public \Adept\Document\ZIP $zip;
 
   /**
    * Undocumented variable
@@ -94,6 +111,8 @@ class Application
       //\Adept\error(debug_backtrace(), 'Invalid URL', "The URL $url doesn't match the allowed url $conf->site->url");
     }
 
+    self::$instance = &$this;
+
     $this->db = new Database($conf);
     $this->session = new Session($this->db, $conf);
 
@@ -102,24 +121,28 @@ class Application
     }
 
     // Check various block lists
-    if (
+    $this->block = (
       $this->session->block
       || $this->session->request->ip->block
       || $this->session->request->route->block
       || $this->session->request->url->block
       || $this->session->request->useragent->block
-    ) {
-      $message  = '<div>Session ' . $this->session->block . '</div>';
-      $message .= '<div>Route  ' . $this->session->request->route->block . '</div>';
-      $message .= '<div>Url ' . $this->session->request->url->block . '</div>';
-      $message .= '<div>IPAddress ' . $this->session->request->ip->block . '</div>';
-      $message .= '<div>UserAgent ' . $this->session->useragent->block . '</div>';
+    );
 
-      \Adept\error(debug_backtrace(), 'Blocked', $message);
+    $namespace = "\\Adept\\Document\\" . $this->session->request->url->type;
+    $doc = $this->session->request->url->extension;
+    $this->$doc = new $namespace();
+    $this->$doc->loadComponent();
+  }
 
-      $this->session->setBlock(true);
-      $this->session->request->setStatus(400);
-      die();
-    }
+  public function render()
+  {
+    $doc = $this->session->request->url->extension;
+    echo $this->$doc->getBuffer();
+  }
+
+  public static function getInstance()
+  {
+    return self::$instance;
   }
 }

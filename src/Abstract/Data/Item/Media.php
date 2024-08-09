@@ -9,7 +9,7 @@ defined('_ADEPT_INIT') or die('No Access');
 
 class Media extends \Adept\Abstract\Data\Item
 {
-  protected string $name = 'Media';
+  protected string $errorName = 'Media';
   protected string $table = 'media';
 
   /**
@@ -82,7 +82,6 @@ class Media extends \Adept\Abstract\Data\Item
    */
   public int $size;
 
-
   /**
    * Undocumented variable
    *
@@ -107,20 +106,6 @@ class Media extends \Adept\Abstract\Data\Item
   /**
    * Undocumented variable
    *
-   * @var string
-   */
-  public string $description;
-
-  /**
-   * Content status, use -1 to show all
-   *
-   * @var bool
-   */
-  public bool $status = true;
-
-  /**
-   * Undocumented variable
-   *
    * @var \DateTime
    */
   public \DateTime $created;
@@ -132,38 +117,21 @@ class Media extends \Adept\Abstract\Data\Item
    */
   public \DateTime $modified;
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\Database $db
-   * @param  int                         $id
-   */
-  public function __construct(Database $db, int $id = 0)
+
+  public function load(int|string $val, string $col = 'id'): bool
   {
-    $this->excludeKeys = ['files'];
-
-    $this->excludeKeysOnNew = [
-      'created',
-      'modified'
-    ];
-
-    parent::__construct($db, $id);
-  }
-
-  public function load(int|string $id, string $col = 'id'): bool
-  {
-    $status =  parent::load($id, $col);
+    $status =  parent::load($val, $col);
 
     if (!$status && $col == 'file') {
-      $file = $id;
-      $path = substr($file, 0, strrpos($file, '/'));
+      $file = $val;
 
-      $fullpath = FS_SITE_MEDIA . $file;
+      $fullpath  = FS_SITE_MEDIA . $file;
       $extension = substr($file, strrpos($file, '.') + 1);
 
       // Get mimetype of file
       $info = finfo_open(FILEINFO_MIME_TYPE);
       $mime = finfo_file($info, $fullpath);
+
       finfo_close($info);
 
       $type = ucfirst(substr($mime, 0, 5));
@@ -180,19 +148,17 @@ class Media extends \Adept\Abstract\Data\Item
         $title = substr($title, 0, strrpos($title, '.'));
 
         //$alias = str_replace(FS_SITE_MEDIA . 'Image/', FS_IMG, $file);
-        $alias = substr($file, 6);
-        $alias = substr($alias, 0, strrpos($alias, '.'));
-        $alias = strtolower($alias);
-        $alias = str_replace(' ', '-', $alias);
+        //$alias = substr($file, 6);
+        //$alias = substr($alias, 0, strrpos($alias, '.'));
+        //$alias = strtolower($alias);
+        //$alias = str_replace(' ', '-', $alias);
 
-        while (strpos($alias, '--') !== false) {
-          $alias = str_replace('--', '-', $alias);
-        }
+        //while (strpos($alias, '--') !== false) {
+        //  $alias = str_replace('--', '-', $alias);
+        //}
 
         $this->mime       = $mime;
-        $this->path       = $path;
         $this->file       = $file;
-        $this->alias      = $alias;
         $this->extension  = $extension;
         $this->width      = $id3['video']['resolution_x'];
         $this->height     = $id3['video']['resolution_y'];
@@ -209,10 +175,5 @@ class Media extends \Adept\Abstract\Data\Item
     }
 
     return $status;
-  }
-
-  public function save(string $table = ''): bool
-  {
-    return parent::save();
   }
 }

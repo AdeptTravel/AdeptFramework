@@ -15,13 +15,11 @@ namespace Adept\Application\Session;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Abstract\Configuration;
 use \Adept\Application\Session\Request\Data;
-use \Adept\Application\Database;
 use \Adept\Data\Item\IPAddress;
 use \Adept\Application\Session\Request\Route;
 use \Adept\Data\Item\Url;
-use \Adept\Data\Item\UserAgent;
+use \Adept\Data\Item\Useragent;
 
 /**
  * \Adept\Application\Session\Request
@@ -35,18 +33,6 @@ use \Adept\Data\Item\UserAgent;
  */
 class Request
 {
-  /**
-   * A reference to the site configuration
-   *
-   * @var \Adept\Abstract\Configuration
-   */
-  protected Configuration $conf;
-
-  /**
-   * @var \Adept\Application\Database
-   */
-  protected Database $db;
-
   /**
    * The current session id
    *
@@ -94,42 +80,74 @@ class Request
    * TODO: Use this data to verify that the browser family andOS hasn't
    *  changed, if so set a session block.
    *
-   * @var \Adept\Data\Item\UserAgent
+   * @var \Adept\Data\Item\Useragent
    */
-  public \Adept\Data\Item\UserAgent $useragent;
+  public \Adept\Data\Item\Useragent $useragent;
 
   /**
-   * Constructor
+   * Construct
    *
-   * @param \Adept\Application\Database $db
-   * @param \Adept\Abstract\Configuration $conf
+   * @param  int $session - The current session id
    */
-  public function __construct(
-    Database &$db,
-    Configuration &$conf,
-    int $session
-  ) {
+  public function __construct(int $session)
+  {
+    $this->session    = $session;
+    $this->url        = new Url();
+    $this->ip         = new IPAddress();
+    $this->useragent  = new Useragent();
+    $this->route      = new Route($this->url);
+    $this->data       = new Data();
+    $this->status     = 200;
+    $this->milisec    = floor((microtime(true) - time()) * 1000);
 
-    $this->conf = $conf;
-    $this->db = $db;
-    $this->session = $session;
-    $this->url = new Url($db);
-    $this->ip = new IPAddress($db);
-    $this->useragent = new UserAgent($db);
-    $this->route = new Route($db, $conf, $this->url);
-    $this->data = new Data();
-    $this->status = 200;
-    $this->milisec = floor((microtime(true) - time()) * 1000);
+    if (!empty($this->route->redirect)) {
+      $this->redirect($this->route->redirect);
+    }
 
-    //if (empty($this->route->route)) {
-    if ($this->route->id == 0) {
+    if ($this->route->block) {
       $this->setStatus(404);
     }
   }
 
   public function __destruct()
   {
-    $query = "INSERT INTO `request`";
+    $this->save();
+  }
+
+  public function redirect(string $url, bool $permanent = true)
+  {
+    $this->status = ($permanent) ? 301 : 302;
+    $this->save();
+    http_response_code($this->status);
+    header('Location:' . $url, true, $this->status);
+    die();
+  }
+
+  public function setStatus(int $status)
+  {
+    $this->status = $status;
+
+    if ($status != 200) {
+
+      $this->route->component = 'Error';
+      $this->route->option = $status;
+
+      http_response_code($status);
+      /*
+      if ($this->format == 'HTML') {
+        header('Location: https://' . $this->conf->site->url . '/' . $status);
+      } else {
+        \Adept\error(get_class($this), __FUNCTION__, __LINE__, 'Status Error');
+        \Adept\error(debug_backtrace(), 'Status error');
+      }
+      */
+    }
+  }
+
+  public function save()
+  {
+    $db = \Adept\Application::getInstance()->db;
+    $query = "INSERT INTO `Request`";
     $query .= '(`session`, `ipaddress`, `useragent`, `route`, `url`, `code`, `milisec`)';
     $query .= 'VALUES';
     $query .= '(?,?,?,?,?,?,?)';
@@ -144,36 +162,6 @@ class Request
       $this->milisec
     ];
 
-    $this->db->insert($query, $params);
-  }
-
-  public function redirect(string $url, bool $permanent = true)
-  {
-    $this->status = ($permanent) ? 301 : 302;
-    $this->__destruct();
-    http_response_code($this->status);
-    header('Location:' . $url, true, $this->status);
-    die();
-  }
-
-  public function setStatus(int $status)
-  {
-    $this->status = $status;
-
-    if ($status != 200) {
-      $this->route->category = 'Core';
-      $this->route->component = 'Error';
-      $this->route->option = $status;
-
-      http_response_code($status);
-      /*
-      if ($this->format == 'HTML') {
-        header('Location: https://' . $this->conf->site->url . '/' . $status);
-      } else {
-        \Adept\error(get_class($this), __FUNCTION__, __LINE__, 'Status Error');
-        \Adept\error(debug_backtrace(), 'Status error');
-      }
-      */
-    }
+    $db->insert($query, $params);
   }
 }

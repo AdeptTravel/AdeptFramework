@@ -6,6 +6,9 @@ defined('_ADEPT_INIT') or die();
 
 class CSS extends \Adept\Abstract\Document\HTML\Head\Asset
 {
+  protected string $extension = 'css';
+  protected string $path = FS_CSS;
+
   public function getFileTag(string $file, \stdClass $args = null): string
   {
     $tag  = '<link';

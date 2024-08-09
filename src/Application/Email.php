@@ -14,12 +14,6 @@ use \PHPMailer\PHPMailer\SMTP;
 
 class Email
 {
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Abstract\Configuration
-   */
-  protected Configuration $conf;
 
   /**
    * Undocumented variable
@@ -35,8 +29,6 @@ class Email
    */
   public function __construct(Configuration $conf)
   {
-    $this->conf = $conf;
-
     $this->mail = new PHPMailer(true);
     $this->mail->SMTPDebug  = SMTP::DEBUG_OFF;                         // Enable verbose debug output 2
     $this->mail->isSMTP();                              // Set mailer to use SMTP
@@ -70,8 +62,6 @@ class Email
     $this->mail->AltBody = $text;
 
     $status = $this->mail->send();
-
-    //die('<pre>' . print_r($this->mail, true));
     // TODO: Add email logging here
 
     return $status;

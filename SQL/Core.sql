@@ -1,0 +1,412 @@
+DROP TABLE IF EXISTS `Content`;
+CREATE TABLE `Content` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `parent` INT UNSIGNED DEFAULT 0,
+  `route` INT UNSIGNED DEFAULT 0,
+  `version` INT UNSIGNED DEFAULT 0,
+  `type` ENUM('Article', 'Category', 'Component', 'Tag'),
+  `subtype` ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
+  `title` VARCHAR(128) NOT NULL,
+  `summary` TEXT DEFAULT '',
+  `content` TEXT DEFAULT '',
+  `seo` TEXT DEFAULT '{}',
+  `media` TEXT DEFAULT '{}',
+  `params` TEXT DEFAULT '{}',
+  `status` TINYINT DEFAULT 1,
+  `publish` DATETIME DEFAULT NOW(),
+  `archive` DATETIME DEFAULT '2256-03-09 00:00:00',
+  `created` DATETIME DEFAULT NOW(),
+  `modified` DATETIME DEFAULT NOW(),
+  `order` INT DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `ContentMedia`;
+CREATE TABLE `ContentMedia` (
+  `content` INT UNSIGNED NOT NULL,
+  `media` INT UNSIGNED NOT NULL,
+  `type`  ENUM('', 'Intro', 'Full') DEFAULT '',
+  `status` TINYINT DEFAULT 1,
+  `order` INT DEFAULT 0,
+  PRIMARY KEY (`content`, `media`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `ContentTag`;
+CREATE TABLE `ContentTag` (
+  `content` INT UNSIGNED NOT NULL,
+  `tag` VARCHAR(128) NOT NULL,
+  `status` TINYINT DEFAULT 1,
+  `order` INT DEFAULT 0,
+  PRIMARY KEY (`content`, `tag`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `IPAddress`;
+CREATE TABLE `IPAddress` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `ipaddress` VARCHAR(45) NOT NULL UNIQUE,
+  `encoded` varbinary(16),
+  `block` TINYINT(3) DEFAULT 0,
+  `created` DATETIME DEFAULT NOW(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Location`;
+CREATE TABLE `Location` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `area` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(128),
+  `street0` VARCHAR(64),
+  `street1` VARCHAR(64),
+  `street2` VARCHAR(64),
+  `elevation` INT,
+  `latitude` DECIMAL(10,8),
+  `longitude` DECIMAL(11,8),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `LocationArea`;
+CREATE TABLE `LocationArea` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `city` VARCHAR(32),
+  `county` VARCHAR(64),
+  `state` VARCHAR(32),
+  `postalcode` VARCHAR(128) NOT NULL,
+  `country` INT UNSIGNED,
+  `timezone` VARCHAR(64),
+  `latitude` DECIMAL(10,8),
+  `longitude` DECIMAL(11,8),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `LocationCountry`;
+CREATE TABLE `LocationCountry` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `content` INT UNSIGNED,
+  `country` VARCHAR(48) UNIQUE,
+  `iso2` VARCHAR(3) UNIQUE,
+  `iso3` VARCHAR(3) UNIQUE,
+  `currency` VARCHAR(64),
+  `currency_code` VARCHAR(4),
+  `phone_code` VARCHAR(8),
+  `region` VARCHAR(32),
+  `subregion` VARCHAR(32),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Media`;
+CREATE TABLE `Media` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type` ENUM('Image', 'Video', 'Audio'),
+  `mime` VARCHAR(32) NOT NULL,
+  `path` VARCHAR(128) NOT NULL,
+  `file` VARCHAR(256) NOT NULL UNIQUE,
+  `alias` VARCHAR(256) NOT NULL UNIQUE,
+  `extension` VARCHAR(5) NOT NULL,
+  `width` INT DEFAULT 0,
+  `height` INT DEFAULT 0,
+  `duration` INT DEFAULT 0,
+  `size` INT DEFAULT 0,
+  `title` VARCHAR(128) DEFAULT '',
+  `caption` TEXT DEFAULT '',
+  `summary` VARCHAR(256) DEFAULT '',
+  `description` TEXT DEFAULT '',
+  `created` DATETIME DEFAULT NOW(),
+  `modified` DATETIME DEFAULT NOW(),
+  `status` TINYINT DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Menu`;
+CREATE TABLE `Menu` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(32) NOT NULL,
+  `image` VARCHAR(64) DEFAULT '',
+  `image_alt` VARCHAR(32) DEFAULT '',
+  `fa` VARCHAR(32) DEFAULT '',
+  `css` VARCHAR(64) DEFAULT '',
+  `status` TINYINT(1) DEFAULT 1,
+  `publish` DATETIME DEFAULT NOW(),
+  `archive` DATETIME DEFAULT '0000-00-00 00:00:00',
+  `access` INT(10) UNSIGNED DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `MenuItem`;
+CREATE TABLE `MenuItem` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `menu` INT UNSIGNED NOT NULL,
+  `parent` INT UNSIGNED DEFAULT 0,
+  `route` INT UNSIGNED DEFAULT 0,
+  `url` VARCHAR(256) DEFAULT '',
+  `title` VARCHAR(128) DEFAULT '',
+  `image` VARCHAR(128) DEFAULT '',
+  `image_alt` VARCHAR(32) DEFAULT '',
+  `fa` VARCHAR(64) DEFAULT '',
+  `css` VARCHAR(64) DEFAULT '',
+  `params` TEXT DEFAULT '{}',
+  `status` TINYINT(1) DEFAULT 1,
+  `publish` DATETIME DEFAULT NOW(),
+  `archive` DATETIME DEFAULT '0000-00-00 00:00:00',
+  `order` INT DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Meta`;
+CREATE TABLE `Meta` (
+  `route` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(256) NOT NULL,
+  `description` VARCHAR(256),
+  `robots` VARCHAR(64),
+  PRIMARY KEY (`route`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Phone`;
+CREATE TABLE `Phone` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `country` INT UNSIGNED NOT NULL,
+  `tel` VARCHAR(16) NOT NULL,
+  `extension` INT,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Request`;
+CREATE TABLE `Request` (
+  `session` INT UNSIGNED NOT NULL,
+  `ipaddress` INT NOT NULL,
+  `useragent` INT NOT NULL,
+  `route` INT UNSIGNED NOT NULL,
+  `url` INT UNSIGNED NOT NULL,
+  `code` SMALLINT NOT NULL,
+  `block` TINYINT(3) NOT NULL DEFAULT 0,
+  `created` DATETIME NOT NULL DEFAULT NOW(),
+  `milisec` SMALLINT NOT NULL,
+  PRIMARY KEY (`session`, `created`, `milisec`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Route`;
+CREATE TABLE `Route` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `route`      VARCHAR(256) NOT NULL UNIQUE,
+  `redirect`   VARCHAR(256) DEFAULT'',
+  `component`  VARCHAR(64) DEFAULT'',
+  `option`     VARCHAR(64) DEFAULT'',
+  `template`   VARCHAR(64) DEFAULT'',
+  # Formats
+  `html`       TINYINT(1) DEFAULT 0,
+  `json`       TINYINT(1) DEFAULT 0,
+  `xml`        TINYINT(1) DEFAULT 0,
+  `csv`        TINYINT(1) DEFAULT 0,
+  `pdf`        TINYINT(1) DEFAULT 0,
+  `zip`        TINYINT(1) DEFAULT 0,
+  # Include in Sitemap
+  `sitemap`    TINYINT(1) DEFAULT 0,
+  # Security Access
+  `get`        TINYINT(1) DEFAULT 0,
+  `post`       TINYINT(1) DEFAULT 0,
+  `email`      TINYINT(1) DEFAULT 0,
+  `secure`     TINYINT(1) DEFAULT 0,
+  `cache`      TINYINT(1) DEFAULT 0,
+  `status`     TINYINT(1) DEFAULT 1,
+  `block`      TINYINT(1) DEFAULT 0,
+  `created`    DATETIME NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Session`;
+CREATE TABLE `Session` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user` INT UNSIGNED NOT NULL DEFAULT 0,
+  `token` VARCHAR(64) UNIQUE,
+  `block` TINYINT(3) DEFAULT 0,
+  `created` DATETIME NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `FeedChannel`;
+CREATE TABLE `FeedChannel` (
+  `id` INT(11) UNSIGNED NOT NULL,
+  `url` VARCHAR(255) NOT NULL UNIQUE,
+  `title` VARCHAR(32) NOT NULL,
+  `status` TINYINT(3) NOT NULL DEFAULT 0,
+  `created` TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `FeedItem`;
+CREATE TABLE `FeedItem` (
+  `id` INT(11) UNSIGNED NOT NULL,
+  `channel` INT UNSIGNED NOT NULL,
+  `category` INT UNSIGNED DEFAULT 1,
+  `url` VARCHAR(255) NOT NULL UNIQUE,
+  `title` VARCHAR(32) NOT NULL,
+  `description` TEXT NOT NULL,
+  `status` DATETIME NOT NULL,
+  `created` TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `FeedCategory`;
+CREATE TABLE `FeedCategory` (
+  `id` INT(11) UNSIGNED NOT NULL,
+  `title` INT UNSIGNED NOT NULL UNIQUE,
+  `created` TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TimeZone`;
+CREATE TABLE `TimeZone` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `timezone` VARCHAR(255),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `TokenForm`;
+CREATE TABLE `TokenForm` (
+  `session` INT UNSIGNED NOT NULL UNIQUE,
+  `token` VARCHAR(64) NOT NULL,
+  `created` DATETIME NOT NULL DEFAULT NOW(),
+  `expires` DATETIME NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 1 DAY),
+  PRIMARY KEY (`user`, `token`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Url`;
+CREATE TABLE `Url` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `url` VARCHAR(512) NOT NULL UNIQUE,
+  `scheme` VARCHAR(5) NOT NULL,
+  `host` VARCHAR(256) NOT NULL,
+  `path` VARCHAR(256),
+  `parts` TEXT,
+  `file` VARCHAR(256) NOT NULL,
+  `extension` VARCHAR(5) NOT NULL,
+  `type` VARCHAR(16) NOT NULL,
+  `mime` VARCHAR(32) NOT NULL,
+  `block` TINYINT(3) NOT NULL DEFAULT 0,
+  `created` TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS `LogAuth`;
+CREATE TABLE `LogAuth` (
+  `username`  VARCHAR(128) NOT NULL,
+  `useragent` INT UNSIGNED NOT NULL,
+  `ipaddress` INT UNSIGNED NOT NULL,
+  `result`    ENUM('Success', 'Fail', 'Delay'),
+  `failed`    ENUM('', 'Nonexistent', 'Password', 'Verified', 'Validated', 'Deactivated'),
+  `created`   DATETIME NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (`username`, `created`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `User`;
+CREATE TABLE `User` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  # Advisor is travel specific
+  `advisor`     INT UNSIGNED DEFAULT 1,
+  `username`    VARCHAR(128) NOT NULL,
+  `password`    VARCHAR(255) NOT NULL,
+  `token`       VARCHAR(32) NOT NULL,
+  `firstname`   VARCHAR(32) NOT NULL,
+  `middlename`  VARCHAR(32),
+  `lastname`    VARCHAR(32) NOT NULL,
+  `dob`         DATETIME DEFAULT '0000-00-00 00:00:00',
+  `created`     DATETIME NOT NULL DEFAULT NOW(),
+  `verified`    DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `validated`   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `status`      TINYINT(3) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `User` (`username`, `password`, `token`, `firstname`, `middlename`, `lastname`, `dob`, `created`, `verified`) VALUES (
+'brandon@adept.travel',
+'$2y$10$BqTlFw582n78e7EUwFFRR.Q9mzTkjCObqzu95Aj5Q0s6FtYEeo7bG',
+'v32pV4ShJztnYBawNYUlcrMLMilW1thN',
+'Brandon',
+'Joseph',
+'Yaniz',
+'1979-08-08 00:00:00',
+'2023-11-02 15:43:10',
+'2023-11-02 20:50:55'
+);
+
+DROP TABLE IF EXISTS `UserToken`;
+CREATE TABLE `UserToken` (
+  `user` INT UNSIGNED NOT NULL,
+  `type` ENUM('Verify', 'Validate', 'Forgot', 'Security'),
+  `token` VARCHAR(64) NOT NULL,
+  `created` DATETIME NOT NULL DEFAULT NOW(),
+  `expires` DATETIME NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 1 DAY),
+  PRIMARY KEY (`user`, `token`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserACL`;
+CREATE TABLE `UserACL` (
+  `user` INT UNSIGNED NOT NULL,
+  `acl` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`user`, `acl`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserLocation`;
+CREATE TABLE `UserLocation` (
+  `user` INT UNSIGNED NOT NULL,
+  `location` INT UNSIGNED NOT NULL,
+  `name` VARCHAR(128) DEFAULT '',
+  `primary` TINYINT(1) DEFAULT 0,
+  PRIMARY KEY (`user`, `address`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserPhone`;
+CREATE TABLE `UserPhone` (
+  `user` INT UNSIGNED NOT NULL,
+  `phone` INT UNSIGNED NOT NULL,
+  `name` VARCHAR(32) DEFAULT '',
+  `primary` TINYINT(1) DEFAULT 0,
+  PRIMARY KEY (`user`, `phone`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserCreditCard`;
+CREATE TABLE `UserCreditCard` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user` INT UNSIGNED NOT NULL,
+  `address` INT UNSIGNED NOT NULL,
+  `bin` MEDIUMINT UNSIGNED NOT NULL,
+  `last4` SMALLINT UNSIGNED NOT NULL,
+  `name` VARCHAR(32),
+  `expire` DATETIME NOT NULL,
+  `data` TEXT,
+  `created` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserIdentification`;
+CREATE TABLE `UserIdentification` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user` INT UNSIGNED NOT NULL,
+  `address` INT UNSIGNED NOT NULL,
+  `type` VARCHAR(16) NOT NULL,
+  `location` VARCHAR(2),
+  `firstname` VARCHAR(128) NOT NULL,
+  `middlename` VARCHAR(128) NOT NULL,
+  `lastname` VARCHAR(128) NOT NULL,
+  `number` VARCHAR(32) UNIQUE,
+  `gender` CHAR(1),
+  `issued` DATETIME DEFAULT '0000-00-00 00:00:00',
+  `expire` DATETIME DEFAULT '0000-00-00 00:00:00',
+  `status` TINYINT(3) DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `Useragent`;
+CREATE TABLE `Useragent` (
+  `id`        INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `useragent` VARCHAR(512) NOT NULL UNIQUE,
+  `friendly`  VARCHAR(96) NOT NULL UNIQUE,
+  `browser`   VARCHAR(32),
+  `os`        VARCHAR(16),
+  `device`    VARCHAR(32),
+  `type`      VARCHAR(16),
+  `detected`  TINYINT(1) NOT NULL,
+  `block`     TINYINT(1) NOT NULL DEFAULT 0,
+  `created`   DATETIME DEFAULT NOW(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
