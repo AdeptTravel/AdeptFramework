@@ -8,7 +8,8 @@
         "whichbrowser/parser": "^2.1",
         "anlutro/curl": "^1.5",
         "james-heinrich/getid3": "^1.9",
-        "ezyang/htmlpurifier": "^4.17"
+        "ezyang/htmlpurifier": "^4.17",
+        "web-auth/webauthn-lib": "^5.0"
     },
     "license": "BSD-3-Clause",
     "autoload": {

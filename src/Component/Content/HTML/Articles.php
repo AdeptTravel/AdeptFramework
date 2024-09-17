@@ -29,8 +29,8 @@ class Articles extends \Adept\Abstract\Component\HTML\Items
     $this->conf->controls->unpublish  = false;
   }
 
-  public function getItems(): \Adept\Data\Items\Content\Article
+  public function getItems(): \Adept\Data\Table\Content\Article
   {
-    return new \Adept\Data\Items\Content\Article();
+    return new \Adept\Data\Table\Content\Article();
   }
 }

@@ -27,6 +27,9 @@ defined('_ADEPT_INIT') or die();
  */
 class Route extends \Adept\Abstract\Data\Item
 {
+  protected string $table = 'Route';
+  protected string $index = 'route';
+
   protected array $uniqueKeys = [
     'route'
   ];
@@ -44,6 +47,7 @@ class Route extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $redirect = '';
+
   /**
    * The component
    *
@@ -163,12 +167,12 @@ class Route extends \Adept\Abstract\Data\Item
    */
   public string $created;
 
-  public function save(string $table = ''): bool
+  public function save(): bool
   {
     // Remove the / from the begining and end of a string
     $this->route = trim($this->route, '/');
 
-    return parent::save($table);
+    return parent::save();
   }
 
   public function formatSegment(string $segment): string

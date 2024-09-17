@@ -10,6 +10,8 @@ class Option extends \Adept\Document\HTML\Elements\Form\DropDown
 	{
 		parent::__construct($attr);
 
+		$this->emptyDisplay = '-- ' . $this->placeholder . ' --';
+
 		$data = [];
 
 		$vals = array_merge(
@@ -33,14 +35,14 @@ class Option extends \Adept\Document\HTML\Elements\Form\DropDown
 				$data[] = $option;
 			}
 
-			if (array_key_exists($option, $this->optionShowOn)) {
-				if (!in_array($component, $this->optionShowOn[$option])) {
-					$this->optionShowOn[$option][] = 'component=' . $component;
-				}
-			} else {
-				$this->optionShowOn[$option] = ['component=' . $component];
+			$showon = 'component=' . $component;
+
+			if (!isset($conditions[$option]) || !in_array($showon, $conditions[$option])) {
+				$conditions[$option][] = $showon;
 			}
 		}
+
+		$this->conditions = $conditions;
 
 		sort($data);
 

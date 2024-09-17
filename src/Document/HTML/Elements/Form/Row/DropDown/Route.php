@@ -22,8 +22,8 @@ class Route extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 
 		parent::__construct($attr, []);
 
-		$items = new \Adept\Data\Items\Route();
-		$data = $items->getList();
+		$table = new \Adept\Data\Table\Route();
+		$data  = $table->getData();
 
 		for ($i = 0; $i < count($data); $i++) {
 			$this->values[$data[$i]->id] = $data[$i]->route;

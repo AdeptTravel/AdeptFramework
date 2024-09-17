@@ -10,7 +10,6 @@ use Adept\Document\HTML\Head;
 
 abstract class Element
 {
-
   /**
    * Undocumented variable
    *
@@ -83,8 +82,16 @@ abstract class Element
   {
     $this->children = $children;
 
+
+
     foreach ($attr as $k => $v) {
+
       if (property_exists($this, $k) && $v != null) {
+
+        if ($k == 'value' && $v == 0) {
+          $attr['value'] = "0";
+        }
+
         $this->$k = $v;
       }
     }

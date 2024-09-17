@@ -92,9 +92,9 @@ class Request
   public function __construct(int $session)
   {
     $this->session    = $session;
-    $this->url        = new Url();
-    $this->ip         = new IPAddress();
-    $this->useragent  = new Useragent();
+    $this->url        = new Url(true);
+    $this->ip         = new IPAddress(true);
+    $this->useragent  = new Useragent(true);
     $this->route      = new Route($this->url);
     $this->data       = new Data();
     $this->status     = 200;
@@ -104,7 +104,7 @@ class Request
       $this->redirect($this->route->redirect);
     }
 
-    if ($this->route->block) {
+    if ($this->route->id == 0) {
       $this->setStatus(404);
     }
   }
@@ -146,22 +146,14 @@ class Request
 
   public function save()
   {
-    $db = \Adept\Application::getInstance()->db;
-    $query = "INSERT INTO `Request`";
-    $query .= '(`session`, `ipaddress`, `useragent`, `route`, `url`, `code`, `milisec`)';
-    $query .= 'VALUES';
-    $query .= '(?,?,?,?,?,?,?)';
-
-    $params = [
-      $this->session,
-      $this->ip->id,
-      $this->useragent->id,
-      $this->route->id,
-      $this->url->id,
-      $this->status,
-      $this->milisec
-    ];
-
-    $db->insert($query, $params);
+    $request = new \Adept\Data\Item\Request();
+    $request->session = $this->session;
+    $request->ipaddress = $this->ip->id;
+    $request->useragent = $this->useragent->id;
+    $request->route = $this->route->id;
+    $request->url = $this->url->id;
+    $request->code = $this->status;
+    $request->milisec = $this->milisec;
+    $request->save();
   }
 }

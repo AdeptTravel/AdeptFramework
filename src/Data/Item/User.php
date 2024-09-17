@@ -13,12 +13,8 @@ use \Adept\Application\Session\Request\Data\Post;
 
 class User extends \Adept\Abstract\Data\Item
 {
-  protected bool $cache = false;
-
-  protected array $connections = [
-    'address',
-    'phone'
-  ];
+  protected string $table = 'User';
+  protected string $index = 'username';
 
   protected array $uniqueKeys = [
     'username'
@@ -38,13 +34,6 @@ class User extends \Adept\Abstract\Data\Item
   protected array $postFilters = [
     'username' => 'email',
   ];
-
-  /**
-   * Undocumented variable
-   *
-   * @var int
-   */
-  public int $advisor = 0;
 
   /**
    * Undocumented variable
@@ -125,6 +114,8 @@ class User extends \Adept\Abstract\Data\Item
    */
   public string $validated;
 
+  public int $advisor;
+
   /**
    * Undocumented function
    *
@@ -180,7 +171,7 @@ class User extends \Adept\Abstract\Data\Item
     return $status;
   }
 
-  public function save(string $table = ''): bool
+  public function save(): bool
   {
     $isNew = ($this->id == 0);
     $status = parent::save();
@@ -249,7 +240,7 @@ class User extends \Adept\Abstract\Data\Item
     );
   }
 
-  protected function isDuplicate(string $table = ''): bool
+  protected function duplicate(string $table = ''): bool
   {
     $app = \Adept\Application::getInstance();
 

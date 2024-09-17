@@ -14,7 +14,6 @@ use Adept\Document\HTML\Elements\Ul;
 
 class Menu
 {
-
   public static function getMenu(array $items, int $parent = 0): Ul|null
   {
     $menu = new Ul();
@@ -39,8 +38,8 @@ class Menu
     $li = new Li();
     $url = '';
 
-    if (!empty($item->route)) {
-      $url = $item->route;
+    if (!empty($item->routeRoute)) {
+      $url = $item->routeRoute;
     } else if (!empty($item->url)) {
       $url = $item->url;
     }
@@ -57,7 +56,7 @@ class Menu
 
       if (!empty($item->image)) {
         $a->children[] = new Img([
-          'alt' => ((!empty($item->imageAlt)) ? $item->alt : $items[$i]->title)
+          'alt' => ((!empty($item->imageAlt)) ? $item->alt : $item->title)
         ]);
       }
 

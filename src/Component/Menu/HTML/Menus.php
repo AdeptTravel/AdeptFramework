@@ -5,7 +5,6 @@ namespace Adept\Component\Menu\HTML;
 defined('_ADEPT_INIT') or die('No Access');
 
 use Adept\Application;
-use Adept\Document\HTML\Head;
 
 class Menus extends \Adept\Abstract\Component\HTML\Items
 {
@@ -14,7 +13,6 @@ class Menus extends \Adept\Abstract\Component\HTML\Items
    */
   public function __construct()
   {
-
     parent::__construct();
 
     Application::getInstance()->html->head->meta->title = 'Menus';
@@ -28,8 +26,24 @@ class Menus extends \Adept\Abstract\Component\HTML\Items
     $this->conf->controls->unpublish  = false;
   }
 
-  public function getItems(): \Adept\Data\Items\Menu
+  public function getTable(): \Adept\Data\Table\Menu
   {
-    return new \Adept\Data\Items\Menu();
+    $get  = Application::getInstance()->session->request->data->get;
+    $data = new \Adept\Data\Table\Menu();
+
+    $data->title = $get->getString('title', '');
+
+    if ($get->exists('status')) {
+      $data->status = $get->getInt('status', 1);
+    }
+
+    if ($get->exists('secure')) {
+      $data->secure = $get->getBool('secure', false);
+    }
+
+    $data->sort = $get->getString('sort', 'route');
+    $data->dir = $get->getString('dir', 'asc');
+
+    return $data;
   }
 }

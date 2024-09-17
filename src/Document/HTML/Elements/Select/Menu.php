@@ -20,7 +20,7 @@ class Menu extends \Adept\Document\HTML\Elements\Select
 
 		parent::__construct($attr, []);
 
-		$items = new \Adept\Data\Items\Menu($db);
+		$items = new \Adept\Data\Table\Menu($db);
 		$data = $items->getData();
 
 		for ($i = 0; $i < count($data); $i++) {

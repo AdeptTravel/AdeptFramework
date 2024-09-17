@@ -8,6 +8,12 @@ use \Adept\Application\Database;
 
 class Url extends \Adept\Abstract\Data\Item
 {
+
+  protected string $table = 'Url';
+  protected string $index = 'url';
+
+  protected array $excludeKeys = ['raw'];
+
   /**
    * The full url with QueryString
    *
@@ -98,14 +104,9 @@ class Url extends \Adept\Abstract\Data\Item
    * @param \Adept\Application\Database $db
    * @param integer $val
    */
-  public function __construct(int|string|object $val = 0, bool $cache = true)
+  public function __construct(bool $current = false)
   {
-    $this->excludeKeys[] = 'raw';
-
-    $url = '';
-
-    // URL or ID was not specificed, get the current URL
-    if (empty($val)) {
+    if ($current) {
       $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
         ? "https"
         : "http";
@@ -146,53 +147,50 @@ class Url extends \Adept\Abstract\Data\Item
       if (substr($url, -1) == '/') {
         $url = substr($url, 0, -1);
       }
-    }
 
-    //$this->raw = $this->url;
 
-    parent::__construct((((is_numeric($val) && $val > 0) || !empty($val)) ? $val : $url));
+      if (!$this->loadFromIndex($url)) {
+        // Set URL
+        $this->url = $url;
 
-    if ($this->id == 0) {
-      // Set URL
-      $this->url = $url;
+        $parsed = parse_url($url);
 
-      $parsed = parse_url($url);
+        $this->scheme = $parsed['scheme'];
+        $this->host = $parsed['host'];
+        $this->path = (!empty($parsed['path'])) ?  substr($parsed['path'], 1) : '';
 
-      $this->scheme = $parsed['scheme'];
-      $this->host = $parsed['host'];
-      $this->path = (!empty($parsed['path'])) ?  substr($parsed['path'], 1) : '';
+        // Set parts array
+        if (!empty($this->path)) {
+          $this->parts = explode('/', $this->path);
+        }
 
-      // Set parts array
-      if (!empty($this->path)) {
-        $this->parts = explode('/', $this->path);
+        // Set index of last element
+        $last = count($this->parts) - 1;
+
+        // Set file (if specificed) and extension
+        if ($last >= 0 && strpos($this->parts[$last], '.') !== false) {
+          $this->file = $this->parts[$last];
+          $this->extension = substr($this->parts[$last], strrpos($this->parts[$last], '.') + 1);
+        } else {
+          $this->extension = 'html';
+        }
+
+        $info = $this->getFormatInfo($this->extension);
+
+        if ($info !== false) {
+          $this->type = $info->type;
+          $this->mime = $info->mime;
+        } else {
+          // TODO: Format error
+          // Generated on .php and other unknown files.  Within this system it's
+          // most likly they are trying to somthing bad.  Let's kill everything
+          // and maybe mark the URL as blocked for future bad actors.
+          //\Adept\error(debug_backtrace(), 'URL format error', "No idea");
+          \Adept\Error::halt(E_ERROR, 'No idea whats going on', __FILE__, __LINE__);
+        }
+
+        $this->save();
       }
-
-      // Set index of last element
-      $last = count($this->parts) - 1;
-
-      // Set file (if specificed) and extension
-      if ($last >= 0 && strpos($this->parts[$last], '.') !== false) {
-        $this->file = $this->parts[$last];
-        $this->extension = substr($this->parts[$last], strrpos($this->parts[$last], '.') + 1);
-      } else {
-        $this->extension = 'html';
-      }
-
-      $info = $this->getFormatInfo($this->extension);
-
-      if ($info !== false) {
-        $this->type = $info->type;
-        $this->mime = $info->mime;
-      } else {
-        // TODO: Format error
-        // Generated on .php and other unknown files.  Within this system it's
-        // most likly they are trying to somthing bad.  Let's kill everything
-        // and maybe mark the URL as blocked for future bad actors.
-        //\Adept\error(debug_backtrace(), 'URL format error', "No idea");
-        \Adept\Error::halt(E_ERROR, 'No idea whats going on', __FILE__, __LINE__);
-      }
-
-      $this->save();
     }
   }
 

@@ -31,6 +31,9 @@ use \Adept\Application\Session\Request\Data\Post;
 class Content extends \Adept\Abstract\Data\Item
 {
 
+  protected string $table = 'Content';
+  protected string $index = 'route';
+
   protected array  $excludeKeys = ['path'];
 
   public int       $parent = 0;
@@ -63,9 +66,7 @@ class Content extends \Adept\Abstract\Data\Item
     return new \Adept\Data\Item\Route($this->route);
   }
 
-  public function generateRoute(string $title, string $path)
-  {
-  }
+  public function generateRoute(string $title, string $path) {}
 
   protected function getQuery(string $col = 'id'): string
   {

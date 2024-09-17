@@ -1,16 +1,17 @@
 <?php
 
-namespace Adept\Data\Items;
+namespace Adept\Data\Table;
 
 defined('_ADEPT_INIT') or die();
 
-class Route extends \Adept\Abstract\Data\Items
+class Route extends \Adept\Abstract\Data\Table
 {
+  protected string $table = 'Route';
+  protected array $like = ['route'];
 
   public string $sort = 'route';
 
   protected array $empty = ['redirect'];
-
   public string $route;
   public string $category;
   public string $component;
@@ -59,18 +60,59 @@ class Route extends \Adept\Abstract\Data\Items
    */
   public bool $zip;
 
+  /**
+   * Route is in the sitemap
+   *
+   * @var bool
+   */
   public bool $sitemap;
+
+  /**
+   * Route is allowed access to GET data
+   *
+   * @var bool
+   */
   public bool $get;
+
+  /**
+   * Route is allowed access to POST data
+   *
+   * @var bool
+   */
   public bool $post;
+
+  /**
+   * Route is allowed to send email
+   *
+   * @var bool
+   */
   public bool $email;
-  public bool $public;
+
+  /**
+   * Route is secured (requires login)
+   *
+   * @var bool
+   */
+  public bool $secure;
+
+  /**
+   * Route is allowed to cache the request
+   *
+   * @var bool
+   */
+  public bool $cache;
+
+  /**
+   * Route is blocked
+   *
+   * @var bool
+   */
   public bool $block;
 
-  //public function getList(string $query = '', array $where = [], array $params = []): array
-  public function getList(string $query = '', array $where = [], array $params = [], bool $recursive = false): array
+  protected function getItem(int $id): \Adept\Data\Item\Route
   {
-    $query = 'SELECT a.* FROM `Route` AS `a`';
-
-    return parent::getList($query, $where, $params);
+    $item = new \Adept\Data\Item\Route($id);
+    $item->loadFromId($id);
+    return $item;
   }
 }

@@ -23,8 +23,8 @@ class Menu extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 		// Parent construct has to be called after everything else
 		parent::__construct($attr);
 
-		$items = new \Adept\Data\Items\Menu();
-		$data = $items->getList();
+		$table = new \Adept\Data\Table\Menu();
+		$data  = $table->getData();
 
 		for ($i = 0; $i < count($data); $i++) {
 			$this->values[$data[$i]->id] = $data[$i]->title;

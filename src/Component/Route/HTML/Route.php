@@ -22,9 +22,9 @@ class Route extends \Adept\Abstract\Component\HTML\Item
     $app = Application::getInstance();
 
     if ($app->session->request->data->get->getInt('id', 0) > 0) {
-      $app->html->head->meta->title = 'Edit Menu Item';
+      $app->html->head->meta->title = 'Edit Route';
     } else {
-      $app->html->head->meta->title = 'New Menu Item';
+      $app->html->head->meta->title = 'New Route';
     }
 
     $this->conf->controls->save       = true;
@@ -36,6 +36,12 @@ class Route extends \Adept\Abstract\Component\HTML\Item
 
   public function getItem(int $id = 0): \Adept\Data\Item\Route
   {
-    return new \Adept\Data\Item\Route($id);
+    $item = new \Adept\Data\Item\Route();
+
+    if ($id > 0) {
+      $item->loadFromID($id);
+    }
+
+    return $item;
   }
 }

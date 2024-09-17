@@ -10,6 +10,8 @@ class Template extends \Adept\Document\HTML\Elements\Form\DropDown
 	{
 		parent::__construct($attr);
 
+		$this->emptyDisplay = '-- ' . $this->placeholder . ' --';
+
 		$data = [];
 
 		$dirs = array_merge(

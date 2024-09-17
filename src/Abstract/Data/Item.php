@@ -4,44 +4,46 @@ namespace Adept\Abstract\Data;
 
 defined('_ADEPT_INIT') or die('No Access');
 
+use \Adept\Application;
 use \Adept\Application\Session\Request\Data\Post;
 
 abstract class Item
 {
   /**
-   * Allow caching?
-   *
-   * @var bool
-   */
-  protected bool $cache;
-
-  /**
-   * The path to the cache folder
+   * Name of the associated database table
    *
    * @var string
    */
-  protected string $cachePath = '';
+  protected string $table = '';
 
   /**
-   * The cache file name
+   * The column that can be used for loading outside of the ID column
    *
    * @var string
    */
-  protected string $cacheFile = '';
+  protected string $index = '';
 
   /**
-   * Undocumented variable
+   * table columns to filter with the LIKE % SQL command
    *
    * @var array
    */
-  protected array $connections = [];
+  protected array $like = [];
 
   /**
-   * The column used when the construct function is called
+   * Specifies tables to join, as $table => $column
    *
-   * @var string
+   * @var array
    */
-  protected string $indexCol = '';
+  protected array $joinInner = [];
+
+  /**
+   * Specifies tables to join, as $table => $column
+   *
+   * @var array
+   */
+  protected array $joinLeft = [];
+
 
   /**
    * Undocumented variable
@@ -49,13 +51,6 @@ abstract class Item
    * @var array
    */
   protected array $uniqueKeys = [];
-
-  /**
-   * The name of the data item, used for error messages
-   *
-   * @var string
-   */
-  protected string $errorName = 'item';
 
   /**
    * List of public variabled to exclude from saving into db
@@ -72,11 +67,18 @@ abstract class Item
   protected array $excludeKeysOnNew = [];
 
   /**
-   * Undocumented variable
+   * The last filter used
    *
    * @var array
    */
-  protected array $index = [];
+  protected array $filter = [];
+
+  /**
+   * The last dataset returned
+   *
+   * @var array
+   */
+  protected array $data;
 
   /**
    * The original data, used to 
@@ -101,156 +103,53 @@ abstract class Item
   protected array $required;
 
   /**
-   * Name of the associated database table
-   *
-   * @var string
-   */
-  protected string $table = '';
-
-  /**
-   * ID of the record in the database table
+   * ID of the item in the database table
    *
    * @var int
    */
   public int $id = 0;
 
   /**
-   * Undocumented variable
+   * Array of errors, used when displaying error messages to users.
    *
    * @var array
    */
   public array $error = [];
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\Database $db
-   * @param  int                         $id
-   * @param  object|null|null            $obj
-   */
-  public function __construct(int|string|object $val = 0, bool $cache = true)
-  {
-
-    $table  = get_class($this);
-    $parts  = explode('\\', $table);
-    $offset = ($parts[0] == 'Adept') ? 3 : 5;
-    $parts  = array_splice($parts, $offset);
-
-    $this->errorName = end($parts);
-
-    if (empty($this->table)) {
-      $this->table = implode('', $parts);
-    }
-
-    //
-    // Cache
-    //
-
-    $this->cache = $cache;
-    $this->cachePath = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
-
-    switch (gettype($val)) {
-      case 'integer':
-        if ($val != 0) {
-          $this->cacheFile = $val . '.php';
-          $this->load($val, 'id');
-        } else {
-          $this->init();
-        }
-        break;
-
-      case 'string':
-        if (empty($this->indexCol)) {
-          $this->indexCol = strtolower(end($parts));
-        }
-        $this->cacheFile = hash('md5', $val) . '.php';
-        $this->load($val, $this->indexCol);
-        break;
-
-      case 'object':
-        $this->loadFromObj($val);
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  public function __destruct()
-  {
-    if (!file_exists($this->cachePath . $this->cachePath) && $this->cache) {
-      $this->cacheSave();
-    }
-  }
-
-  public function init()
-  {
-    $reflect    = new \ReflectionClass($this);
-    $properties = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
-
-    $this->excludeKeys[] = 'error';
-
-    foreach ($properties as $p) {
-
-      $key  = (string)$p->name;
-      $type = (string)$p->getType();
-
-      if ($key == 'id' && $this->$key == 0) {
-        continue;
-      }
-
-      if (
-        !in_array($key, $this->excludeKeys)
-        //&& !in_array($key, $this->excludeKeysOnNew)
-        && !isset($this->$key)
-      ) {
-        switch ($type) {
-          case 'string':
-            // Check if the string contains a MySQL DateTime
-            if (in_array($key, ['archive', 'created', 'modified', 'publish'])) {
-              $this->$key = '0000-00-00 00:00:00';
-            } else {
-              $this->$key = '';
-            }
-
-            break;
-
-          case 'int':
-            $this->$key = 0;
-
-            break;
-
-          case 'bool':
-            $this->$key = false;
-            break;
-
-          case 'array':
-            $this->$key = [];
-            break;
-
-          default:
-
-            if (strpos($type, 'Adept\Data\Item') !== false) {
-              if ($this->id == 0 && $type != get_class($this)) {
-                $this->$key = new $type();
-              }
-            }
-
-            break;
-        }
-      }
-    }
-  }
-
-  public function load(int|string $id, string $col = 'id'): bool
+  public function loadFromID(int $id): bool
   {
     $db     = \Adept\Application::getInstance()->db;
-    $status = $this->cacheLoad($col, $id);
+    $status = $this->cacheLoad($id);
 
     if (!$status) {
-      $query = $this->getQuery($col);
+      $query  = $this->getQuery();
+      $query .= ' WHERE `id` = :id';
+      $params = [':id' => $id];
 
-      if (($obj = $db->getObject($query, [$id])) !== false) {
+      if (($obj = $db->getObject($query, $params)) !== false) {
+        $this->loadFromObj($obj);
+        $status = true;
+      }
+    }
+
+    if ($status) {
+      $this->originalData = $this->getData();
+    }
+
+    return $status;
+  }
+
+  public function loadFromIndex(string|int $index): bool
+  {
+    $db     = \Adept\Application::getInstance()->db;
+    $status = $this->cacheLoad(hash('md5', $index));
+
+    if (!$status) {
+      $query = $this->getQuery();
+      $query .= " WHERE `$this->index` = :index";
+      $params = [':index' => $index];
+
+      if (($obj = $db->getObject($query, $params)) !== false) {
         $status = true;
         $this->loadFromObj($obj);
       }
@@ -263,6 +162,8 @@ abstract class Item
 
   public function loadFromObj(object $obj)
   {
+
+
     foreach ($obj as $k => $v) {
       if (!empty($v)) {
         $this->setVar($k, $v);
@@ -328,45 +229,29 @@ abstract class Item
   }
 
   /**
-   * Checks if the object has changed after loading
-   *
-   * @param  array $data
-   *
-   * @return bool
-   */
-  public function hasChanged(array $data = []): bool
-  {
-    if (empty($data)) {
-      $data = $this->getData();
-    }
-
-    return ($this->originalData != $data);
-  }
-
-  /**
    * Saves the current data object in the db
    *
    * @param  string $table
    *
    * @return bool
    */
-  public function save(string $table = ''): bool
+  public function save(): bool
   {
     $status = false;
-    $app = \Adept\Application::getInstance();
+    $app    = Application::getInstance();
     $data   = $this->getData();
 
-    if ($this->hasChanged($data)) {
-
-      if (empty($table)) {
-        $table = $this->table;
-      }
-
+    if ($this->changed($data)) {
       if ($this->id == 0) {
+
         // Insert
-        if ($this->isDuplicate()) {
+        if ($this->duplicate()) {
           // Duplicate
-          $this->setError('Duplicate', 'The ' . $this->errorName . ' already exists.');
+          $this->setError('Duplicate', 'The data already exists in table ' . $this->table . '.');
+
+          // TODO: Add check for is Valid here
+          // } else if (!$this->valid()) {
+
         } else {
           // Insert
           if (($id = $app->db->insertSingleTableGetId($this->table, $data)) !== false) {
@@ -375,21 +260,21 @@ abstract class Item
           }
         }
       } else {
-        $status = $app->db->updateSingleTable($table, $data);
-      }
-    }
-    $this->cachePurge();
+        $status = $app->db->updateSingleTable($this->table, $data);
 
-    if ($status && $this->cache) {
+        if (!$status) {
+          $this->setError('Failed', 'Failed to save the data to table ' . $this->table . '.');
+        }
+      }
+    } else {
+      $status = true;
+    }
+
+    if ($status) {
       $this->cacheSave();
     }
 
     return $status;
-  }
-
-  public function cachePurge()
-  {
-    array_map('unlink', array_filter((array) glob($this->cachePath . '*')));
   }
 
   /**
@@ -397,11 +282,11 @@ abstract class Item
    *
    * @return array
    */
-  public function getData(bool $sql = true): array
+  protected function getData(bool $sql = true): array
   {
     $data       = [];
-    $reflect    = new \ReflectionClass($this);
-    $properties = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
+    $reflection = new \ReflectionClass($this);
+    $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
 
     $this->excludeKeys[] = 'error';
 
@@ -476,20 +361,98 @@ abstract class Item
   }
 
   /**
-   * Delete the current record
+   * Allows data objects to override the query used to retrieve the data
    *
-   * @return bool
+   * @param  string $col
+   *
+   * @return string
    */
-  public function delete(): bool
+  protected function getQuery(): string
   {
-    $app = \Adept\Application::getInstance();
-    $result = false;
+    $query  = $this->getSelectQuery();
+    $query .= ' FROM ' . $this->table;
+    $query .= $this->getJoinQuery();
 
-    if ($this->id > 0) {
-      $result = $app->db->delete($this->table, $this->id);
+    return $query;
+  }
+
+  protected function getSelectQuery(): string
+  {
+    $db   = Application::getInstance()->db;
+    $cols = $db->getColumns($this->table);
+
+    for ($i = 0; $i < count($cols); $i++) {
+      //$cols[$i] = "`$this->table`.`$cols[$i]`";
+      $cols[$i] = "`$cols[$i]`";
     }
 
-    return $result;
+    $joins = array_merge($this->joinInner, $this->joinLeft);
+
+    if (!empty($joins)) {
+      foreach ($joins as $table => $col) {
+        $tmp = $db->getColumns($this->table);
+
+        for ($i = 0; $i < count($tmp); $i++) {
+          $tmp[$i] = "`$table`.`$tmp[$i]`";
+        }
+
+        $cols = array_merge($cols, $tmp);
+      }
+    }
+
+    $query = 'SELECT ';
+
+    for ($i = 0; $i < count($cols); $i++) {
+      if ($i > 0) {
+        $query .= ', ';
+      }
+
+      $as = str_replace('`', '', $cols[$i]);
+
+      if (strpos($cols[$i], '.') !== false) {
+        $parts = explode('.', $as);
+        $as = strtolower($parts[0]) . ucfirst($parts[1]);
+      }
+
+      $query .= $cols[$i] . " AS  `$as`";
+    }
+
+    return $query;
+  }
+
+  protected function getJoinQuery(bool $recursive = false)
+  {
+    $query = '';
+
+    if (!empty($this->joinInner)) {
+      foreach ($this->joinInner as $t => $c) {
+        $query .= " INNER JOIN $t ON $this->table.$c = $t.id";
+      }
+    }
+
+    if (!empty($this->joinLeft)) {
+      foreach ($this->joinLeft as $t => $c) {
+        $query .= " LEFT JOIN $t ON $this->table.$c = $t.id";
+      }
+    }
+
+    return $query;
+  }
+
+  /**
+   * Set's an error, errors are used on the client end
+   *
+   * @param  string $title
+   * @param  string $message
+   *
+   * @return void
+   */
+  protected function setError(string $title, string $message)
+  {
+    $this->error[] = (object)[
+      'title' => $title,
+      'message' => $message
+    ];
   }
 
   protected function setVar(string $key, $val)
@@ -533,130 +496,19 @@ abstract class Item
   }
 
   /**
-   * Allows data objects to override the query used to retrieve the data
+   * Checks if the object has changed after loading
    *
-   * @param  string $col
+   * @param  array $data
    *
-   * @return string
+   * @return bool
    */
-  protected function getQuery(string $col = 'id'): string
+  protected function changed(array $data = []): bool
   {
-    $query  = 'SELECT * FROM `' . $this->table . '` AS a';
-    $query .= ' WHERE `' . $col . '` = ?';
-
-    return $query;
-  }
-
-  protected function cacheLoad(string|int $key, string $val): bool
-  {
-    $status = false;
-    if ($this->cache) {
-
-      if (file_exists($this->cachePath . $this->cacheFile)) {
-        $serialized = file_get_contents($this->cachePath . $this->cacheFile);
-        $serialized = substr($serialized, 15);
-        $data      = unserialize($serialized);
-
-        foreach ($data as $k => $v) {
-          $this->$k = $v;
-        }
-
-        $status = true;
-      }
-    }
-    return $status;
-  }
-
-  protected function cacheSave()
-  {
-    $data = [];
-
-    $reflect    = new \ReflectionClass($this);
-    $properties = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
-
-    $this->excludeKeys[] = 'error';
-
-    for ($i = 0; $i < count($properties); $i++) {
-      $type = $properties[$i]->getType();
-      $key  = $properties[$i]->name;
-
-      if (
-        isset($this->$key)
-        && !in_array($key, $this->excludeKeys)
-        && !($this->id == 0 && in_array($key, $this->excludeKeysOnNew))
-      ) {
-
-        switch ($type) {
-          case 'string':
-          case 'int':
-          case 'bool':
-          case 'array':
-          case 'DateTime':
-            $data[$key] = $this->$key;
-            break;
-
-          default:
-
-            if (strpos($type, "Adept\\Data\\") !== false) {
-              $data[$key] = $this->$key->id;
-            }
-
-            break;
-        }
-      }
+    if (empty($data)) {
+      $data = $this->getData();
     }
 
-    $serialized = serialize($data);
-    $cache = '<?php die(); ?>' . $serialized;
-
-    if (!file_exists($this->cachePath)) {
-      mkdir($this->cachePath, 0774, true);
-    }
-
-    if (!empty($this->cacheFile)) {
-      file_put_contents($this->cachePath . $this->cacheFile, $cache);
-    }
-  }
-
-
-  public function getLinked(string $table, string $namespace): array
-  {
-    $app = \Adept\Application::getInstance();
-    $objs = [];
-
-    $ids = $app->db->getObjects(
-      "SELECT `" . $table . "` FROM `" . $this->table . '_' . $table . "` WHERE `" . $this->table . "` = ?",
-      [$this->id]
-    );
-
-    for ($i = 0; $i < count($ids); $i++) {
-      $objs[] = new $namespace($ids[$i]->$table);
-    }
-
-    return $objs;
-  }
-
-  public function map(string $table, array $data)
-  {
-    $app  = \Adept\Application::getInstance();
-    $keys = '';
-    $vals = '';
-
-    if (!$app->db->isDuplicate($table, $data)) {
-      foreach ($data as $k => $v) {
-        $keys .= "`$k`, ";
-        $vals .= '?, ';
-
-        $params[] = $v;
-      }
-
-      $keys = substr($keys, 0, strlen($keys) - 2);
-      $vals = substr($vals, 0, strlen($vals) - 2);
-
-      $query = "INSERT INTO `$table` ($keys) VALUES ($vals)";
-
-      $app->db->insert($query, $params);
-    }
+    return ($this->originalData != $data);
   }
 
   /**
@@ -664,7 +516,7 @@ abstract class Item
    *
    * @return bool
    */
-  protected function isValid(): bool
+  protected function valid(): bool
   {
     if (isset($this->required)) {
       foreach ($this->required as $k => $v) {
@@ -673,8 +525,8 @@ abstract class Item
         }
       }
     } else if (!empty($this->required)) {
-      $reflect = new \ReflectionClass($this);
-      $properties = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
+      $reflection = new \ReflectionClass($this);
+      $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
 
       $this->excludeKeys[] = 'error';
 
@@ -699,16 +551,12 @@ abstract class Item
    *
    * @return int|bool
    */
-  protected function isDuplicate(string $table = ''): int|bool
+  protected function duplicate(): int|bool
   {
     $app = \Adept\Application::getInstance();
 
-    if (empty($table)) {
-      $table = $this->table;
-    }
-
     if (!empty($this->uniqueKeys)) {
-      $query = "SELECT `id` FROM `$table`";
+      $query = "SELECT `id` FROM `$this->table`";
 
       for ($i = 0; $i < count($this->uniqueKeys); $i++) {
         $key      = $this->uniqueKeys[$i];
@@ -724,23 +572,101 @@ abstract class Item
 
       return $app->db->getInt($query, $params);
     } else {
-      return $app->db->isDuplicate($table, $this->getData());
+      return $app->db->isDuplicate($this->table, $this->getData());
     }
   }
 
   /**
-   * Set's an error, errors are used on the client end
+   * Delete the current item
    *
-   * @param  string $title
-   * @param  string $message
+   * @return bool
+   */
+  public function delete(): bool
+  {
+    $app = \Adept\Application::getInstance();
+    $result = false;
+
+    if ($this->id > 0) {
+      $result = $app->db->delete($this->table, $this->id);
+    }
+
+    return $result;
+  }
+
+  /**
+   * Load the cache data
+   *
+   * @param  int|string $val
+   *
+   * @return bool
+   */
+
+  protected function cacheLoad(string $file): bool
+  {
+    $status = false;
+
+    $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
+    $file = $file . '.php';
+
+    if (file_exists($path . $file)) {
+      // Get the serialized cache data
+      $cache = file_get_contents($path . $file);
+      // Remove security block
+      $cache = substr($cache, 15);
+      // Unseralize the data
+      $data  = unserialize($cache);
+
+      // Set the objects variable from the cache data
+      foreach ($data as $k => $v) {
+        $this->$k = $v;
+      }
+
+      $status = true;
+    }
+
+    return $status;
+  }
+
+  /**
+   * Save the cache file
+   *
+   * @param  string $col - The columns to use as an index for the cache file
    *
    * @return void
    */
-  protected function setError(string $title, string $message)
+  protected function cacheSave()
   {
-    $this->error[] = (object)[
-      'title' => $title,
-      'message' => $message
-    ];
+    $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
+
+    $data = $this->getData();
+
+    $serialized = serialize($data);
+    $cache = '<?php die(); ?>' . $serialized;
+
+    if (!file_exists($path)) {
+      mkdir($path, 0774, true);
+    }
+
+    file_put_contents($path . $this->id . '.php', $cache);
+    file_put_contents($path . hash('md5', $this->index) . '.php', $cache);
+
+    // Delete all table cache files related the the database table of this item
+    $path = str_replace("Data/Item/", "Data/Table/", $path);
+
+    array_map([$this, 'cacheDelete'], array_filter((array) glob($path . '*')));
+  }
+
+  // Method to delete files and directories
+  protected function cacheDelete($item)
+  {
+    if (is_dir($item)) {
+      // Recursively delete directory contents
+      array_map([$this, 'deleteItem'], glob($item . '/*'));
+      // Remove the empty directory
+      rmdir($item);
+    } else {
+      // Delete the file
+      unlink($item);
+    }
   }
 }

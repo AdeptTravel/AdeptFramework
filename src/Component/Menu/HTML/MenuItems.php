@@ -5,22 +5,17 @@ namespace Adept\Component\Menu\HTML;
 defined('_ADEPT_INIT') or die('No Access');
 
 use Adept\Application;
-use Adept\Document\HTML\Head;
 
 class MenuItems extends \Adept\Abstract\Component\HTML\Items
 {
   /**
    * Undocumented function
-   *
-   * @param  \Adept\Application        $app
-   * @param  \Adept\Document\HTML\Head $head
    */
   public function __construct()
   {
     parent::__construct();
 
-    $app = Application::getInstance();
-    $app->html->head->meta->title = 'Menu Items';
+    Application::getInstance()->html->head->meta->title = 'Menu Items';
 
     // Component controls
     $this->conf->controls->delete     = false;
@@ -31,8 +26,63 @@ class MenuItems extends \Adept\Abstract\Component\HTML\Items
     $this->conf->controls->unpublish  = false;
   }
 
-  protected function getItems(): \Adept\Data\Items\Menu\Item
+  public function getTable(): \Adept\Data\Table\Menu\Item
   {
-    return new \Adept\Data\Items\Menu\Item();
+    $get  = Application::getInstance()->session->request->data->get;
+    $data = new \Adept\Data\Table\Menu\Item();
+
+    if ($get->exists('menu')) {
+      $data->menu = $get->getInt('menu');
+    }
+
+    if ($get->exists('parent')) {
+      $data->parent = $get->getInt('parent');
+    }
+
+    if ($get->exists('route')) {
+      $data->route = $get->getInt('route');
+    }
+
+    $data->title = $get->getString('title');
+
+    if ($get->exists('status')) {
+      $data->status = $get->getInt('status', 1);
+    }
+
+    $data->sort = $get->getString('sort', 'route');
+    $data->dir  = $get->getString('dir', 'asc');
+
+    return $data;
+  }
+
+  public function getDataset(): \Adept\Data\Dataset\Menu\Item
+  {
+    $get  = Application::getInstance()->session->request->data->get;
+    $data = new \Adept\Data\Dataset\Menu\Item();
+
+    //$table->status = $get->getInt('status', 99);
+
+    if ($get->exists('menu')) {
+      $data->menu = $get->getInt('menu');
+    }
+
+    if ($get->exists('parent')) {
+      $data->parent = $get->getInt('parent');
+    }
+
+    if ($get->exists('route')) {
+      $data->route = $get->getInt('route');
+    }
+
+    $data->title = $get->getString('title');
+
+    if ($get->exists('status')) {
+      $data->status = $get->getInt('status', 1);
+    }
+
+    $data->sort = $get->getString('sort', 'route');
+    $data->dir = $get->getString('dir', 'asc');
+
+    return $data;
   }
 }

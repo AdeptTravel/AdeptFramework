@@ -267,6 +267,25 @@ class Database
     return $status;
   }
 
+  public function getColumns($table): array|bool
+  {
+
+    $result = false;
+
+    try {
+      $stmt = $this->connection->prepare("DESCRIBE `$table`");
+      $stmt->execute();
+      $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (\PDOException $e) {
+    }
+
+    if (!$result) {
+      //echo "\n\nDB->getColumns Table: $table\n\n";
+    }
+
+    return $result;
+  }
+
   public function getString(string $query, array $params = []): string|bool
   {
     $result = $this->getValue($query, $params);

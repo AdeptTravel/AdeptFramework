@@ -4,12 +4,13 @@ namespace Adept\Component\Menu\HTML;
 
 defined('_ADEPT_INIT') or die('No Access');
 
+
 use Adept\Application;
 
 class MenuItem extends \Adept\Abstract\Component\HTML\Item
 {
   /**
-   * Undocumented function
+   * Init
    */
   public function __construct()
   {
@@ -32,12 +33,12 @@ class MenuItem extends \Adept\Abstract\Component\HTML\Item
 
   public function getItem(int $id = 0): \Adept\Data\Item\Menu\Item
   {
-    $app = Application::getInstance();
+    $item = new \Adept\Data\Item\Menu\Item();
 
-    if ($id == 0) {
-      $id = $app->session->request->data->get->getInt('id');
+    if ($id > 0) {
+      $item->loadFromID($id);
     }
 
-    return new \Adept\Data\Item\Menu\Item($id, false);
+    return $item;
   }
 }

@@ -49,11 +49,12 @@ class Authentication
   public function __construct(Data &$data)
   {
     $this->data = $data;
-    $this->user = new User(
-      (($id = $data->server->getInt('auth.userid', 0)) > 0) ? $id : 0
-    );
+    $this->user = new User();
 
-    $this->status = ($this->user->id > 0 && $this->user->verified != '0000-00-00 00:00:00');
+    if (($id = $data->server->getInt('auth.userid', 0)) > 0) {
+      $this->user->loadFromId($id);
+      $this->status = ($this->user->id > 0 && $this->user->verified != '0000-00-00 00:00:00');
+    }
   }
 
   /**

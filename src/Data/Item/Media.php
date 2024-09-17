@@ -9,6 +9,9 @@ use \Adept\Application\Database;
 class Media extends \Adept\Abstract\Data\Item
 {
 
+  protected string $table = 'Media';
+  //protected string $index = '';
+
   protected array $uniqueKeys = ['file'];
 
   /**
@@ -127,15 +130,6 @@ class Media extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $modified;
-
-  public function __construct(int|string|object $val = 0, bool $cache = true)
-  {
-    if (is_string($val)) {
-      $this->file = $val;
-    }
-
-    parent::__construct($val, $cache);
-  }
 
   public function loadInfo()
   {

@@ -18,7 +18,7 @@ class Route extends \Adept\Document\HTML\Elements\Datalist
 	{
 		parent::__construct($attr, []);
 
-		$items = new \Adept\Data\Items\Route($db);
+		$items = new \Adept\Data\Table\Route($db);
 		$data = $items->getData();
 
 		for ($i = 0; $i < count($data); $i++) {

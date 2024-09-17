@@ -7,6 +7,4 @@ use DateTime;
 defined('_ADEPT_INIT') or die('No Access');
 
 
-class Files extends \Adept\Abstract\Data\Item
-{
-}
+class Files extends \Adept\Abstract\Data\Item {}

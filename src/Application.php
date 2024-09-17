@@ -121,13 +121,16 @@ class Application
     }
 
     // Check various block lists
-    $this->block = (
+    if (
       $this->session->block
       || $this->session->request->ip->block
       || $this->session->request->route->block
       || $this->session->request->url->block
       || $this->session->request->useragent->block
-    );
+    ) {
+      http_response_code(403);
+      die('<h1>403 - Forbidden</h1>');
+    }
 
     $namespace = "\\Adept\\Document\\" . $this->session->request->url->type;
     $doc = $this->session->request->url->extension;

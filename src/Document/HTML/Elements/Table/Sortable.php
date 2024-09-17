@@ -25,7 +25,6 @@ use Adept\Document\HTML\Elements\Input\Hidden;
  */
 class Sortable extends Table
 {
-
 	public array $data = [];
 
 	/**
@@ -76,7 +75,8 @@ class Sortable extends Table
 	 */
 	public function __construct(array $attr = [], array $data = [])
 	{
-		$app = Application::getInstance();
+		$app  = Application::getInstance();
+		$head = $app->html->head;
 
 		$this->data    = $data;
 		$this->path    = '/' . $app->session->request->url->path;
@@ -85,10 +85,13 @@ class Sortable extends Table
 
 		parent::__construct($attr, []);
 
-		$app->html->head->css->addFile('form.table.css');
+		$head->css->addFile('table.css');
+		$head->javascript->addFile('form.table.js');
+		$head->javascript->addFile('table.ajax.js');
+		$head->javascript->addFile('table.toggle.js');
 
 		if ($this->reorder) {
-			$app->html->head->javascript->addFile('table.reorder.js');
+			$head->javascript->addFile('table.sortable.js');
 		}
 	}
 
@@ -107,18 +110,31 @@ class Sortable extends Table
 	public function getBuffer(): string
 	{
 		$app  = Application::getInstance();
-		$path = '/' . $app->session->request->url->path;
-		$sort = $app->session->request->data->get->getString('sort', '');
-		$dir  = $app->session->request->data->get->getString('dir', 'asc');
+		$get = $app->session->request->data->get;
+		$url = $app->session->request->url;
+
+		$path = '/' . $url->path;
+		$sort = $get->getString('sort', '');
+		$dir  = $get->getString('dir', 'asc');
+
+		$parts = $get->getArray();
+
+		foreach (['dir', 'sort'] as $v) {
+			if (array_key_exists($v, $parts)) {
+				unset($parts[$v]);
+			}
+		}
+
+		$query = http_build_query($parts);
 
 		if ($this->reorder) {
+
 			$this->header = array_merge([(object)[
 				'column' 	=> 'order',
 				'title' 	=> '',
 				'edit' 		=> false,
 				'css' 		=> ['fa-solid', 'fa-grip-vertical', 'grab']
 			]], $this->header);
-			//<i class="fa-solid fa-grip-vertical"></i>
 		}
 
 		if (!empty($this->header)) {
@@ -128,7 +144,8 @@ class Sortable extends Table
 			for ($i = 0; $i < count($this->header); $i++) {
 				$col   = &$this->header[$i];
 
-				$href  = $path . '?sort=' . $col->column;
+				$href  = $path . '?' . ((!empty($query)) ? $query . '&' : '');
+				$href .= 'sort=' . $col->column;
 				$href .= '&dir=' . (($sort == $col->column && $dir == 'asc') ? 'desc' : 'asc');
 				$html  = $col->title;
 
@@ -157,78 +174,7 @@ class Sortable extends Table
 				$tbody->css[] = 'reorder';
 			}
 
-			//die('<pre>' . print_r($this->data, true));
-
-			//for ($i = 0; $i < count($this->data); $i++) {
-			//	$tbody->children[] = $this->getRow($this->data[$i]);
-			//}
-
 			$tbody->children = $this->getRows();
-
-			/*
-			for ($i = 0; $i < count($this->data); $i++) {
-				$row = &$this->data[$i];
-				$tr = new Tr();
-
-				if ($this->reorder) {
-					//draggable="true"
-					//data-id="1"
-					//data-group="1"
-
-					$tr->draggable = true;
-
-					if ($this->reorder) {
-						if (isset($row->id)) {
-							$tr->data['id'] = $row->id;
-
-							if (isset($row->parent)) {
-								$tr->data['group'] = $row->parent;
-							}
-						}
-					}
-				}
-
-				for ($j = 0; $j < count($this->header); $j++) {
-					$col = &$this->header[$j];
-					$index = $col->column;
-					$td = new Td();
-
-					for ($k = 0; $k < count($col->css); $k++) {
-						if (substr($col->css[$k], 0, 3) != 'fa-') {
-							$td->css[] = $col->css[$k];
-						}
-					}
-
-					if ($col->column == 'id') {
-						$td->scope = 'row';
-						//$td->html = '<input type="text" name="id" value="' . $row->$index . '" disabled>';
-						$td->html = '<input type="hidden" name="id" value="' . $row->$index . '">' . $row->$index;
-					} else if (in_array('fa-solid', $col->css)) {
-						$td->html = '<i class="' . $col->column . ' ' . implode(' ', $col->css) . ' ' . (($row->$index == 1) ? 'on' : 'off') . '">';
-					} else {
-						if ($col->edit) {
-
-							$text = $row->$index;
-
-							if (isset($row->level)) {
-								$text = ' ' . str_repeat("-", $row->level) . ' ' . $text;
-							}
-
-							$td->children[] = new A([
-								'href' => $path . '/edit?id=' . $row->id,
-								'text' => $text
-							]);
-						} else {
-							$td->html = $row->$index;
-						}
-					}
-
-					$tr->children[] = $td;
-				}
-
-				$tbody->children[] = $tr;
-			}
-			*/
 		}
 
 		$this->children[] = $tbody;
@@ -241,7 +187,7 @@ class Sortable extends Table
 		$rows = [];
 
 		for ($i = 0; $i < count($this->data); $i++) {
-			$rows = $this->getRow($this->data[$i]);
+			$rows[] = $this->getRow($this->data[$i]);
 		}
 
 		return $rows;

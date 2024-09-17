@@ -26,8 +26,50 @@ class Routes extends \Adept\Abstract\Component\HTML\Items
     $this->conf->controls->unpublish  = false;
   }
 
-  public function getItems(): \Adept\Data\Items\Route
+  public function getTable(): \Adept\Data\Table\Route
   {
-    return new \Adept\Data\Items\Route();
+    $get  = Application::getInstance()->session->request->data->get;
+    $data = new \Adept\Data\Table\Route();
+
+    //$table->status = $get->getInt('status', 99);
+    if ($get->exists('status')) {
+      $data->status = $get->getInt('status', 1);
+    }
+
+    $data->component = $get->getString('component');
+    $data->option = $get->getString('option');
+    $data->template = $get->getString('template');
+    $data->route = strtolower($get->getString('route'));
+
+
+    if ($get->exists('sitemap')) {
+      $data->sitemap = $get->getInt('sitemap', 1);
+    }
+
+    if ($get->exists('get')) {
+      $data->get = $get->getInt('get', 1);
+    }
+
+    if ($get->exists('post')) {
+      $data->post = $get->getInt('post', 1);
+    }
+
+    if ($get->exists('email')) {
+      $data->email = $get->getInt('email', 1);
+    }
+
+    if ($get->exists('secure')) {
+      $data->secure = $get->getInt('secure', 1);
+    }
+
+    if ($get->exists('block')) {
+      $data->block = $get->getInt('block', 1);
+    }
+
+    $data->sort = $get->getString('sort', 'route');
+    $data->dir = $get->getString('dir', 'asc');
+
+
+    return $data;
   }
 }

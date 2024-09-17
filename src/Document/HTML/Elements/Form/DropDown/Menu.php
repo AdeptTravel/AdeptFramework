@@ -23,8 +23,8 @@ class Menu extends \Adept\Document\HTML\Elements\Form\DropDown
 			$attr['placeholder'] = 'Menu';
 		}
 
-		$items = new \Adept\Data\Items\Menu();
-		$data = $items->getList();
+		$items = new \Adept\Data\Table\Menu();
+		$data = $items->getData();
 
 		for ($i = 0; $i < count($data); $i++) {
 			$this->values[$data[$i]->id] = $data[$i]->title;

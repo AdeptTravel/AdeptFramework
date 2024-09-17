@@ -7,9 +7,7 @@ defined('_ADEPT_INIT') or die('No Access');
 class Image extends \Adept\Data\Item\Media
 {
 
-  protected string $table    = 'Media';
-  protected string $indexCol = 'file';
-
+  protected string $table = 'Media';
   public string $type = 'Image';
 
   public function getRelPath(

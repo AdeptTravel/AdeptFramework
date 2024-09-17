@@ -6,27 +6,22 @@ defined('_ADEPT_INIT') or die('No Access');
 
 
 use Adept\Application;
-use Adept\Document\HTML;
-use Adept\Document\HTML\Body\Status;
-use Adept\Document\HTML\Head;
-
 
 class Menu extends \Adept\Abstract\Component\HTML\Item
 {
   /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application        $app
-   * @param  \Adept\Document\HTML\Head $head
+   * Init
    */
-  public function __construct(Application &$app, Head &$head)
+  public function __construct()
   {
-    parent::__construct($app, $head);
+    parent::__construct();
 
-    if ($this->app->session->request->data->get->getInt('id', 0) > 0) {
-      $head->meta->title = 'Edit Menu';
+    $app = Application::getInstance();
+
+    if ($app->session->request->data->get->getInt('id', 0) > 0) {
+      $app->html->head->meta->title = 'Edit Menu';
     } else {
-      $head->meta->title = 'New Menu';
+      $app->html->head->meta->title = 'New Menu';
     }
 
     $this->conf->controls->save       = true;
@@ -38,6 +33,12 @@ class Menu extends \Adept\Abstract\Component\HTML\Item
 
   public function getItem(int $id = 0): \Adept\Data\Item\Menu
   {
-    return new \Adept\Data\Item\Menu($this->app->db, $id);
+    $item = new \Adept\Data\Item\Menu();
+
+    if ($id > 0) {
+      $item->loadFromID($id);
+    }
+
+    return $item;
   }
 }

@@ -1,38 +1,56 @@
 <?php
 
-/**
- * \Adept\Data\Item\Menu
- *
- * The menu data item
- *
- * @package    AdeptFramework.Data
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
+use Adept\Application;
+use Adept\Document\HTML\Elements\Form;
+use Adept\Document\HTML\Elements\Form\Row;
+use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
+use Adept\Document\HTML\Elements\Form\Row\Input;
+use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
+use Adept\Document\HTML\Elements\Input\Hidden;
+use Adept\Document\HTML\Elements\Input\Toggle;
 
-namespace Adept\Data\Item;
+// Shortcuts
+$app  = Application::getInstance();
+$get  = $app->session->request->data->get;
+$head = $app->html->head;
+$item = $this->getItem($get->getInt('id'));
 
-defined('_ADEPT_INIT') or die();
+$form = new Form([
+  'method' => 'post',
+]);
 
-use \Adept\Application\Database;
+$form->children[] = new Hidden(['name' => 'id', 'value' => $item->id]);
 
-/**
- * \Adept\Data\Item\Menu
- *
- * The menu data item
- *
- * @package    AdeptFramework.Data
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
-class Menu extends \Adept\Abstract\Data\Item
-{
-  public string $title = '';
-  public string $css = '';
-  public bool $secure = false;
-  public \DateTime $publishStart;
-  public \DateTime $publishEnd;
-  public \DateTime $created;
-}
+$form->children[] = new Input([
+  'label' => 'Title',
+  'name' => 'title',
+  'value' => $item->title,
+  'placeholder' => 'Title',
+  'required' => true
+]);
+
+$form->children[] = new Input([
+  'label' => 'CSS Class',
+  'name' => 'css',
+  'value' => $item->css,
+  'placeholder' => 'CSS Class',
+  'required' => true
+]);
+
+$form->children[] = new Status([
+  'label' => 'Status',
+  'name'  => 'status',
+  'value' => (string)$item->status
+]);
+
+$form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);
+
+$form->children[] = new DateTime([
+  'name'  => 'created',
+  'label' => 'Created',
+  'value' => $item->created
+]);
+
+echo $form->getBuffer();
+
+//echo '<pre>' . print_r($item, true) . '</pre>';

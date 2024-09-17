@@ -33,20 +33,17 @@ class HTML extends \Adept\Abstract\Component
    */
   public function __construct()
   {
-    $app = \Adept\Application::getInstance();
+    $app = Application::getInstance();
 
     $this->conf = $app->conf->component;
-
-    if ($app->session->request->url->type == 'HTML') {
-      $this->status = new Status();
-    }
+    $this->status = new Status();
   }
 
   // This is here for maybe loading sub-templates from a template file.  Might
   // just get rid of it, not sure yet.
   public function getHTML(string $template): string
   {
-    $app        = \Adept\Application::getInstance();
+    $app        = Application::getInstance();
     $buffer     = '';
     $request    = &$app->session->request;
     $component  = $request->route->component;

@@ -29,20 +29,17 @@ use \Adept\Application\DataBase;
  */
 class IPAddress extends \Adept\Abstract\Data\Item
 {
+  protected string $table = 'IPAddress';
+  protected string $index = 'ipaddress';
+
   public string $ipaddress = '';
   public string $encoded;
   public bool $block = false;
   public string $created = '0000-00-00 00:00:00';
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\DataBase $db
-   * @param  int                         $val
-   */
-  public function __construct(int|string|object $val = 0, bool $cache = true)
+  public function __construct(bool $current = false)
   {
-    if (empty($val)) {
+    if ($current) {
       $ipaddress = '';
 
       if (!empty($_SERVER["HTTP_CF_CONNECTING_IP"])) {
@@ -76,19 +73,13 @@ class IPAddress extends \Adept\Abstract\Data\Item
       }
 
       $ipaddress = filter_var($ipaddress, FILTER_VALIDATE_IP);
+
+      if (!$this->loadFromIndex($ipaddress)) {
+        $this->ipaddress = $ipaddress;
+        $this->encoded = inet_pton($ipaddress);
+        $this->save();
+      }
     }
-
-    parent::__construct((((is_numeric($val) && $val > 0) || !empty($val)) ? $val : $ipaddress));
-
-    //if (!$this->loadCache()) {
-    //if (!empty($ipaddress)) {
-    if ($this->id == 0) {
-      $this->ipaddress = $ipaddress;
-      $this->encoded = inet_pton($ipaddress);
-
-      $this->save();
-    }
-    //}
   }
 
   protected function validate(): bool

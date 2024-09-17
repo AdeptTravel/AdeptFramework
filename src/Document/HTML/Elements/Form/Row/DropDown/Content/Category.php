@@ -22,7 +22,7 @@ class Category extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 
 		parent::__construct($attr);
 
-		$items = new \Adept\Data\Items\Content\Category();
+		$items = new \Adept\Data\Table\Content\Category();
 
 		$data = $items->getList();
 

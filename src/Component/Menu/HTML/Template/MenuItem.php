@@ -1,5 +1,6 @@
 <?php
 
+use Adept\Application;
 use Adept\Document\HTML\Elements\Form;
 use Adept\Document\HTML\Elements\Form\Row;
 use Adept\Document\HTML\Elements\Input\Toggle;
@@ -13,20 +14,20 @@ use Adept\Document\HTML\Elements\Form\Row\DropDown\Route;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
 
 
+// Shortcuts
+$app  = Application::getInstance();
+$get  = $app->session->request->data->get;
+$post = $app->session->request->data->post;
+$head = $app->html->head;
+$item = $this->getItem($get->getInt('id'));
+
+$head->javascript->addFile('form.conditional.js');
+
 $form = new Form([
   'method' => 'post',
 ]);
 
-$item = $this->getItem();
 
-$form->children[] = new Status([
-  'value' => $item->status
-]);
-
-//$form->children[] = new Row(['label' => 'Status'], [new Toggle([
-//  'name' => 'status',
-//  'checked' => ($item->status == 1)
-//])]);
 
 $form->children[] = new Input([
   'required' => true,
@@ -36,17 +37,21 @@ $form->children[] = new Input([
   'placeholder' => 'Title'
 ]);
 
-$form->children[] = new Menu($this->app->db, [
+$form->children[] = new Status([
+  'value' => (string)$item->status
+]);
+
+$form->children[] = new Menu([
   'required'    => true,
   'name'        => 'menu',
   'value'       => ((isset($item->menu)) ? $item->menu : 0),
   'placeholder' => 'Menu'
 ]);
 
-$form->children[] = new Item($this->app->db, [
+$form->children[] = new Item([
   'label'       => 'Parent',
   'name'        => 'parent',
-  'value'       => ((isset($item->parent)) ? $item->parent : 0),
+  'value'       => ((isset($item->parent)) ? (string)$item->parent : "0"),
   'placeholder' => 'Parent'
 ]);
 
@@ -63,7 +68,7 @@ $form->children[] = new DropDown([
   ]
 ]);
 
-$form->children[] = new Route($this->app->db, [
+$form->children[] = new Route([
   'required'    => true,
   'label'       => 'Route',
   'showOn'      => ['linktype=Route'],

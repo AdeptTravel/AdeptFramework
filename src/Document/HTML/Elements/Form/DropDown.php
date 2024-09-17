@@ -23,7 +23,7 @@ class DropDown extends \Adept\Document\HTML\Elements\Div
   public bool   $autofocus;
   public bool   $disabled;
   public string $form;
-  public string $value = '';
+  public int|string $value = '';
   // Select specific attributes
   public array  $values = [];
   // Input specific attributes
@@ -65,6 +65,10 @@ class DropDown extends \Adept\Document\HTML\Elements\Div
     $app = Application::getInstance();
 
     $app->html->head->javascript->addFile('form.dropdown.js');
+
+    if (!empty($this->conditions)) {
+      $app->html->head->javascript->addFile('form.conditional.js');
+    }
 
     $this->css[]   = 'dropdown';
 
@@ -145,6 +149,7 @@ class DropDown extends \Adept\Document\HTML\Elements\Div
       ]);
 
       if (array_key_exists($k, $this->conditions)) {
+
         for ($i = 0; $i < count($this->conditions[$k]); $i++) {
           $option->showOn[] = $this->conditions[$k][$i];
         }

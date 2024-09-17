@@ -10,83 +10,108 @@ use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\Option;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\Template;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
 use Adept\Document\HTML\Elements\Form\Row\Input;
+use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
 use Adept\Document\HTML\Elements\H3;
 use Adept\Document\HTML\Elements\Hr;
-use Adept\Document\HTML\Elements\Input\Toggle;
 
+use Adept\Document\HTML\Elements\Input\Hidden;
+use Adept\Document\HTML\Elements\Input\Toggle;
+use Adept\Document\HTML\Elements\Tab;
+use Adept\Document\HTML\Elements\Tabs;
 
 // Shortcuts
 $app  = Application::getInstance();
+$get  = $app->session->request->data->get;
+$post = $app->session->request->data->post;
 $head = $app->html->head;
+$item = $this->getItem($get->getInt('id'));
 
 $head->javascript->addFile('form.conditional.js');
+
+$tabs = new Tabs();
 
 $form = new Form([
   'method' => 'post',
 ]);
 
-$form->children[] = new Hr();
-
-$form->children[] = new Status([
-  'label' => 'Status',
-  'name'  => 'status',
-  'value' => $this->item->status
-]);
+$form->children[] = new Hidden(['name' => 'id', 'value' => $item->id]);
 
 $form->children[] = new Input([
   'label' => ' Route',
   'name' => 'route',
-  'value' => $this->item->route,
+  'value' => $item->route,
   'placeholder' => 'Route',
   'required' => true
 ]);
 
+$tabDetails = new Tab([
+  'title' => 'Details'
+]);
 
-$form->children[] = new Component([
+$tabDetails->children[] = new Status([
+  'label' => 'Status',
+  'name'  => 'status',
+  'value' => (string)$item->status
+]);
+
+$tabDetails->children[] = new Component([
   'required' => true,
   'label' => 'Component',
   'name' => 'component',
-  'value' => $this->item->component
+  'value' => $item->component
 ]);
 
 
-$form->children[] = new Option([
+$tabDetails->children[] = new Option([
   'required' => true,
   'label' => 'Option',
   'name' => 'option',
-  'value' => $this->item->option,
+  'value' => $item->option,
 ]);
 
-$form->children[] = new Template([
+$tabDetails->children[] = new Template([
   'required' => true,
   'label' => 'Template',
   'name' => 'template',
-  'value' => $this->item->template
+  'value' => $item->template
 ]);
 
+$tabDetails->children[] = new DateTime([
+  'name'  => 'created',
+  'label' => 'Created',
+  'value' => $item->created
+]);
 
-$form->children[] = new Hr();
-$form->children[] = new H3(['text' => 'Sitemap']);
-$form->children[] = new Row(['label' => 'Include in Sitemap'], [new Toggle(['name' => 'sitemap', 'checked' => $this->item->sitemap])]);
+$tabDetails->children[] = new Row(['label' => 'Include in Sitemap'], [new Toggle(['name' => 'sitemap', 'checked' => $item->sitemap])]);
 
-$form->children[] = new Hr();
-$form->children[] = new H3(['text' => 'Formats']);
-$form->children[] = new Row(['label' => 'Allow HTML'], [new Toggle(['name' => 'html', 'checked' => $this->item->html])]);
-$form->children[] = new Row(['label' => 'Allow JSON'], [new Toggle(['name' => 'json', 'checked' => $this->item->json])]);
-$form->children[] = new Row(['label' => 'Allow CSV'], [new Toggle(['name' => 'csv', 'checked' => $this->item->csv])]);
-$form->children[] = new Row(['label' => 'Allow PDF'], [new Toggle(['name' => 'pdf', 'checked' => $this->item->pdf])]);
-$form->children[] = new Row(['label' => 'Allow ZIP'], [new Toggle(['name' => 'zip', 'checked' => $this->item->zip])]);
+$tabs->children[] = $tabDetails;
 
+$tabFormat = new Tab([
+  'title' => 'Formats'
+]);
 
+$tabFormat->children[] = new Row(['label' => 'Allow HTML'], [new Toggle(['name' => 'html', 'checked' => $item->html])]);
+$tabFormat->children[] = new Row(['label' => 'Allow JSON'], [new Toggle(['name' => 'json', 'checked' => $item->json])]);
+$tabFormat->children[] = new Row(['label' => 'Allow CSV'], [new Toggle(['name' => 'csv', 'checked' => $item->csv])]);
+$tabFormat->children[] = new Row(['label' => 'Allow PDF'], [new Toggle(['name' => 'pdf', 'checked' => $item->pdf])]);
+$tabFormat->children[] = new Row(['label' => 'Allow ZIP'], [new Toggle(['name' => 'zip', 'checked' => $item->zip])]);
 
-$form->children[] = new Hr();
-$form->children[] = new H3(['text' => 'Security']);
-$form->children[] = new Row(['label' => 'Allow Get'], [new Toggle(['name' => 'get', 'checked' => $this->item->get])]);
-$form->children[] = new Row(['label' => 'Allow Post'], [new Toggle(['name' => 'post', 'checked' => $this->item->post])]);
-$form->children[] = new Row(['label' => 'Allow Email'], [new Toggle(['name' => 'email', 'checked' => $this->item->email])]);
-$form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $this->item->secure])]);
-$form->children[] = new Row(['label' => 'Block Route'], [new Toggle(['name' => 'block', 'checked' => $this->item->block])]);
+$tabs->children[] = $tabFormat;
+
+$tabSecurity = new Tab([
+  'title' => 'Security'
+]);
+
+$tabSecurity->children[] = new Row(['label' => 'Allow Get'], [new Toggle(['name' => 'get', 'checked' => $item->get])]);
+$tabSecurity->children[] = new Row(['label' => 'Allow Post'], [new Toggle(['name' => 'post', 'checked' => $item->post])]);
+$tabSecurity->children[] = new Row(['label' => 'Allow Email'], [new Toggle(['name' => 'email', 'checked' => $item->email])]);
+$tabSecurity->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);
+$tabSecurity->children[] = new Row(['label' => 'Block Route'], [new Toggle(['name' => 'block', 'checked' => $item->block])]);
+
+$tabs->children[] = $tabSecurity;
+
+$form->children[] = $tabs;
 
 echo $form->getBuffer();
 
-//echo '<pre>' . print_r($this->item, true) . '</pre>';
+//echo '<pre>' . print_r($item, true) . '</pre>';

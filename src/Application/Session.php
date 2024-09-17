@@ -33,7 +33,6 @@ use \Adept\Data\Item\Url;
  */
 class Session
 {
-
   /**
    * Reference to the Authentication object
    *
@@ -90,54 +89,52 @@ class Session
     $this->auth   = new Authentication($this->data);
     $this->token  = $this->data->server->getString('session.token', session_id(), 32);
 
-    $db = \Adept\Application::getInstance()->db;
     $id = $this->data->server->getInt('session.id', 0);
 
     if ($id == 0) {
-      $id = $db->insertSingleTableGetId(
-        'Session',
-        [
-          'user' => $this->auth->user->id,
-          'token' => $this->token
-        ]
-      );
+      $session = new \Adept\Data\Item\Session();
 
-      if ($id !== false) {
+      if (!$session->loadFromIndex($this->token)) {
 
-        $this->id = $id;
+        $session->user = $this->auth->user->id;
+        $session->token = $this->token;
 
-        $this->data->server->set('session.id', $id);
-        $this->data->server->set('session.token', $this->token);
-        $this->data->server->set('session.block', false);
+        if ($session->save()) {
 
-        $this->request = new Request($id);
-      } else {
-        \Adept\error(debug_backtrace(), 'Session ID', 'No Session ID is available');
-      }
-    } else {
+          $this->id = $session->id;
 
-      $this->request = new Request($id);
+          $this->data->server->set('session.id', $id);
+          $this->data->server->set('session.token', $this->token);
+          $this->data->server->set('session.block', false);
 
-      $time = $this->data->server->getInt('session.timestamp', 0, 11);
-
-      // Check for timeout, which is 20 minutes
-      // TODO: Set the timeout time in the config file
-      if (
-        $this->auth->user->id > 0
-        && empty($this->token)
-        && time() > ($time + (20 * 60))
-      ) {
-        $url = new Url($db);
-
-        $this->data->server->set('auth.userid', 0);
-
-        $redirect = (!empty($this->request->url->path))
-          ? '?redirect=' . $this->request->url->path
-          : '';
-
-        $this->request->redirect('/login' . $redirect, false);
+          $this->request = new Request($this->id);
+        } else {
+          die('Session Error');
+          //\Adept\error(debug_backtrace(), 'Session ID', 'No Session ID is available');
+        }
       }
     }
+
+    $this->request = new Request($this->id);
+
+    $time = $this->data->server->getInt('session.timestamp', 0, 11);
+
+    // Check for timeout, which is 20 minutes
+    // TODO: Set the timeout time in the config file
+    if (
+      $this->auth->user->id > 0
+      && empty($this->token)
+      && time() > ($time + (20 * 60))
+    ) {
+      $this->data->server->set('auth.userid', 0);
+
+      $redirect = (!empty($this->request->url->path))
+        ? '?redirect=' . $this->request->url->path
+        : '';
+
+      $this->request->redirect('/login' . $redirect, false);
+    }
+
 
     $this->data->server->set('session.timestamp', time());
     $this->data->server->set('session.token', $this->token);
@@ -178,15 +175,10 @@ class Session
   public function setBlock(bool $block)
   {
     if ($this->data->server->getBool('session.block') != $block && $this->id > 0) {
-
-      $db = \Adept\Application::getInstance()->db;
-
-      $this->data->server->set('session.block', $block);
-
-      $this->db->update(
-        'UPDATE `Session` SET `block` = ? WHERE `id` = ?',
-        [$block, $this->id]
-      );
+      $session = new \Adept\Data\Item\Session();
+      $session->loadFromID($this->id);
+      $session->block = true;
+      $session->save();
     }
   }
 }

@@ -12,7 +12,6 @@ class Input extends \Adept\Document\HTML\Elements\Form\Row
 {
   protected string $inputNameSpace = "\\Adept\\Document\\HTML\\Elements\\Input";
 
-
   public string $label;
   public bool $required = false;
 

@@ -13,6 +13,14 @@ class Status
   public array $error = [];
   public array $warning = [];
 
+  /**
+   * Add a success message
+   *
+   * @param  string $title
+   * @param  string $message
+   *
+   * @return void
+   */
   public function addSuccess(string $title, string $message)
   {
     $this->success[] = (object)[
@@ -21,6 +29,14 @@ class Status
     ];
   }
 
+  /**
+   * Undocumented function
+   *
+   * @param  string $title
+   * @param  string $message
+   *
+   * @return void
+   */
   public function addError(string $title, string $message)
   {
     $this->error[] = (object)[
@@ -29,6 +45,14 @@ class Status
     ];
   }
 
+  /**
+   * Add a warning status message
+   *
+   * @param  string $title
+   * @param  string $message
+   *
+   * @return void
+   */
   public function addWarning(string $title, string $message)
   {
     $this->warning[] = (object)[
@@ -37,6 +61,14 @@ class Status
     ];
   }
 
+  /**
+   * Add informational status, this is neutral info not success/warn/fail
+   *
+   * @param  string $title
+   * @param  string $message
+   *
+   * @return void
+   */
   public function addInformation(string $title, string $message)
   {
     $this->information[] = (object)[
@@ -45,6 +77,11 @@ class Status
     ];
   }
 
+  /**
+   * Returns HTML with all the status messages
+   *
+   * @return string
+   */
   public function getBuffer(): string
   {
     $html = '<div class="status">';

@@ -1,12 +1,12 @@
 <?php
 
-namespace Adept\Data\Items\Content;
+namespace Adept\Data\Table\Content;
 
 defined('_ADEPT_INIT') or die();
 
 use \Adept\Application\Database;
 
-class Category extends \Adept\Data\Items\Content
+class Category extends \Adept\Data\Table\Content
 {
   protected string $table = 'Content';
 

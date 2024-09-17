@@ -17,7 +17,7 @@ if (array_key_exists('menu', $args)) {
   $query .= " ORDER BY b.id ASC, a.order ASC";
 
 
-$items = new \Adept\Data\Items\Menu\Item($this->app->db);
+$items = new \Adept\Data\Table\Menu\Item($this->app->db);
 $items->load();
 
 if (count($items->data) > 0) {

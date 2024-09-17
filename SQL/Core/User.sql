@@ -13,8 +13,6 @@ CREATE TABLE `LogAuth` (
 DROP TABLE IF EXISTS `User`;
 CREATE TABLE `User` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  # Advisor is travel specific
-  `advisor`     INT UNSIGNED DEFAULT 1,
   `username`    VARCHAR(128) NOT NULL,
   `password`    VARCHAR(255) NOT NULL,
   `token`       VARCHAR(32) NOT NULL,
@@ -49,6 +47,18 @@ CREATE TABLE `UserToken` (
   `created` DATETIME NOT NULL DEFAULT NOW(),
   `expires` DATETIME NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 1 DAY),
   PRIMARY KEY (`user`, `token`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `UserPasskey`;
+CREATE TABLE `UserPasskey` (
+    `user`       INT UNSIGNED NOT NULL,
+    `credential` VARCHAR(255) NOT NULL,
+    `publickey`  TEXT NOT NULL,
+    `count`      INT UNSIGNED NOT NULL,
+    `source`     ENUM('direct', 'indirect', 'none'),
+    `created`    DATETIME NOT NULL DEFAULT NOW(),
+    `lastused`   DATETIME NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (`user`, `credential`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `UserACL`;

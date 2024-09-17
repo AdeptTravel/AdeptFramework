@@ -1,6 +1,6 @@
 <?php
 
-namespace Adept\Data\Items;
+namespace Adept\Data\Table;
 
 defined('_ADEPT_INIT') or die();
 

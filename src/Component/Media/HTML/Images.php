@@ -35,11 +35,11 @@ class Images extends \Adept\Abstract\Component\HTML\Items
   }
 
 
-  public function getItems(): \Adept\Data\Items\Media\Image
+  public function getItems(): \Adept\Data\Table\Media\Image
   {
     $get = Application::getInstance()->session->request->data->get;
 
-    $items = new \Adept\Data\Items\Media\Image(false);
+    $items = new \Adept\Data\Table\Media\Image(false);
 
     $items->path = ($get->exists('path')) ? $get->getString('path') : '/';
     $items->load();

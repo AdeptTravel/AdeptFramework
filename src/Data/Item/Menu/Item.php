@@ -15,9 +15,6 @@ namespace Adept\Data\Item\Menu;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application\Database;
-use \Adept\Application\Session\Request\Data\Post;
-
 /**
  * \Adept\Data\Item\Menu\Item
  *
@@ -30,6 +27,14 @@ use \Adept\Application\Session\Request\Data\Post;
  */
 class Item extends \Adept\Abstract\Data\Item
 {
+  protected string $table = 'MenuItem';
+  protected string $index = 'title';
+
+  protected array $joinInner = [
+    'Menu' => 'menu',
+    'Route' => 'route'
+  ];
+
   public int    $menu;
   public int    $parent = 0;
   public int    $route;
@@ -42,21 +47,5 @@ class Item extends \Adept\Abstract\Data\Item
   public string $params = '';
   public int    $order = 0;
   public int    $status = 0;
-
-  public \DateTime $created;
-
-  public function getMenu(): \Adept\Data\Item\Menu
-  {
-    return new \Adept\Data\Item\Menu($this->menu);
-  }
-
-  public function getParent(): \Adept\Data\Item\Menu\Item
-  {
-    return new \Adept\Data\Item\Menu\Item($this->parent);
-  }
-
-  public function getRoute(): \Adept\Data\Item\Route
-  {
-    return new \Adept\Data\Item\Route($this->route);
-  }
+  public string $created;
 }

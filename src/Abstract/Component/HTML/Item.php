@@ -17,10 +17,9 @@ abstract class Item extends \Adept\Abstract\Component\HTML
   public function __construct()
   {
     parent::__construct();
-    $app    = \Adept\Application::getInstance();
-    $get    = &$app->session->request->data->get;
-    $post   = &$app->session->request->data->post;
-    $status = null;
+    $app  = Application::getInstance();
+    $get  = &$app->session->request->data->get;
+    $post = &$app->session->request->data->post;
 
     if (
       $get->getInt('id') > 0 &&
@@ -31,32 +30,39 @@ abstract class Item extends \Adept\Abstract\Component\HTML
       die("You're' being a naughty.");
     }
 
-    // Determin if the id is sent via get or post
-    $id = ($get->getInt('id', 0) > 0)
-      ? $get->getInt('id', 0)
-      : $post->getInt('id', 0);
-
     $action = $post->getString('action', '');
 
+    // POST
+
+    // Determin if the id is sent via get or post
+    $id = (!empty($action))
+      ? $post->getInt('id', 0)
+      : $get->getInt('id', 0);
+
+    $item = $this->getItem($id);
+
+    //echo '<pre>' . print_r($_POST, true) . '</pre>';
+    //echo '<pre>' . print_r($item, true) . '</pre>';
+    //die();
     if (strpos($action, 'save') !== false) {
       $item = $this->getItem();
+
       $item->loadFromPost($post);
 
       if ($id > 0) {
         $item->id = $id;
       }
 
-      if ($status = $item->save()) {
-        $this->status->addInformation('Success', 'The data was successfuly saved.');
+      if ($item->save()) {
+        $this->status->addSuccess('Success', 'The data was successfuly saved.');
       } else {
-
-        for ($i = 0; $i < count($this->item->error); $i++) {
-          $this->status->addError('Error', $this->item->error[$i]);
+        for ($i = 0; $i < count($item->error); $i++) {
+          $this->status->addError('Error', $item->error[$i]);
         }
       }
     }
-    if (!empty($action) && $status) {
 
+    if (!empty($action) && !empty($this->status->success)) {
       $path = '/' . $app->session->request->url->path;
       $path = substr($path, 0, strrpos($path, '/'));
 

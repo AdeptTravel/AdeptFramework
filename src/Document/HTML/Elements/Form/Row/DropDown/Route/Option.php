@@ -22,13 +22,14 @@ class Option extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 			glob(FS_CORE_COMPONENT . '*/HTML/Template/*'),
 			glob(FS_SITE_COMPONENT . '*/HTML/Template/*')
 		);
-
+		//die('<pre>' . print_r($vals, true));
 		$conditions = [];
 
 		for ($i = 0; $i < count($vals); $i++) {
 			$parts = explode('/', substr($vals[$i], 1));
 
-			$option = $parts[count($parts) - 1] = substr($parts[count($parts) - 1], 0, -4);
+			$option = $parts[count($parts) - 1];
+			$option = substr($parts[count($parts) - 1], 0, -4);
 			$component = $parts[count($parts) - 3];
 
 			if ($component == 'HTML') {
@@ -40,12 +41,10 @@ class Option extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 				$data[] = $option;
 			}
 
-			if (array_key_exists($option, $conditions)) {
-				if (!in_array($component, $conditions[$option])) {
-					$conditions[$option][] = $component;
-				}
-			} else {
-				$conditions[$option] = [$component];
+			$showon = 'component=' . $component;
+
+			if (!isset($conditions[$option]) || !in_array($showon, $conditions[$option])) {
+				$conditions[$option][] = $showon;
 			}
 		}
 
