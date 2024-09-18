@@ -76,11 +76,14 @@ $tabDetails->children[] = new Template([
   'value' => $item->template
 ]);
 
-$tabDetails->children[] = new DateTime([
-  'name'  => 'created',
-  'label' => 'Created',
-  'value' => $item->created
+$form->children[] = new DateTime([
+  'name'     => 'created',
+  'label'    => 'Created',
+  'value'    => $item->created,
+  'readonly' => true
 ]);
+
+
 
 $tabDetails->children[] = new Row(['label' => 'Include in Sitemap'], [new Toggle(['name' => 'sitemap', 'checked' => $item->sitemap])]);
 

@@ -46,9 +46,10 @@ $form->children[] = new Status([
 $form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);
 
 $form->children[] = new DateTime([
-  'name'  => 'created',
-  'label' => 'Created',
-  'value' => $item->created
+  'name'     => 'created',
+  'label'    => 'Created',
+  'value'    => $item->created,
+  'readonly' => true
 ]);
 
 echo $form->getBuffer();

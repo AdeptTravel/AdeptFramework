@@ -126,7 +126,7 @@ $form->children[] = new DateTime(
     'label'    => 'Created',
     'name'     => 'created',
     'value'    => (!empty($item->created)) ? $item->created : '0000-00-00 00:00:00',
-    'disabled' => true,
+    'readonly' => true,
   ]
 );
 

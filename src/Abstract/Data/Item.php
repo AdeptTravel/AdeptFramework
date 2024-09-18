@@ -123,7 +123,7 @@ abstract class Item
 
     if (!$status) {
       $query  = $this->getQuery();
-      $query .= ' WHERE `id` = :id';
+      $query .= " WHERE `$this->table`.`id` = :id";
       $params = [':id' => $id];
 
       if (($obj = $db->getObject($query, $params)) !== false) {
@@ -378,43 +378,38 @@ abstract class Item
 
   protected function getSelectQuery(): string
   {
-    $db   = Application::getInstance()->db;
-    $cols = $db->getColumns($this->table);
+    $db    = Application::getInstance()->db;
+    $cols  = $db->getColumns($this->table);
+    $joins = array_merge($this->joinInner, $this->joinLeft);
+
+    $query = 'SELECT ';
 
     for ($i = 0; $i < count($cols); $i++) {
-      //$cols[$i] = "`$this->table`.`$cols[$i]`";
-      $cols[$i] = "`$cols[$i]`";
+
+      if ($i > 0) {
+        $query .= ', ';
+      }
+
+      if (!empty($joins)) {
+        $query .= "`$this->table`.";
+      }
+
+      $query .= "`$cols[$i]` AS `$cols[$i]`";
     }
 
     $joins = array_merge($this->joinInner, $this->joinLeft);
 
     if (!empty($joins)) {
       foreach ($joins as $table => $col) {
-        $tmp = $db->getColumns($this->table);
 
-        for ($i = 0; $i < count($tmp); $i++) {
-          $tmp[$i] = "`$table`.`$tmp[$i]`";
+        $cols = $db->getColumns($table);
+
+        for ($i = 0; $i < count($cols); $i++) {
+          $query .= ', ';
+          $query .= "`$table`.`$cols[$i]` AS ";
+          $query .= strtolower($table) . ucfirst($cols[$i]);
         }
-
-        $cols = array_merge($cols, $tmp);
       }
-    }
-
-    $query = 'SELECT ';
-
-    for ($i = 0; $i < count($cols); $i++) {
-      if ($i > 0) {
-        $query .= ', ';
-      }
-
-      $as = str_replace('`', '', $cols[$i]);
-
-      if (strpos($cols[$i], '.') !== false) {
-        $parts = explode('.', $as);
-        $as = strtolower($parts[0]) . ucfirst($parts[1]);
-      }
-
-      $query .= $cols[$i] . " AS  `$as`";
     }
 
     return $query;
@@ -457,41 +452,43 @@ abstract class Item
 
   protected function setVar(string $key, $val)
   {
-    $reflection = new \ReflectionProperty($this, $key);
-    $type = $reflection->getType()->getName();
+    if (property_exists($this, $key)) {
+      $reflection = new \ReflectionProperty($this, $key);
+      $type = $reflection->getType()->getName();
 
-    switch ($type) {
-      case 'string':
-        $this->$key = (string)$val;
-        break;
+      switch ($type) {
+        case 'string':
+          $this->$key = (string)$val;
+          break;
 
-      case 'int':
-        $this->$key = (int)$val;
-        break;
+        case 'int':
+          $this->$key = (int)$val;
+          break;
 
-      case 'bool':
-        $this->$key = (bool)$val;
-        break;
+        case 'bool':
+          $this->$key = (bool)$val;
+          break;
 
-      case 'array':
-        $this->$key = json_decode($val);
-        break;
+        case 'array':
+          $this->$key = json_decode($val);
+          break;
 
-      case 'DateTime':
-        $this->$key = \DateTime::createFromFormat('Y-m-d H:i:s', $val);
-        break;
-      case 'object':
-        $this->$key = json_decode($val);
-        break;
+        case 'DateTime':
+          $this->$key = \DateTime::createFromFormat('Y-m-d H:i:s', $val);
+          break;
+        case 'object':
+          $this->$key = json_decode($val);
+          break;
 
-      default:
-        if (strpos($type, "Adept\\Data\\Item") !== false) {
-          $this->$key = new $type($val);
-        } else {
-          $this->$key = $val;
-        }
+        default:
+          if (strpos($type, "Adept\\Data\\Item") !== false) {
+            $this->$key = new $type($val);
+          } else {
+            $this->$key = $val;
+          }
 
-        break;
+          break;
+      }
     }
   }
 
