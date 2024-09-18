@@ -657,8 +657,15 @@ abstract class Item
   protected function cacheDelete($item)
   {
     if (is_dir($item)) {
-      // Recursively delete directory contents
-      array_map([$this, 'deleteItem'], glob($item . '/*'));
+
+      $items = array_diff(scandir($item), ['.', '..']);
+
+      if (count($items) > 0) {
+        for ($i = 2; $i < count($items) + 2; $i++) {
+          unlink($item . '/' . $items[$i]);
+        }
+      }
+
       // Remove the empty directory
       rmdir($item);
     } else {
