@@ -15,29 +15,64 @@ abstract class Items extends \Adept\Abstract\Component\JSON
   {
     $app  = Application::getInstance();
     $post = $app->session->request->data->post;
+    $id   = $post->getInt('id');
+    $ids  = explode(',', $post->getString('ids'));
+    $col  = $post->getString('column');
+    $val  = $post->getInt('value');
 
     if (!empty($action = $post->getString('action'))) {
-      switch ($action) {
-        case 'toggle':
-          $id = $post->getInt('id');
-          $col = $post->getString('column');
-          $val = $post->getInt('value');
-          $this->data['status'] = false;
-          $this->data['id'] = $id;
-          $this->data['column'] = $col;
-          $this->data['value'] = $val;
-          if ($id > 0 && $col != '' && ($val == 0 || $val == 1)) {
-            $this->data['status'] = $this->toggle($id, $col, $val);
-          }
+
+      if ($action == 'delete' || $action == 'publish' || $action == 'unpublish') {
+        $this->data['status'] = [];
+
+        for ($i = 0; $i < count($ids); $i++) {
+          $this->data['status'][$ids[$i]] = $this->$action($ids[$i]);
+        }
+      } else if ($action == 'toggle') {
+        $id  = $post->getInt('id');
+        $col = $post->getString('column');
+        $val = $post->getInt('value');
+
+        $this->data['id']     = $id;
+        $this->data['column'] = $col;
+        $this->data['status'] = 'fail';
+        $this->data['value']  = $val;
+
+        if ($id > 0 && $col != '' && ($val == 0 || $val == 1)) {
+          $this->data['status'] = ($this->toggle($id, $col, $val)) ? 'success' : 'fail';
+        }
       }
     }
   }
 
-  public function toggle(int $id, string $col, bool $val): bool
+  public function toggle(int $id, string $col, int $val): bool
   {
     $item = $this->getItem($id);
     $item->$col = $val;
-    return $item->save();
+    $status = $item->save();
+    return $status;
+  }
+
+  public function archive(int $id)
+  {
+    return $this->toggle($id, 'status', ITEM_STATUS_ARCHIVE);
+  }
+
+
+  public function delete(int $id)
+  {
+
+    return $this->toggle($id, 'status', ITEM_STATUS_TRASH);
+  }
+
+  public function publish(int $id)
+  {
+    return $this->toggle($id, 'status', ITEM_STATUS_ON);
+  }
+
+  public function unpublish(int $id)
+  {
+    return $this->toggle($id, 'status', ITEM_STATUS_OFF);
   }
 
   abstract protected function getTable(): \Adept\Abstract\Data\Table;

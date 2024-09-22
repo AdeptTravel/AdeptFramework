@@ -18,12 +18,12 @@ class MenuItems extends \Adept\Abstract\Component\HTML\Items
     Application::getInstance()->html->head->meta->title = 'Menu Items';
 
     // Component controls
-    $this->conf->controls->delete     = false;
+    $this->conf->controls->delete     = true;
     $this->conf->controls->duplicate  = false;
     $this->conf->controls->edit       = false;
     $this->conf->controls->new        = true;
-    $this->conf->controls->publish    = false;
-    $this->conf->controls->unpublish  = false;
+    $this->conf->controls->publish    = true;
+    $this->conf->controls->unpublish  = true;
   }
 
   public function getTable(): \Adept\Data\Table\Menu\Item

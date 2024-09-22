@@ -31,7 +31,10 @@ class Item extends \Adept\Abstract\Data\Item
   protected string $index = 'title';
 
   protected array $joinInner = [
-    'Menu' => 'menu',
+    'Menu' => 'menu'
+  ];
+
+  protected array $joinLeft = [
     'Route' => 'route'
   ];
 

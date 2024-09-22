@@ -167,6 +167,8 @@ abstract class Table
     return $item->save();
   }
 
+
+
   protected function getQuery(): string
   {
     $query  = $this->getSelectQuery();

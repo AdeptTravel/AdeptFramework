@@ -18,6 +18,7 @@ use \Adept\Document\HTML\Elements\Th;
 use \Adept\Document\HTML\Elements\Td;
 use \Adept\Document\HTML\Elements\Colgroup;
 use \Adept\Document\HTML\Elements\Col;
+use Adept\Document\HTML\Elements\Input\Checkbox;
 use Adept\Document\HTML\Elements\Input\Hidden;
 
 /**
@@ -55,6 +56,13 @@ class Sortable extends Table
 	 */
 	public bool $reorder = false;
 
+	/**
+	 * Include a checkbox to select an item in the table
+	 *
+	 * @var bool
+	 */
+	public bool $select = false;
+
 	protected string $path;
 
 	protected string $sort;
@@ -86,8 +94,8 @@ class Sortable extends Table
 		parent::__construct($attr, []);
 
 		$head->css->addFile('table.css');
-		$head->javascript->addFile('form.table.js');
-		$head->javascript->addFile('table.ajax.js');
+		$head->javascript->addFile('form.ajax.js');
+		//$head->javascript->addFile('form.table.js');
 		$head->javascript->addFile('table.toggle.js');
 
 		if ($this->reorder) {
@@ -134,6 +142,16 @@ class Sortable extends Table
 				'title' 	=> '',
 				'edit' 		=> false,
 				'css' 		=> ['fa-solid', 'fa-grip-vertical', 'grab']
+			]], $this->header);
+		}
+
+		if ($this->select) {
+
+			$this->header = array_merge([(object)[
+				'column' 	=> 'select',
+				'title' 	=> '',
+				'edit' 		=> false,
+				'css' 		=> []
 			]], $this->header);
 		}
 
@@ -198,20 +216,15 @@ class Sortable extends Table
 		$tr   = new Tr();
 		$path = '/' .  Application::getInstance()->session->request->url->path;
 
-		if ($this->reorder) {
-			//draggable="true"
-			//data-id="1"
-			//data-group="1"
+		if ($this->reorder || $this->select) {
 
-			$tr->draggable = true;
+			$tr->draggable = ($this->reorder);
 
-			if ($this->reorder) {
-				if (isset($row->id)) {
-					$tr->data['id'] = $row->id;
+			if (isset($row->id)) {
+				$tr->data['id'] = $row->id;
 
-					if (isset($row->parent)) {
-						$tr->data['group'] = $row->parent;
-					}
+				if ($this->reorder && isset($row->parent)) {
+					$tr->data['group'] = $row->parent;
 				}
 			}
 		}
@@ -245,7 +258,14 @@ class Sortable extends Table
 						'href' => $path . '/edit?id=' . $row->id,
 						'text' => $text
 					]);
+				} else if ($col->column == 'select') {
+					$td->children[] = new Checkbox([
+						'name' => 'select',
+						'value' => $row->id
+					]);
 				} else {
+					//die('<pre>' . print_r($col, true));
+					//die('<pre>' . print_r($row, true));
 					$td->html = $row->$index;
 				}
 			}

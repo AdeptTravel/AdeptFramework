@@ -46,6 +46,7 @@ for ($i = 0; $i < count($data); $i++) {
 $sortable = new \Adept\Document\HTML\Elements\Table\Sortable(['reorder' => true], $data);
 $sortable->reorder = true;
 $sortable->recursive = true;
+$sortable->select = true;
 
 /*
 [id] => 3
@@ -92,6 +93,7 @@ $sortable->recursive = true;
             [Route.block] => 0
             [Route.created] => 2024-06-20 15:40:52
 */
+
 $sortable->addCol('status', 'Status', ['fa-solid', 'fa-circle-check']);
 $sortable->addCol('title', 'Menu Item', ['main'], true);
 $sortable->addCol('url', 'URL');
