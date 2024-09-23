@@ -12,6 +12,7 @@ if (!empty($args['menu'])) {
 
   $items = new Item();
   $items->menuTitle = $args['menu'];
+  $items->status = 1;
   $data = $items->getData();
   //die('<pre>' . print_r($data, true));
   if (!empty($data)) {
