@@ -162,8 +162,6 @@ abstract class Item
 
   public function loadFromObj(object $obj)
   {
-
-
     foreach ($obj as $k => $v) {
       if (!empty($v)) {
         $this->setVar($k, $v);

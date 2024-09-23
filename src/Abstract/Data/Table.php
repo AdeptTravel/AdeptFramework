@@ -302,7 +302,7 @@ abstract class Table
 
       foreach ($filter as $key => $val) {
         $query .=  ((empty($query)) ? ' WHERE ' : ' AND ');
-        $query .= ' `' . $key . '` ';
+        $query .= ' `' . $this->table .  '`.`' . $key . '` ';
 
         if (in_array($key, $this->like)) {
           $query .= 'LIKE';
@@ -326,6 +326,9 @@ abstract class Table
         $query .= ((strpos($query, ' WHERE ') === false) ? ' WHERE ' : ' AND ');
         $query .= $this->notEmpty[$i] . " <> ''";
       }
+    }
+
+    if (!array_key_exists('status', $filter)) {
     }
 
     return $query;
