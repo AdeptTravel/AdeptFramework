@@ -3,8 +3,11 @@
 namespace Adept\Application;
 
 use \PDO;
+use \Adept\Application;
+use \Adept\Abstract\Configuration\Database as Configuration;
 
 defined('_ADEPT_INIT') or die();
+
 
 class Database
 {
@@ -15,22 +18,14 @@ class Database
    */
   protected \PDO $connection;
 
+
   /**
-   * Log queries and results
+   * Undocumented function
    *
-   * @param bool
+   * @param  \Adept\Abstract\Configuration $configuration
    */
-  protected bool $log = false;
-
-  /**
-   * Construct
-   * 
-   * @return null
-   */
-  function __construct(\Adept\Abstract\Configuration &$configuration)
+  public function __construct(Configuration &$conf)
   {
-    $conf = $configuration->database;
-
     $dsn  = 'mysql:';
     $dsn .= 'host=' . $conf->host . ';';
     $dsn .= 'dbname=' . $conf->database . ';';
@@ -67,26 +62,11 @@ class Database
    **/
   public function insert(string $query, array $params = []): bool
   {
-    $result = false;
-
     for ($i = 0; $i < count($params); $i++) {
       $params[$i] = trim($params[$i]);
     }
 
-    try {
-      $stmt = $this->connection->prepare($query);
-      $result = $stmt->execute($params);
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    return $this->execute($query, $params);
   }
 
   /**
@@ -101,30 +81,19 @@ class Database
   {
     $result = 0;
 
-    try {
-      $stmt = $this->connection->prepare($query);
+    for ($i = 0; $i < count($params); $i++) {
 
-      for ($i = 0; $i < count($params); $i++) {
+      $params[$i] = trim($params[$i]);
 
-        $params[$i] = trim($params[$i]);
-
-        if (is_bool($params[$i])) {
-          $params[$i] = ($params[$i]) ? 1 : 0;
-        }
+      if (is_bool($params[$i])) {
+        $params[$i] = ($params[$i]) ? 1 : 0;
       }
-
-      if ($stmt->execute($params) !== false) {
-        $result = (int)$this->connection->lastInsertId();
-      }
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
     }
+
+    if ($this->execute($query, $params) !== false) {
+      $result = (int)$this->connection->lastInsertId();
+    }
+
 
     return $result;
   }
@@ -141,44 +110,34 @@ class Database
   {
     $id = 0;
 
-    try {
-      $params = [];
-      $key = '';
-      $val = '';
+    $params = [];
+    $key = '';
+    $val = '';
 
-      $i = count($data);
+    $i = count($data);
 
-      foreach ($data as $k => $v) {
-        $key .= "`$k`";
-        $val .= '?';
+    foreach ($data as $k => $v) {
+      $key .= "`$k`";
+      $val .= '?';
 
-        if (is_bool($v)) {
-          $params[] = ($v) ? 1 : 0;
-        } else {
-          $params[] = trim($v);
-        }
-
-        if ($i > 1) {
-          $key .= ', ';
-          $val .= ', ';
-
-          $i = $i - 1;
-        }
+      if (is_bool($v)) {
+        $params[] = ($v) ? 1 : 0;
+      } else {
+        $params[] = trim($v);
       }
 
-      $query  = "INSERT INTO `$table` ($key) VALUES ($val)";
+      if ($i > 1) {
+        $key .= ', ';
+        $val .= ', ';
 
-      if ($this->insert($query, $params)) {
-        $id = (int)$this->connection->lastInsertId();
+        $i = $i - 1;
       }
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
+    }
+
+    $query  = "INSERT INTO `$table` ($key) VALUES ($val)";
+
+    if ($this->insert($query, $params)) {
+      $id = (int)$this->connection->lastInsertId();
     }
 
     return $id;
@@ -186,22 +145,7 @@ class Database
 
   public function update(string $query, array $params): bool
   {
-    $result = false;
-
-    try {
-      $stmt = $this->connection->prepare($query);
-      $result = $stmt->execute($params);
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    return $this->execute($query, $params);
   }
 
   /**
@@ -214,76 +158,43 @@ class Database
    **/
   public function updateSingleTable(string $table, array $data): bool
   {
-    $status = false;
+    $params = [];
+    $set    = '';
+    $i      = count($data) - 1;
 
-    try {
-      $params = [];
-      $set = '';
-      $i = count($data) - 1;
+    foreach ($data as $k => $v) {
 
-      //$dump = '';
-
-      foreach ($data as $k => $v) {
-
-        if ($k == 'id') {
-          continue;
-        }
-
-        $set .= "`$k` = ?";
-        //$dump .= "`$k` = '" . $v . "'";
-
-        if (is_bool($v)) {
-          $params[] = ($v) ? 1 : 0;
-        } else {
-          $params[] = trim($v);
-        }
-
-        if ($i > 1) {
-          $set .= ', ';
-          //$dump .= ', ';
-          $i = $i - 1;
-        }
+      if ($k == 'id') {
+        continue;
       }
 
-      $params[] = $data['id'];
+      $set .= "`$k` = ?";
 
-      $query  = "UPDATE `$table`";
-      $query .= " SET $set";
-      $query .= " WHERE `id` = ?";
+      if (is_bool($v)) {
+        $params[] = ($v) ? 1 : 0;
+      } else {
+        $params[] = trim($v);
+      }
 
-      //die($this->getQueryDebug($query, $params));
-
-      $status = $this->update($query, $params);
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
+      if ($i > 1) {
+        $set .= ', ';
+        $i = $i - 1;
+      }
     }
 
-    return $status;
+    $params[] = $data['id'];
+
+    $query  = "UPDATE `$table`";
+    $query .= " SET $set";
+    $query .= " WHERE `id` = ?";
+
+    return $this->update($query, $params);
   }
 
   public function getColumns($table): array|bool
   {
-
-    $result = false;
-
-    try {
-      $stmt = $this->connection->prepare("DESCRIBE `$table`");
-      $stmt->execute();
-      $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (\PDOException $e) {
-    }
-
-    if (!$result) {
-      //echo "\n\nDB->getColumns Table: $table\n\n";
-    }
-
-    return $result;
+    $stmt = $this->execute($query, $params);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
   }
 
   public function getString(string $query, array $params = []): string|bool
@@ -314,21 +225,8 @@ class Database
 
   public function getValue(string $query, array $params = []): string|int|bool|null
   {
-    try {
-      $stmt = $this->connection->prepare($query);
-      $stmt->execute($params);
-      $result = $stmt->fetchColumn();
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    $stmt = $this->execute($query, $params);
+    return $stmt->fetchColumn();
   }
 
   /**
@@ -340,41 +238,14 @@ class Database
    */
   public function getValues(string $query, array $params = []): array|bool
   {
-    try {
-      $stmt = $this->connection->prepare($query);
-      $stmt->execute($params);
-      $result = $stmt->fetchAll();
-    } catch (\PDOException $e) {
-
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    $stmt = $this->execute($query, $params);
+    return $result = $stmt->fetchAll();
   }
 
   public function getObject(string $query, array $params = []): object|bool
   {
-    try {
-      $stmt = $this->connection->prepare($query);
-      $stmt->execute($params);
-      $result = $stmt->fetchObject();
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    $stmt = $this->execute($query, $params);
+    return $stmt->fetchObject();
   }
 
   /**
@@ -386,22 +257,8 @@ class Database
    */
   public function getObjects(string $query, array $params = []): array|bool
   {
-    try {
-      $stmt = $this->connection->prepare($query);
-      $stmt->execute($params);
-      $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-    } catch (\PDOException $e) {
-
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
-
-    return $result;
+    $stmt = $this->execute($query, $params);
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
   }
 
   /**
@@ -466,5 +323,28 @@ class Database
     }, $query);
 
     return $query;
+  }
+
+  protected function execute(string $query, array $params = []): \PDOStatement|bool
+  {
+
+    if (Application::getInstance()->conf->log->query) {
+      Application::getInstance()->log->logQuery($query, $params, $this->getQueryDebug($query, $params));
+    }
+
+    try {
+
+      $stmt = $this->connection->prepare($query);
+      return $stmt->execute($params);
+    } catch (\PDOException $e) {
+
+      throw new \Adept\Exceptions\Database\PDOException(
+        'PDO Exception',
+        $this->formatErrorMessage($e, $query, $params),
+        __NAMESPACE__,
+        __CLASS__,
+        __METHOD__
+      );
+    }
   }
 }
