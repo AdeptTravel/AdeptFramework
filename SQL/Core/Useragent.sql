@@ -1,14 +1,15 @@
 DROP TABLE IF EXISTS `Useragent`;
 CREATE TABLE `Useragent` (
-  `id`        INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `useragent` VARCHAR(512) NOT NULL UNIQUE,
-  `friendly`  VARCHAR(96) NOT NULL UNIQUE,
-  `browser`   VARCHAR(32),
-  `os`        VARCHAR(16),
-  `device`    VARCHAR(32),
-  `type`      VARCHAR(16),
-  `detected`  TINYINT(1) NOT NULL,
-  `block`     TINYINT(1) NOT NULL DEFAULT 0,
-  `created`   DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `useragent`  VARCHAR(512) NOT NULL UNIQUE,
+  `friendly`   VARCHAR(128) NOT NULL UNIQUE,
+  `browser`    VARCHAR(64),
+  `os`         VARCHAR(64),
+  `device`     VARCHAR(64),
+  `type     `  VARCHAR(32),
+  `isDetected` TINYINT(1) NOT NULL DEFAULT 0,
+  `status`     ENUM('Active', 'Block', 'Inactive') NOT NULL DEFAULT 'Active',
+  `createdOn`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

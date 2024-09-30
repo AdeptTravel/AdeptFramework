@@ -1,48 +1,55 @@
 DROP TABLE IF EXISTS `Menu`;
 CREATE TABLE `Menu` (
-  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `title`      VARCHAR(32) NOT NULL,
-  `css`        VARCHAR(64) DEFAULT '',
-  `status`     TINYINT(1) DEFAULT 1,
-  `secure`     TINYINT(1) DEFAULT 0,
-  `created`    DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `title`           VARCHAR(64) NOT NULL,
+  `css`             VARCHAR(64) DEFAULT NULL,
+  `isSecure`        BOOLEAN DEFAULT FALSE,
+  `status`          ENUM('Active', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `createdOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `Menu` (`title`, `secure`) VALUES ('Main Menu', 1), ('Social Menu', 0);
+INSERT INTO `Menu` (`title`, `isSecure`) VALUES ('Main Menu', TRUE), ('Social Menu', FALSE);
 
 DROP TABLE IF EXISTS `MenuItem`;
 CREATE TABLE `MenuItem` (
-  `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `menu`         INT UNSIGNED NOT NULL,
-  `parent`       INT UNSIGNED DEFAULT 0,
-  `route`        INT UNSIGNED DEFAULT 0,
-  `url`          VARCHAR(128) DEFAULT '',
-  `title`        VARCHAR(128) DEFAULT '',
-  `image`        VARCHAR(128) DEFAULT '',
-  `imageAlt`     VARCHAR(32) DEFAULT '',
-  `fa`           VARCHAR(64) DEFAULT '',
-  `css`          VARCHAR(64) DEFAULT '',
-  `params`       TEXT DEFAULT '{}',
-  `order`        INT DEFAULT 0,
-  `status`       TINYINT(1) DEFAULT 1,
-  `created`      DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `menuId`          INT UNSIGNED DEFAULT NULL,
+  `parentId`        INT UNSIGNED DEFAULT NULL,
+  `routeId`         INT UNSIGNED DEFAULT NULL,
+  `url`             VARCHAR(256) DEFAULT NULL,
+  `title`           VARCHAR(128) NOT NULL,
+  `image`           VARCHAR(256) DEFAULT NULL,
+  `fa`              VARCHAR(64) DEFAULT NULL,
+  `css`             VARCHAR(64) DEFAULT NULL,
+  `params`          JSON DEFAULT NULL,
+  `status`          ENUM('active', 'inactive', 'block') NOT NULL DEFAULT 'active',
+  `publishAt`       DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `createdOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `displayOrder`    INT DEFAULT 0,
+  FOREIGN KEY (`menuId`)   REFERENCES `Menu`(`id`)     ON DELETE CASCADE,
+  FOREIGN KEY (`parentId`) REFERENCES `MenuItem`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`routeId`)  REFERENCES `Route`(`id`)    ON DELETE SET NULL,
+  INDEX `idxMenuId` (`menuId`),
+  INDEX `idxStatus` (`status`),
+  INDEX `idxDisplayOrder` (`displayOrder`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `MenuItem` (`menu`, `parent`, `route`, `order`, `title`, `fa`) VALUES
-(1,  0,  7, 1, 'Dashboard', 'fa-solid fa-chart-column'),
-(1,  0,  0, 2, 'Content', 'fa-solid fa-file-lines'),
-(1,  2,  8, 1, 'Articles', ''),
-(1,  2, 20, 2, 'Categories', ''),
-(1,  2, 22, 3, 'Tags', ''),
-(1,  0,  0, 3, 'Media', 'fa-solid fa-photo-film'),
-(1,  6, 16, 1, 'Images', ''),
-(1,  0,  0, 4, 'Menu', 'fa-solid fa-table-list'),
-(1,  8, 12, 1, 'Menus', ''),
-(1,  8, 14, 2, 'Menu Items', ''),
-(1,  0,  0, 5, 'System', 'fa-solid fa-gear'),
-(1, 11,  8, 1, 'Routes', '');
+
+INSERT INTO `MenuItem` (`menuId`, `parentId`, `routeId`, `displayOrder`, `title`, `fa`) VALUES
+(1,  NULL,     6, 1, 'Dashboard', 'fa-solid fa-chart-column'),
+(1,  NULL,  NULL, 2, 'Content', 'fa-solid fa-file-lines'),
+(1,     2,     17, 1, 'Articles', ''),
+(1,     2,    19, 2, 'Categories', ''),
+(1,  NULL,  NULL, 3, 'Media', 'fa-solid fa-photo-film'),
+(1,     6,    15, 1, 'Images', ''),
+(1,  NULL,  NULL, 4, 'Menu', 'fa-solid fa-table-list'),
+(1,     8,    11, 1, 'Menus', ''),
+(1,     8,    13, 2, 'Menu Items', ''),
+(1,  NULL,  NULL, 5, 'System', 'fa-solid fa-gear'),
+(1,    11,     7, 1, 'Routes', '');
 
 
 

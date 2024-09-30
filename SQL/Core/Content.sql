@@ -1,47 +1,26 @@
 DROP TABLE IF EXISTS `Content`;
 CREATE TABLE `Content` (
-  `id`       INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `parent`   INT UNSIGNED DEFAULT 0,
-  `route`    INT UNSIGNED DEFAULT 0,
-  `type`     ENUM('Article', 'Category', 'Component', 'Tag'),
-  `subtype`  ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
-  `title`    VARCHAR(128) NOT NULL,
-  `summary`  TEXT DEFAULT '',
-  `content`  TEXT DEFAULT '',
-  `image`    INT UNSIGNED DEFAULT 0,
-  `seo`      TEXT DEFAULT '{}',
-  `media`    TEXT DEFAULT '{}',
-  `params`   TEXT DEFAULT '{}',
-  `status`   TINYINT DEFAULT 1,
-  `publish`  DATETIME DEFAULT NOW(),
-  `archive`  DATETIME DEFAULT NOW(),
-  `created`  DATETIME DEFAULT NOW(),
-  `modified` DATETIME DEFAULT NOW(),
-  `order`    INT DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-INSERT INTO Content (`parent`, `type`, `title`, `order`) VALUES
-(0, 'Category', 'Blog', 1),
-(0, 'Category', 'News', 2),
-(0, 'Category', 'Company', 3),
-(3, 'Category', 'Awards &amp; Honors', 1),
-(3, 'Category', 'News', 2),
-(3, 'Category', 'Media', 3),
-(6, 'Category', 'Images &amp; Video', 1),
-(6, 'Category', 'Press Release', 2),
-(3, 'Category', 'Our Team', 4);
-
-DROP TABLE IF EXISTS `ContentTag`;
-CREATE TABLE `ContentTag` (
-  `article` INT UNSIGNED NOT NULL,
-  `tag`     INT UNSIGNED NOT NULL,
-  PRIMARY KEY (`content`, `tag`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `ContentTags`;
-CREATE TABLE `ContentTags` (
-  `content` INT UNSIGNED NOT NULL,
-  `tag`     VARCHAR(128) NOT NULL UNIQUE,
-  PRIMARY KEY (`content`, `tag`)
+  `id`            INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `parentId`      INT UNSIGNED DEFAULT 0,
+  `routeId`       INT UNSIGNED,
+  `imageId`       INT UNSIGNED DEFAULT NULL,
+  `type`          ENUM('Article', 'Category', 'Component', 'Tag') NOT NULL,
+  `subtype`       ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
+  `title`         VARCHAR(128) NOT NULL,
+  `summary`       TEXT DEFAULT NULL,
+  `content`       TEXT DEFAULT NULL,
+  `seo`           JSON CHECK (JSON_VALID(`seo`)),
+  `media`         JSON CHECK (JSON_VALID(`media`)),
+  `params`        JSON CHECK (JSON_VALID(`params`)),
+  `status`        ENUM('Publish', 'Unpublish', 'Archive', 'Trash') NOT NULL DEFAULT 'Publish',
+  `activeOn`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `archiveOn`     TIMESTAMP DEFAULT NULL,
+  `createdOn`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `displayOrder`  INT DEFAULT 0,
+  FOREIGN KEY (`routeId`) REFERENCES `Route`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`imageId`) REFERENCES `Media`(`id`) ON DELETE SET NULL,
+  INDEX idxType (`type`),
+  INDEX idxStatus (`status`),
+  INDEX idxPublishAt (`activeOn`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

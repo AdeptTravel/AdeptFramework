@@ -1,9 +1,11 @@
 DROP TABLE IF EXISTS `Session`;
 CREATE TABLE `Session` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user` INT UNSIGNED NOT NULL DEFAULT 0,
-  `token` VARCHAR(64) UNIQUE,
-  `block` TINYINT(3) DEFAULT 0,
-  `created` DATETIME NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (`id`)
+  `id`          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `userId`      INT UNSIGNED DEFAULT NULL,
+  `token`       VARCHAR(64) NOT NULL UNIQUE,
+  `status`      enum('Active', 'Block', 'Inactive') NOT NULL DEFAULT 'Active',
+  `createdOn`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_userId (`userId`),
+  INDEX idx_status (`status`),
+  FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;

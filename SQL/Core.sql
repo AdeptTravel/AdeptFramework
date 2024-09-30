@@ -1,412 +1,322 @@
+# Has forign key
 DROP TABLE IF EXISTS `Content`;
-CREATE TABLE `Content` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `parent` INT UNSIGNED DEFAULT 0,
-  `route` INT UNSIGNED DEFAULT 0,
-  `version` INT UNSIGNED DEFAULT 0,
-  `type` ENUM('Article', 'Category', 'Component', 'Tag'),
-  `subtype` ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
-  `title` VARCHAR(128) NOT NULL,
-  `summary` TEXT DEFAULT '',
-  `content` TEXT DEFAULT '',
-  `seo` TEXT DEFAULT '{}',
-  `media` TEXT DEFAULT '{}',
-  `params` TEXT DEFAULT '{}',
-  `status` TINYINT DEFAULT 1,
-  `publish` DATETIME DEFAULT NOW(),
-  `archive` DATETIME DEFAULT '2256-03-09 00:00:00',
-  `created` DATETIME DEFAULT NOW(),
-  `modified` DATETIME DEFAULT NOW(),
-  `order` INT DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `ContentMedia`;
-CREATE TABLE `ContentMedia` (
-  `content` INT UNSIGNED NOT NULL,
-  `media` INT UNSIGNED NOT NULL,
-  `type`  ENUM('', 'Intro', 'Full') DEFAULT '',
-  `status` TINYINT DEFAULT 1,
-  `order` INT DEFAULT 0,
-  PRIMARY KEY (`content`, `media`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `ContentTag`;
-CREATE TABLE `ContentTag` (
-  `content` INT UNSIGNED NOT NULL,
-  `tag` VARCHAR(128) NOT NULL,
-  `status` TINYINT DEFAULT 1,
-  `order` INT DEFAULT 0,
-  PRIMARY KEY (`content`, `tag`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `IPAddress`;
-CREATE TABLE `IPAddress` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ipaddress` VARCHAR(45) NOT NULL UNIQUE,
-  `encoded` varbinary(16),
-  `block` TINYINT(3) DEFAULT 0,
-  `created` DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Location`;
-CREATE TABLE `Location` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `area` INT UNSIGNED NOT NULL,
-  `title` VARCHAR(128),
-  `street0` VARCHAR(64),
-  `street1` VARCHAR(64),
-  `street2` VARCHAR(64),
-  `elevation` INT,
-  `latitude` DECIMAL(10,8),
-  `longitude` DECIMAL(11,8),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `LocationArea`;
-CREATE TABLE `LocationArea` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `city` VARCHAR(32),
-  `county` VARCHAR(64),
-  `state` VARCHAR(32),
-  `postalcode` VARCHAR(128) NOT NULL,
-  `country` INT UNSIGNED,
-  `timezone` VARCHAR(64),
-  `latitude` DECIMAL(10,8),
-  `longitude` DECIMAL(11,8),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `LocationCountry`;
-CREATE TABLE `LocationCountry` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `content` INT UNSIGNED,
-  `country` VARCHAR(48) UNIQUE,
-  `iso2` VARCHAR(3) UNIQUE,
-  `iso3` VARCHAR(3) UNIQUE,
-  `currency` VARCHAR(64),
-  `currency_code` VARCHAR(4),
-  `phone_code` VARCHAR(8),
-  `region` VARCHAR(32),
-  `subregion` VARCHAR(32),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Media`;
-CREATE TABLE `Media` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `type` ENUM('Image', 'Video', 'Audio'),
-  `mime` VARCHAR(32) NOT NULL,
-  `path` VARCHAR(128) NOT NULL,
-  `file` VARCHAR(256) NOT NULL UNIQUE,
-  `alias` VARCHAR(256) NOT NULL UNIQUE,
-  `extension` VARCHAR(5) NOT NULL,
-  `width` INT DEFAULT 0,
-  `height` INT DEFAULT 0,
-  `duration` INT DEFAULT 0,
-  `size` INT DEFAULT 0,
-  `title` VARCHAR(128) DEFAULT '',
-  `caption` TEXT DEFAULT '',
-  `summary` VARCHAR(256) DEFAULT '',
-  `description` TEXT DEFAULT '',
-  `created` DATETIME DEFAULT NOW(),
-  `modified` DATETIME DEFAULT NOW(),
-  `status` TINYINT DEFAULT 1,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Menu`;
-CREATE TABLE `Menu` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(32) NOT NULL,
-  `image` VARCHAR(64) DEFAULT '',
-  `image_alt` VARCHAR(32) DEFAULT '',
-  `fa` VARCHAR(32) DEFAULT '',
-  `css` VARCHAR(64) DEFAULT '',
-  `status` TINYINT(1) DEFAULT 1,
-  `publish` DATETIME DEFAULT NOW(),
-  `archive` DATETIME DEFAULT '0000-00-00 00:00:00',
-  `access` INT(10) UNSIGNED DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
 DROP TABLE IF EXISTS `MenuItem`;
-CREATE TABLE `MenuItem` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `menu` INT UNSIGNED NOT NULL,
-  `parent` INT UNSIGNED DEFAULT 0,
-  `route` INT UNSIGNED DEFAULT 0,
-  `url` VARCHAR(256) DEFAULT '',
-  `title` VARCHAR(128) DEFAULT '',
-  `image` VARCHAR(128) DEFAULT '',
-  `image_alt` VARCHAR(32) DEFAULT '',
-  `fa` VARCHAR(64) DEFAULT '',
-  `css` VARCHAR(64) DEFAULT '',
-  `params` TEXT DEFAULT '{}',
-  `status` TINYINT(1) DEFAULT 1,
-  `publish` DATETIME DEFAULT NOW(),
-  `archive` DATETIME DEFAULT '0000-00-00 00:00:00',
-  `order` INT DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Meta`;
-CREATE TABLE `Meta` (
-  `route` INT UNSIGNED NOT NULL,
-  `title` VARCHAR(256) NOT NULL,
-  `description` VARCHAR(256),
-  `robots` VARCHAR(64),
-  PRIMARY KEY (`route`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Phone`;
-CREATE TABLE `Phone` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `country` INT UNSIGNED NOT NULL,
-  `tel` VARCHAR(16) NOT NULL,
-  `extension` INT,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Request`;
-CREATE TABLE `Request` (
-  `session` INT UNSIGNED NOT NULL,
-  `ipaddress` INT NOT NULL,
-  `useragent` INT NOT NULL,
-  `route` INT UNSIGNED NOT NULL,
-  `url` INT UNSIGNED NOT NULL,
-  `code` SMALLINT NOT NULL,
-  `block` TINYINT(3) NOT NULL DEFAULT 0,
-  `created` DATETIME NOT NULL DEFAULT NOW(),
-  `milisec` SMALLINT NOT NULL,
-  PRIMARY KEY (`session`, `created`, `milisec`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Route`;
-CREATE TABLE `Route` (
-  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `route`      VARCHAR(256) NOT NULL UNIQUE,
-  `redirect`   VARCHAR(256) DEFAULT'',
-  `component`  VARCHAR(64) DEFAULT'',
-  `option`     VARCHAR(64) DEFAULT'',
-  `template`   VARCHAR(64) DEFAULT'',
-  # Formats
-  `html`       TINYINT(1) DEFAULT 0,
-  `json`       TINYINT(1) DEFAULT 0,
-  `xml`        TINYINT(1) DEFAULT 0,
-  `csv`        TINYINT(1) DEFAULT 0,
-  `pdf`        TINYINT(1) DEFAULT 0,
-  `zip`        TINYINT(1) DEFAULT 0,
-  # Include in Sitemap
-  `sitemap`    TINYINT(1) DEFAULT 0,
-  # Security Access
-  `get`        TINYINT(1) DEFAULT 0,
-  `post`       TINYINT(1) DEFAULT 0,
-  `email`      TINYINT(1) DEFAULT 0,
-  `secure`     TINYINT(1) DEFAULT 0,
-  `cache`      TINYINT(1) DEFAULT 0,
-  `status`     TINYINT(1) DEFAULT 1,
-  `block`      TINYINT(1) DEFAULT 0,
-  `created`    DATETIME NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Session`;
-CREATE TABLE `Session` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user` INT UNSIGNED NOT NULL DEFAULT 0,
-  `token` VARCHAR(64) UNIQUE,
-  `block` TINYINT(3) DEFAULT 0,
-  `created` DATETIME NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `FeedChannel`;
-CREATE TABLE `FeedChannel` (
-  `id` INT(11) UNSIGNED NOT NULL,
-  `url` VARCHAR(255) NOT NULL UNIQUE,
-  `title` VARCHAR(32) NOT NULL,
-  `status` TINYINT(3) NOT NULL DEFAULT 0,
-  `created` TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `FeedItem`;
-CREATE TABLE `FeedItem` (
-  `id` INT(11) UNSIGNED NOT NULL,
-  `channel` INT UNSIGNED NOT NULL,
-  `category` INT UNSIGNED DEFAULT 1,
-  `url` VARCHAR(255) NOT NULL UNIQUE,
-  `title` VARCHAR(32) NOT NULL,
-  `description` TEXT NOT NULL,
-  `status` DATETIME NOT NULL,
-  `created` TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `FeedCategory`;
-CREATE TABLE `FeedCategory` (
-  `id` INT(11) UNSIGNED NOT NULL,
-  `title` INT UNSIGNED NOT NULL UNIQUE,
-  `created` TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `TimeZone`;
-CREATE TABLE `TimeZone` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `timezone` VARCHAR(255),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `TokenForm`;
-CREATE TABLE `TokenForm` (
-  `session` INT UNSIGNED NOT NULL UNIQUE,
-  `token` VARCHAR(64) NOT NULL,
-  `created` DATETIME NOT NULL DEFAULT NOW(),
-  `expires` DATETIME NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 1 DAY),
-  PRIMARY KEY (`user`, `token`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Url`;
-CREATE TABLE `Url` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `url` VARCHAR(512) NOT NULL UNIQUE,
-  `scheme` VARCHAR(5) NOT NULL,
-  `host` VARCHAR(256) NOT NULL,
-  `path` VARCHAR(256),
-  `parts` TEXT,
-  `file` VARCHAR(256) NOT NULL,
-  `extension` VARCHAR(5) NOT NULL,
-  `type` VARCHAR(16) NOT NULL,
-  `mime` VARCHAR(32) NOT NULL,
-  `block` TINYINT(3) NOT NULL DEFAULT 0,
-  `created` TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-
 DROP TABLE IF EXISTS `LogAuth`;
-CREATE TABLE `LogAuth` (
-  `username`  VARCHAR(128) NOT NULL,
-  `useragent` INT UNSIGNED NOT NULL,
-  `ipaddress` INT UNSIGNED NOT NULL,
-  `result`    ENUM('Success', 'Fail', 'Delay'),
-  `failed`    ENUM('', 'Nonexistent', 'Password', 'Verified', 'Validated', 'Deactivated'),
-  `created`   DATETIME NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (`username`, `created`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+DROP TABLE IF EXISTS `Request`;
+DROP TABLE IF EXISTS `Session`;
 
+
+# No forign key
+DROP TABLE IF EXISTS `IPAddress`;
+DROP TABLE IF EXISTS `LogAuth`;
+DROP TABLE IF EXISTS `Media`;
+DROP TABLE IF EXISTS `Menu`;
+DROP TABLE IF EXISTS `Redirect`;
+DROP TABLE IF EXISTS `Route`;
+DROP TABLE IF EXISTS `Url`;
 DROP TABLE IF EXISTS `User`;
-CREATE TABLE `User` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  # Advisor is travel specific
-  `advisor`     INT UNSIGNED DEFAULT 1,
-  `username`    VARCHAR(128) NOT NULL,
-  `password`    VARCHAR(255) NOT NULL,
-  `token`       VARCHAR(32) NOT NULL,
-  `firstname`   VARCHAR(32) NOT NULL,
-  `middlename`  VARCHAR(32),
-  `lastname`    VARCHAR(32) NOT NULL,
-  `dob`         DATETIME DEFAULT '0000-00-00 00:00:00',
-  `created`     DATETIME NOT NULL DEFAULT NOW(),
-  `verified`    DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `validated`   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `status`      TINYINT(3) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`id`)
+DROP TABLE IF EXISTS `Useragent`;
+
+##
+## Core tables with no forign key
+##
+
+CREATE TABLE `IPAddress` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `ipAddress`       VARCHAR(45) NOT NULL UNIQUE,
+  `encoded`         VARBINARY(16) NOT NULL,
+  `status`          ENUM('Active', 'Block') NOT NULL DEFAULT 'Active',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idxEncoded (`encoded`),
+  INDEX idxStatus (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `User` (`username`, `password`, `token`, `firstname`, `middlename`, `lastname`, `dob`, `created`, `verified`) VALUES (
-'brandon@adept.travel',
-'$2y$10$BqTlFw582n78e7EUwFFRR.Q9mzTkjCObqzu95Aj5Q0s6FtYEeo7bG',
-'v32pV4ShJztnYBawNYUlcrMLMilW1thN',
-'Brandon',
-'Joseph',
-'Yaniz',
-'1979-08-08 00:00:00',
-'2023-11-02 15:43:10',
-'2023-11-02 20:50:55'
+
+CREATE TABLE `Media` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `type`            ENUM('Image', 'Video', 'Audio'),
+  `path`            VARCHAR(256) NOT NULL,
+  `file`            VARCHAR(256) NOT NULL UNIQUE,
+  `alias`           VARCHAR(256) NOT NULL UNIQUE,
+  `mime`            VARCHAR(32) NOT NULL,
+  `extension`       VARCHAR(5) NOT NULL,
+  `width`           INT DEFAULT 0,
+  `height`          INT DEFAULT 0,
+  `duration`        INT DEFAULT 0,
+  `size`            INT DEFAULT 0,
+  `title`           VARCHAR(128) DEFAULT '',
+  `caption`         TEXT DEFAULT '',
+  `summary`         TEXT DEFAULT '',
+  `status`          ENUM('Active', 'Archive', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `createdOn`       DATETIME DEFAULT NOW(),
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idxPath (`path`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `Menu` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `title`           VARCHAR(64) NOT NULL,
+  `css`             VARCHAR(64) DEFAULT NULL,
+  `isSecure`        BOOLEAN DEFAULT FALSE,
+  `status`          ENUM('Active', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `createdOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE Redirect (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `route`           VARCHAR(512) NOT NULL UNIQUE,
+  `redirect`        VARCHAR(512) NOT NULL,
+  `code`            SMALLINT UNSIGNED NOT NULL DEFAULT 301,
+  `status`          ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE Route (
+  `id`             INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `route`           VARCHAR(512) NOT NULL UNIQUE,
+  `component`       VARCHAR(64) DEFAULT NULL,
+  `view`            VARCHAR(64) DEFAULT NULL,
+  `template`        VARCHAR(64) DEFAULT NULL,
+  -- Formats
+  `html`            BOOLEAN DEFAULT FALSE,
+  `json`            BOOLEAN DEFAULT FALSE,
+  `xml`             BOOLEAN DEFAULT FALSE,
+  `csv`             BOOLEAN DEFAULT FALSE,
+  `pdf`             BOOLEAN DEFAULT FALSE,
+  `zip`             BOOLEAN DEFAULT FALSE,
+  -- Include in Sitemap
+  `sitemap`         BOOLEAN DEFAULT FALSE,
+  -- Security Access
+  `allowGet`        BOOLEAN DEFAULT FALSE,
+  `allowPost`       BOOLEAN DEFAULT FALSE,
+  `allowEmail`      BOOLEAN DEFAULT FALSE,
+  `isSecure`        BOOLEAN DEFAULT FALSE,
+  `isCacheable`     BOOLEAN DEFAULT FALSE,
+  -- General
+  `status`          ENUM('Active', 'Block', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_component (`component`),
+  INDEX idx_status (`status`)
 );
 
-DROP TABLE IF EXISTS `UserToken`;
-CREATE TABLE `UserToken` (
-  `user` INT UNSIGNED NOT NULL,
-  `type` ENUM('Verify', 'Validate', 'Forgot', 'Security'),
-  `token` VARCHAR(64) NOT NULL,
-  `created` DATETIME NOT NULL DEFAULT NOW(),
-  `expires` DATETIME NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 1 DAY),
-  PRIMARY KEY (`user`, `token`)
+CREATE TABLE `Url` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `url`             TEXT NOT NULL UNIQUE,
+  `scheme`          ENUM('http', 'https') NOT NULL DEFAULT 'https',
+  `host`            VARCHAR(256) NOT NULL,
+  `path`            TEXT,
+  `parts`           JSON CHECK (JSON_VALID(`parts`)),
+  `file`            VARCHAR(512) NOT NULL,
+  `extension`       ENUM('aac', 'avi', 'bmp', 'css', 'csv', 'doc', 'docx', 'eml', 'flac', 'gif', 'gltf', 'gz', 'htm', 'html', 'ico', 'iges', 'igs', 'jpeg', 'jpg', 'js', 'json', 'jsonld', 'md', 'mesh', 'mime', 'mov', 'mp3', 'mp4', 'mpeg', 'mpg', 'msh', 'obj', 'ogg', 'ogv', 'otf', 'pdf', 'png', 'ppt', 'pptx', 'svg', 'swf', 'tif', 'tiff', 'ttf', 'txt', 'vrml', 'wav', 'weba', 'webm', 'webp', 'woff', 'woff2', 'wrl', 'xls', 'xlsx', 'xml', 'zip' ) NOT NULL,
+  `type`            ENUM('Archive', 'Audio', 'CSS', 'CSV', 'Font', 'HTML', 'Image', 'JSON', 'JavaScript', 'PDF', 'Text', 'Video', 'XML') NOT NULL, `mime`        ENUM( 'text/plain', 'text/html', 'text/css', 'text/javascript', 'text/xml', 'text/csv', 'text/markdown', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff', 'image/vnd.microsoft.icon', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/aac', 'audio/flac', 'video/mp4', 'video/mpeg', 'video/ogg', 'video/webm', 'video/avi', 'video/quicktime', 'application/javascript', 'application/json', 'application/xml', 'application/pdf', 'application/zip', 'application/gzip', 'application/x-www-form-urlencoded', 'application/octet-stream', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/x-shockwave-flash', 'application/ld+json', 'application/vnd.api+json', 'multipart/form-data', 'multipart/byteranges', 'multipart/alternative', 'multipart/mixed', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2', 'model/iges', 'model/mesh', 'model/vrml', 'model/gltf+json', 'model/obj', 'message/http', 'message/imdn+xml', 'message/partial', 'message/rfc822') NOT NULL,
+  `status`          ENUM('Active', 'Block') NOT NULL DEFAULT 'Active',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idxHost (`host`),
+  INDEX idxPath (`path`),
+  INDEX idxMime (`mime`),
+  INDEX idxStatus (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 
-DROP TABLE IF EXISTS `UserACL`;
-CREATE TABLE `UserACL` (
-  `user` INT UNSIGNED NOT NULL,
-  `acl` INT UNSIGNED NOT NULL,
-  PRIMARY KEY (`user`, `acl`)
+CREATE TABLE `User` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `username`        VARCHAR(128) NOT NULL,
+  `password`        VARCHAR(255) NOT NULL,
+  `firstName`       VARCHAR(64) NOT NULL,
+  `middleName`      VARCHAR(64),
+  `lastName`        VARCHAR(64) NOT NULL,
+  `dob`             DATE DEFAULT NULL,
+  `status`          ENUM('Active', 'Block', 'Inactive', 'Locked') NOT NULL DEFAULT 'Inactive',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `verifiedAt`      TIMESTAMP DEFAULT NULL,
+  `validatedAt`     TIMESTAMP DEFAULT NULL,
+  INDEX idx_status (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 
-DROP TABLE IF EXISTS `UserLocation`;
-CREATE TABLE `UserLocation` (
-  `user` INT UNSIGNED NOT NULL,
-  `location` INT UNSIGNED NOT NULL,
-  `name` VARCHAR(128) DEFAULT '',
-  `primary` TINYINT(1) DEFAULT 0,
-  PRIMARY KEY (`user`, `address`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `UserPhone`;
-CREATE TABLE `UserPhone` (
-  `user` INT UNSIGNED NOT NULL,
-  `phone` INT UNSIGNED NOT NULL,
-  `name` VARCHAR(32) DEFAULT '',
-  `primary` TINYINT(1) DEFAULT 0,
-  PRIMARY KEY (`user`, `phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `UserCreditCard`;
-CREATE TABLE `UserCreditCard` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user` INT UNSIGNED NOT NULL,
-  `address` INT UNSIGNED NOT NULL,
-  `bin` MEDIUMINT UNSIGNED NOT NULL,
-  `last4` SMALLINT UNSIGNED NOT NULL,
-  `name` VARCHAR(32),
-  `expire` DATETIME NOT NULL,
-  `data` TEXT,
-  `created` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `UserIdentification`;
-CREATE TABLE `UserIdentification` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user` INT UNSIGNED NOT NULL,
-  `address` INT UNSIGNED NOT NULL,
-  `type` VARCHAR(16) NOT NULL,
-  `location` VARCHAR(2),
-  `firstname` VARCHAR(128) NOT NULL,
-  `middlename` VARCHAR(128) NOT NULL,
-  `lastname` VARCHAR(128) NOT NULL,
-  `number` VARCHAR(32) UNIQUE,
-  `gender` CHAR(1),
-  `issued` DATETIME DEFAULT '0000-00-00 00:00:00',
-  `expire` DATETIME DEFAULT '0000-00-00 00:00:00',
-  `status` TINYINT(3) DEFAULT 1,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
-DROP TABLE IF EXISTS `Useragent`;
 CREATE TABLE `Useragent` (
-  `id`        INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `useragent` VARCHAR(512) NOT NULL UNIQUE,
-  `friendly`  VARCHAR(96) NOT NULL UNIQUE,
-  `browser`   VARCHAR(32),
-  `os`        VARCHAR(16),
-  `device`    VARCHAR(32),
-  `type`      VARCHAR(16),
-  `detected`  TINYINT(1) NOT NULL,
-  `block`     TINYINT(1) NOT NULL DEFAULT 0,
-  `created`   DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
+  `id`           INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `useragent`    VARCHAR(512) NOT NULL UNIQUE,
+  `friendly`     VARCHAR(128) NOT NULL UNIQUE,
+  `browser`      VARCHAR(64),
+  `os`           VARCHAR(64),
+  `device`       VARCHAR(64),
+  `type`         VARCHAR(32),
+  `isDetected`   TINYINT(1) NOT NULL DEFAULT 0,
+  `status`       ENUM('Allow', 'Block') NOT NULL DEFAULT 'Allow',
+  `createdOn`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+##
+## Has forign key
+##
+
+CREATE TABLE `Content` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `parentId`        INT UNSIGNED DEFAULT 0,
+  `routeId`         INT UNSIGNED,
+  `imageId`         INT UNSIGNED DEFAULT NULL,
+  `type`            ENUM('Article', 'Category', 'Component', 'Tag') NOT NULL,
+  `subtype`         ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
+  `title`           VARCHAR(128) NOT NULL,
+  `summary`         TEXT DEFAULT NULL,
+  `content`         TEXT DEFAULT NULL,
+  `seo`             JSON CHECK (JSON_VALID(`seo`)),
+  `media`           JSON CHECK (JSON_VALID(`media`)),
+  `params`          JSON CHECK (JSON_VALID(`params`)),
+  `status`          ENUM('Active', 'Archive', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `activeOn`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `archiveOn`       TIMESTAMP DEFAULT NULL,
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `displayOrder`    INT DEFAULT 0,
+  FOREIGN KEY (`routeId`) REFERENCES `Route`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`imageId`) REFERENCES `Media`(`id`) ON DELETE SET NULL,
+  INDEX idxType (`type`),
+  INDEX idxStatus (`status`),
+  INDEX idxPublishAt (`activeOn`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `MenuItem` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `menuId`          INT UNSIGNED DEFAULT NULL,
+  `parentId`        INT UNSIGNED DEFAULT NULL,
+  `routeId`         INT UNSIGNED DEFAULT NULL,
+  `url`             VARCHAR(256) DEFAULT NULL,
+  `title`           VARCHAR(128) NOT NULL,
+  `image`           VARCHAR(256) DEFAULT NULL,
+  `fa`              VARCHAR(64) DEFAULT NULL,
+  `css`             VARCHAR(64) DEFAULT NULL,
+  `params`          JSON DEFAULT NULL,
+  `status`          ENUM('Active', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `activeOn`       DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `createdOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `displayOrder`    INT DEFAULT 0,
+  FOREIGN KEY (`menuId`)   REFERENCES `Menu`(`id`)     ON DELETE CASCADE,
+  FOREIGN KEY (`parentId`) REFERENCES `MenuItem`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`routeId`)  REFERENCES `Route`(`id`)    ON DELETE SET NULL,
+  INDEX `idxMenuId` (`menuId`),
+  INDEX `idxStatus` (`status`),
+  INDEX `idxDisplayOrder` (`displayOrder`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `Session` (
+  `id`          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `userId`      INT UNSIGNED DEFAULT NULL,
+  `token`       VARCHAR(64) NOT NULL UNIQUE,
+  `status`      enum('Active', 'Block', 'Inactive') NOT NULL DEFAULT 'Active',
+  `createdOn`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_userId (`userId`),
+  INDEX idx_status (`status`),
+  FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE Request (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `sessionId`       INT UNSIGNED NOT NULL,
+  `ipAddressId`     INT UNSIGNED NOT NULL,
+  `useragentId`     INT UNSIGNED NOT NULL,
+  `routeId`         INT UNSIGNED,
+  `redirectId`      INT UNSIGNED,
+  `urlId`           INT UNSIGNED NOT NULL,
+  `code`            SMALLINT NOT NULL,
+  `status`          ENUM('Active', 'Block', 'Error') NOT NULL DEFAULT 'Active',
+  `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idxSessionId` (`sessionId`),
+  INDEX `idxIPAddressId` (`ipAddressId`),
+  INDEX `idxUseragentId` (`userAgentId`),
+  INDEX `idxRouteId` (`routeId`),
+  INDEX `idxUrlId` (`urlId`),
+  FOREIGN KEY (`sessionId`) REFERENCES `Session`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`ipAddressId`) REFERENCES `IPAddress`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`useragentId`) REFERENCES `Useragent`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`routeId`) REFERENCES `Route`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`urlId`) REFERENCES `Url`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `LogAuth` (
+  `sessionId`   INT UNSIGNED NOT NULL,
+  `requestId`   INT UNSIGNED NOT NULL,
+  `useragentId` INT UNSIGNED NOT NULL,
+  `ipAddressId` INT UNSIGNED NOT NULL,
+  `username`    VARCHAR(128) NOT NULL,
+  `result`      ENUM('Success', 'Fail', 'Delay'),
+  `reason`      ENUM('', 'Deactivated', 'Nonexistent', 'Password', 'Verified', 'Validated'),
+  `createdOn`   DATETIME NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (`username`, `createdOn`),
+  FOREIGN KEY (`sessionId`) REFERENCES `Session`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`requestId`) REFERENCES `Request`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`useragentId`) REFERENCES `Useragent`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`ipAddressId`) REFERENCES `IPAddress`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
+
+##
+## Default Data
+##
+
+INSERT INTO `Menu` (`title`, `isSecure`) VALUES ('Main Menu', TRUE), ('Social Menu', FALSE);
+
+INSERT INTO `Redirect` (`route`, `redirect`) VALUES
+('', 'dashboard');
+
+INSERT INTO `Route`
+(`route`, `component`, `view`, `template`, `html`, `json`, `xml`, `csv`, `pdf`, `zip`, `sitemap`, `allowGet`, `allowPost`, `allowEmail`, `isSecure`, `status`)
+VALUES
+('login',                 'Auth',      'Login',          'Minimal', 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 'Active'),
+('logout',                'Auth',      'Logout',         'Minimal', 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'Active'),
+('forgot',                'Auth',      'Forgot',         'Minimal', 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 'Active'),
+('verify',                'Auth',      'Verify',         'Minimal', 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 'Active'),
+('signup',                'User',      'Signup',         'Minimal', 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 'Active'),
+('dashboard',             'Dashboard', 'Dashboard',      '',        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'Active'),
+('route',                 'Route',     'Routes',         '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('route/edit',            'Route',     'Route',          '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('route/notfound',        'Route',     'NotFound',       '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('route/redirect',        'Route',     'Redirect',       '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('menu/',                 'Menu',      'Menus',          '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('menu/edit',             'Menu',      'Menu',           '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 'Active'),
+('menu/item',             'Menu',      'MenuItems',      '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('menu/item/edit',        'Menu',      'MenuItem',       '',        1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 'Active'),
+('media/image',           'Media',     'Images',         '',        1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 'Active'),
+('media/image/edit',      'Media',     'Image',          '',        1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('content/article',       'Content',   'Articles',       '',        1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 'Active'),
+('content/article/edit',  'Content',   'Article',        '',        1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active'),
+('content/category',      'Content',   'Categories',     '',        1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 'Active'),
+('content/category/edit', 'Content',   'Category',       '',        1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active');
+
+
+
+INSERT INTO `MenuItem` (`menuId`, `parentId`, `routeId`, `displayOrder`, `title`, `fa`) VALUES
+(1,  NULL,     6, 1, 'Dashboard', 'fa-solid fa-chart-column'),
+(1,  NULL,  NULL, 2, 'Content', 'fa-solid fa-file-lines'),
+(1,     2,     17, 1, 'Articles', ''),
+(1,     2,    19, 2, 'Categories', ''),
+(1,  NULL,  NULL, 3, 'Media', 'fa-solid fa-photo-film'),
+(1,     6,    15, 1, 'Images', ''),
+(1,  NULL,  NULL, 4, 'Menu', 'fa-solid fa-table-list'),
+(1,     8,    11, 1, 'Menus', ''),
+(1,     8,    13, 2, 'Menu Items', ''),
+(1,  NULL,  NULL, 5, 'System', 'fa-solid fa-gear'),
+(1,    11,     7, 1, 'Routes', '');
+
+
+INSERT INTO `User` (`username`, `password`, `firstname`, `middlename`, `lastname`, `status`, `dob`, `createdOn`, `verifiedAt`, `validatedAt`) VALUES (
+  'brandon@adept.travel',
+  '$2y$10$BqTlFw582n78e7EUwFFRR.Q9mzTkjCObqzu95Aj5Q0s6FtYEeo7bG',
+  'Brandon',
+  'Joseph',
+  'Yaniz',
+  'Active',
+  '1979-08-08 00:00:00',
+  '2023-11-02 15:43:10',
+  '2023-11-02 20:50:55',
+  '2023-11-02 20:50:55'
+);

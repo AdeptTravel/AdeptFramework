@@ -1,10 +1,11 @@
-DROP TABLE IF EXISTS `IPAddress`;
+DROP TABLE IF EXISTS IPAddress;
 CREATE TABLE `IPAddress` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ipaddress` VARCHAR(45) NOT NULL UNIQUE,
-  `encoded` varbinary(16),
-  `block` TINYINT(3) DEFAULT 0,
-  `created` DATETIME DEFAULT NOW(),
-  PRIMARY KEY (`id`)
+  `id`          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `ipaddress`   VARCHAR(45) NOT NULL UNIQUE,
+  `encoded`     VARBINARY(16) NOT NULL,
+  `status`      ENUM('Active', 'Block') NOT NULL DEFAULT 'Active',
+  `createdOn`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedOn`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idxEncoded (`encoded`),
+  INDEX idxStatus (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
