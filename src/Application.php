@@ -20,6 +20,7 @@ require_once('Global.php');
 use \Adept\Abstract\Configuration;
 use \Adept\Application\Database;
 use \Adept\Application\Email;
+use \Adept\Application\Log;
 use \Adept\Application\Session;
 
 /**
@@ -38,13 +39,6 @@ class Application
   private static Application $instance;
 
   /**
-   * A system has been marked as block
-   *
-   * @var bool
-   */
-  public bool $block;
-
-  /**
    * The configuration object
    * 
    * @var \Adept\Abstract\Configuration;
@@ -57,6 +51,13 @@ class Application
    * @var \Adept\Application\Database
    */
   public Database $db;
+
+  /**
+   * The logging object
+   *
+   * @var \Adept\Application\Log
+   */
+  public Log $log;
 
   public \Adept\Document\CSV $csv;
   public \Adept\Document\HTML $html;
@@ -79,16 +80,17 @@ class Application
    */
   public Session $session;
 
+  public string $status = 'Allow';
+
   /**
    * Constructor
    *
    * @param \Adept\Abstract\Configuration $conf
-   * @param \Adept\Application\Database $this->db
-   * @param \Adept\Application\Session $this->session
    */
   public function __construct(Configuration $conf)
   {
     $this->conf = $conf;
+    $this->log = new Log();
 
     // This is a basic config/security check.  We want to make sure that the 
     // host matches the site conf.  It might not because of a misconfigured
@@ -113,21 +115,23 @@ class Application
 
     self::$instance = &$this;
 
-    $this->db = new Database($conf);
-    $this->session = new Session($this->db, $conf);
+    $this->db = new Database($conf->database);
+    $this->session = new Session();
 
-    if ($this->session->request->route->email) {
+    if ($this->session->request->route->allowEmail) {
       $this->email = new \Adept\Application\Email($conf);
     }
 
     // Check various block lists
     if (
-      $this->session->block
-      || $this->session->request->ip->block
-      || $this->session->request->route->block
-      || $this->session->request->url->block
-      || $this->session->request->useragent->block
+      ($this->session->status == 'Block')
+      || ($this->session->request->ipAddress->status == 'Block')
+      || ($this->session->request->route->status == 'Block')
+      || ($this->session->request->url->status == 'Block')
+      || ($this->session->request->useragent->status == 'Block')
     ) {
+      // TODO: Handle this through the request object
+      $this->status = 'Block';
       http_response_code(403);
       die('<h1>403 - Forbidden</h1>');
     }

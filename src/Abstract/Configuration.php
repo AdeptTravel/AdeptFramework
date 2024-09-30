@@ -9,6 +9,7 @@ use \Adept\Abstract\Configuration\Company;
 use \Adept\Abstract\Configuration\Component;
 use \Adept\Abstract\Configuration\Database;
 use \Adept\Abstract\Configuration\Email;
+use \Adept\Abstract\Configuration\Log;
 use \Adept\Abstract\Configuration\Media;
 use \Adept\Abstract\Configuration\Optimize;
 use \Adept\Abstract\Configuration\Security;
@@ -24,6 +25,7 @@ abstract class Configuration
   public Component $component;
   public Database $database;
   public Email $email;
+  public Log $log;
   public Media $media;
   public Security $security;
   public Site $site;
@@ -38,6 +40,7 @@ abstract class Configuration
     $this->component   = new Component();
     $this->database    = new Database();
     $this->email       = new Email();
+    $this->log         = new Log();
     $this->media       = new Media();
     $this->security    = new Security();
     $this->site        = new Site();
