@@ -32,15 +32,15 @@ class MenuItems extends \Adept\Abstract\Component\HTML\Items
     $data = new \Adept\Data\Table\Menu\Item();
 
     if ($get->exists('menu')) {
-      $data->menu = $get->getInt('menu');
+      $data->menuId = $get->getInt('menuId');
     }
 
     if ($get->exists('parent')) {
-      $data->parent = $get->getInt('parent');
+      $data->parentId = $get->getInt('parentId');
     }
 
     if ($get->exists('route')) {
-      $data->route = $get->getInt('route');
+      $data->routeId = $get->getInt('routeId');
     }
 
     $data->title = $get->getString('title');
@@ -51,37 +51,6 @@ class MenuItems extends \Adept\Abstract\Component\HTML\Items
 
     $data->sort = $get->getString('sort', 'route');
     $data->dir  = $get->getString('dir', 'asc');
-
-    return $data;
-  }
-
-  public function getDataset(): \Adept\Data\Dataset\Menu\Item
-  {
-    $get  = Application::getInstance()->session->request->data->get;
-    $data = new \Adept\Data\Dataset\Menu\Item();
-
-    //$table->status = $get->getInt('status', 99);
-
-    if ($get->exists('menu')) {
-      $data->menu = $get->getInt('menu');
-    }
-
-    if ($get->exists('parent')) {
-      $data->parent = $get->getInt('parent');
-    }
-
-    if ($get->exists('route')) {
-      $data->route = $get->getInt('route');
-    }
-
-    $data->title = $get->getString('title');
-
-    if ($get->exists('status')) {
-      $data->status = $get->getInt('status', 1);
-    }
-
-    $data->sort = $get->getString('sort', 'route');
-    $data->dir = $get->getString('dir', 'asc');
 
     return $data;
   }

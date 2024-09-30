@@ -93,11 +93,25 @@ abstract class Table
   public int $id;
 
   /**
-   * Undocumented variable
+   * Status - Active, Inactive, Block
    *
-   * @var int
+   * @var string
    */
-  public int $status;
+  public string $status;
+
+  /**
+   * The created date as a MySQL string
+   *
+   * @var string
+   */
+  public string $createdOn;
+
+  /**
+   * The last updated date as a MySQL string
+   *
+   * @var string
+   */
+  public string $updatedOn;
 
   public function getData(bool $recursive = false): array
   {
@@ -234,6 +248,7 @@ abstract class Table
     }
 
     $joins = array_merge($this->joinInner, $this->joinLeft);
+
     if (!empty($joins)) {
       foreach ($joins as $table => $col) {
         $tmp = $db->getColumns($table);
@@ -422,20 +437,23 @@ abstract class Table
   protected function cacheLoad(array $filter): bool
   {
     $status = false;
-    $path   = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
 
-    $file   = $this->cacheHash($filter) . '.php';
+    if (Application::getInstance()->conf->system->cache) {
+      $path   = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
 
-    if (file_exists($path . $file)) {
-      // Get the serialized cache data
-      $cache = file_get_contents($path . $file);
-      // Remove security block
-      $cache = substr($cache, 15);
-      // Unseralize the data
-      $this->data  = unserialize($cache);
+      $file   = $this->cacheHash($filter) . '.php';
+
+      if (file_exists($path . $file)) {
+        // Get the serialized cache data
+        $cache = file_get_contents($path . $file);
+        // Remove security block
+        $cache = substr($cache, 15);
+        // Unseralize the data
+        $this->data  = unserialize($cache);
 
 
-      $status = true;
+        $status = true;
+      }
     }
 
     return $status;
@@ -450,18 +468,20 @@ abstract class Table
    */
   protected function cacheSave(array $filter)
   {
-    $path   = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
-    $file   = $this->cacheHash($filter) . '.php';
+    if (Application::getInstance()->conf->system->cache) {
+      $path   = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
+      $file   = $this->cacheHash($filter) . '.php';
 
-    $serialized = serialize($this->data);
-    $cache = '<?php die(); ?>' . $serialized;
+      $serialized = serialize($this->data);
+      $cache = '<?php die(); ?>' . $serialized;
 
-    if (!file_exists($path)) {
-      mkdir($path, 0774, true);
-    }
+      if (!file_exists($path)) {
+        mkdir($path, 0774, true);
+      }
 
-    if (!file_exists($path . $file)) {
-      file_put_contents($path . $file, $cache);
+      if (!file_exists($path . $file)) {
+        file_put_contents($path . $file, $cache);
+      }
     }
   }
 

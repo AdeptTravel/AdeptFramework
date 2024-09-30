@@ -47,7 +47,7 @@ class HTML extends \Adept\Abstract\Component
     $buffer     = '';
     $request    = &$app->session->request;
     $component  = $request->route->component;
-    $option     = $request->route->option;
+    $option     = $request->route->view;
     $type       = $request->url->type;
 
     if (!empty($template)) {

@@ -10,11 +10,13 @@ use \Adept\Application\Session\Authentication;
 
 class Login extends \Adept\Abstract\Component
 {
-  public function __construct(Application &$app, Document &$doc)
+  public function __construct()
   {
-    parent::__construct($app, $doc);
+    parent::__construct();
 
-    $data = $app->session->request->post;
+    $app  = Application::getInstance();
+    $auth = $app->session->auth;
+    $data = $app->session->request->data->post;
 
     //$this->view->status->addError('Login Error', 'Username or Password is incorrect');
     //$this->view->status->addWarning('Warning', 'This is a warning');
@@ -26,7 +28,8 @@ class Login extends \Adept\Abstract\Component
       $password = $data->get('password', '');
 
       if (!empty($username) && !empty($password)) {
-        $auth = new Authentication($app->db, $app->session->data);
+
+
         if (!$auth->login($username, $password)) {
           $this->view->status->addError('Login Error', 'Username or Password is incorrect');
         }

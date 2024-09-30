@@ -138,7 +138,7 @@ class Sortable extends Table
 		if ($this->reorder) {
 
 			$this->header = array_merge([(object)[
-				'column' 	=> 'order',
+				'column' 	=> 'displayOrder',
 				'title' 	=> '',
 				'edit' 		=> false,
 				'css' 		=> ['fa-solid', 'fa-grip-vertical', 'grab']
@@ -259,13 +259,12 @@ class Sortable extends Table
 						'text' => $text
 					]);
 				} else if ($col->column == 'select') {
+
 					$td->children[] = new Checkbox([
 						'name' => 'select',
 						'value' => $row->id
 					]);
 				} else {
-					//die('<pre>' . print_r($col, true));
-					//die('<pre>' . print_r($row, true));
 					$td->html = $row->$index;
 				}
 			}

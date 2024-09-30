@@ -18,9 +18,8 @@ class Useragent extends \Adept\Abstract\Data\Item
   public string $os = '';
   public string $device = '';
   public string $type = '';
-  public bool   $detected = false;
-  public bool   $block = false;
-  public string $created;
+  public bool   $isDetected = false;
+  public string $status = 'Allow';
 
   public function __construct(bool $current = false)
   {
@@ -54,7 +53,7 @@ class Useragent extends \Adept\Abstract\Data\Item
           $this->type = $parser->device->type;
         }
 
-        $this->detected = $parser->isDetected();
+        $this->isDetected = $parser->isDetected();
 
         $this->save();
       }

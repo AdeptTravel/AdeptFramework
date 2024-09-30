@@ -32,16 +32,7 @@ class Menu extends \Adept\Abstract\Data\Item
   protected string $table = 'Menu';
   protected string $index = 'title';
 
-  public string $title = '';
-  public string $css = '';
-  public bool   $secure = false;
-
-  /**
-   * The status of the data object: published, unpublished, trashed, lost, archived, etc.
-   *
-   * @var int
-   */
-  public int $status = 1;
-
-  public string $created;
+  protected string $title;
+  protected string $css;
+  protected bool   $isSecure;
 }

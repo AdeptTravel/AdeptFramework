@@ -2,17 +2,16 @@
 
 use Adept\Application;
 use Adept\Document\HTML\Elements\Form;
-use Adept\Document\HTML\Elements\Form\Row;
-use Adept\Document\HTML\Elements\Input\Toggle;
 use Adept\Document\HTML\Elements\Form\Image;
-use Adept\Document\HTML\Elements\Form\Row\Input;
-use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
+use Adept\Document\HTML\Elements\Form\Row;
 use Adept\Document\HTML\Elements\Form\Row\DropDown;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Menu;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Menu\Item;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Route;
-use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
-
+use Adept\Document\HTML\Elements\Form\Row\Input;
+use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
+use Adept\Document\HTML\Elements\Input\Toggle;
+use Adept\Helper\Arrays;
 
 // Shortcuts
 $app  = Application::getInstance();
@@ -37,8 +36,11 @@ $form->children[] = new Input([
   'placeholder' => 'Title'
 ]);
 
-$form->children[] = new Status([
-  'value' => (string)$item->status
+$form->children[] = new Dropdown([
+  'label'        => 'Status',
+  'name'         => 'status',
+  'value'        => (string)$item->status,
+  'values'       => Arrays::ValueToArray(['Active', 'Block', 'Inactive', 'Trash'])
 ]);
 
 $form->children[] = new Menu([

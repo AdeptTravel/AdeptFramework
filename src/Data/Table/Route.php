@@ -11,12 +11,33 @@ class Route extends \Adept\Abstract\Data\Table
 
   public string $sort = 'route';
 
-  protected array $empty = ['redirect'];
-  public string $route;
-  public string $category;
-  public string $component;
-  public string $option;
-  public string $template;
+  /**
+   * The route
+   *
+   * @param string
+   */
+  public string $route = '';
+
+  /**
+   * The component
+   *
+   * @var string
+   */
+  public string $component = '';
+
+  /**
+   * The component option aka what area of the component should be loaded
+   *
+   * @var string
+   */
+  public string $view = '';
+
+  /**
+   * The view template
+   *
+   * @var string
+   */
+  public string $template = '';
 
   /**
    * Allow access to the HTML component
@@ -61,53 +82,47 @@ class Route extends \Adept\Abstract\Data\Table
   public bool $zip;
 
   /**
-   * Route is in the sitemap
+   * Is the route in the sitemap
    *
-   * @var bool
+   * @param bool
    */
   public bool $sitemap;
 
   /**
-   * Route is allowed access to GET data
+   * Allow get data
    *
    * @var bool
    */
-  public bool $get;
+  public bool $allowGet;
 
   /**
-   * Route is allowed access to POST data
+   * Allow post data
    *
    * @var bool
    */
-  public bool $post;
+  public bool $allowPost;
 
   /**
-   * Route is allowed to send email
+   * Allow the route to send emails
    *
    * @var bool
    */
-  public bool $email;
+  public bool $allowEmail;
 
   /**
-   * Route is secured (requires login)
+   * Is the route publically viewable
    *
    * @var bool
    */
-  public bool $secure;
+  public bool $isSecure;
 
   /**
-   * Route is allowed to cache the request
+   * Can the route be cached
    *
    * @var bool
    */
-  public bool $cache;
+  public bool $isCacheable;
 
-  /**
-   * Route is blocked
-   *
-   * @var bool
-   */
-  public bool $block;
 
   protected function getItem(int $id): \Adept\Data\Item\Route
   {

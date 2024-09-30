@@ -15,11 +15,12 @@ namespace Adept\Application\Session;
 
 defined('_ADEPT_INIT') or die();
 
-use \Adept\Application\Session\Request\Data;
-use \Adept\Data\Item\IPAddress;
-use \Adept\Application\Session\Request\Route;
-use \Adept\Data\Item\Url;
-use \Adept\Data\Item\Useragent;
+use Adept\Application\Session\Request\Data;
+use Adept\Application\Session\Request\Redirect;
+use Adept\Application\Session\Request\Route;
+use Adept\Data\Item\IPAddress;
+use Adept\Data\Item\Url;
+use Adept\Data\Item\Useragent;
 
 /**
  * \Adept\Application\Session\Request
@@ -33,6 +34,9 @@ use \Adept\Data\Item\Useragent;
  */
 class Request
 {
+
+  public int $id;
+
   /**
    * The current session id
    *
@@ -45,12 +49,20 @@ class Request
    *
    * @var int
    */
-  protected int $session;
+  protected int $sessionId;
 
   /**
    * @var \Adept\Data\Item\IPAddress
    */
-  public IPAddress $ip;
+  public IPAddress $ipAddress;
+
+
+  /**
+   * A reference to the Request data item
+   *
+   * @var \Adept\Data\Item\Request
+   */
+  public \Adept\Data\Item\Request $request;
 
   /**
    * @var \Adept\Application\Session\Request\Route
@@ -58,11 +70,16 @@ class Request
   public Route $route;
 
   /**
+   *  @var \Adept\Application\Session\Request\Redirect
+   */
+  public Redirect $redirect;
+
+  /**
    * HTTP Status Code
    * 
    * @var int
    */
-  public int $status;
+  public string $code;
 
   /**
    * The URL the request came in on
@@ -71,14 +88,19 @@ class Request
    */
   public Url $url;
 
-  public int $milisec = 0;
+  /**
+   * Date and time the record was created
+   *
+   * @var string
+   */
+  public string $createdOn;
 
   /**
    * The useragent used for the current request.  This is in Request and not
    * Session because we have don't log me out features and app integration.
    * As browsers and apps get updated we can track the changes over time.
-   * TODO: Use this data to verify that the browser family andOS hasn't
-   *  changed, if so set a session block.
+   * TODO: Use this data to verify that the browser family and OS hasn't
+   *       changed, if so set a session block.
    *
    * @var \Adept\Data\Item\Useragent
    */
@@ -91,21 +113,46 @@ class Request
    */
   public function __construct(int $session)
   {
-    $this->session    = $session;
+    $this->sessionId  = $session;
     $this->url        = new Url(true);
-    $this->ip         = new IPAddress(true);
+    $this->ipAddress  = new IPAddress(true);
     $this->useragent  = new Useragent(true);
     $this->route      = new Route($this->url);
     $this->data       = new Data();
-    $this->status     = 200;
-    $this->milisec    = floor((microtime(true) - time()) * 1000);
 
-    if (!empty($this->route->redirect)) {
-      $this->redirect($this->route->redirect);
-    }
+    $this->request              = new \Adept\Data\Item\Request();
+    $this->request->sessionId   = $this->sessionId;
+    $this->request->ipAddressId = $this->ipAddress->id;
+    $this->request->useragentId = $this->useragent->id;
+    $this->request->urlId       = $this->url->id;
 
     if ($this->route->id == 0) {
-      $this->setStatus(404);
+      $this->redirect = new Redirect($this->url);
+
+      if ($this->redirect->id > 0) {
+        $this->code = $this->redirect->code;
+        $this->request->redirectId = $this->redirect->id;
+        $this->redirect($this->redirect->redirect, $this->code);
+      } else {
+        $this->setStatus(404);
+        $this->data->get->purge();
+        $this->data->post->purge();
+      }
+    } else {
+      $this->request->routeId = $this->route->id;
+      $this->data = new Data();
+      $this->code = 200;
+
+      //
+      // Security Checks
+      //
+      if (!$this->route->allowGet) {
+        $this->data->get->purge();
+      }
+
+      if (!$this->route->allowPost) {
+        $this->data->post->purge();
+      }
     }
   }
 
@@ -114,46 +161,39 @@ class Request
     $this->save();
   }
 
-  public function redirect(string $url, bool $permanent = true)
+  public function redirect(string $url, $code = 301)
   {
-    $this->status = ($permanent) ? 301 : 302;
     $this->save();
-    http_response_code($this->status);
-    header('Location:' . $url, true, $this->status);
+    http_response_code($this->code);
+    header('Location:' . $url, true, $code);
     die();
   }
 
   public function setStatus(int $status)
   {
-    $this->status = $status;
+    $this->code = $status;
 
     if ($status != 200) {
 
       $this->route->component = 'Error';
-      $this->route->option = $status;
+      $this->route->view = $status;
 
       http_response_code($status);
-      /*
-      if ($this->format == 'HTML') {
-        header('Location: https://' . $this->conf->site->url . '/' . $status);
-      } else {
-        \Adept\error(get_class($this), __FUNCTION__, __LINE__, 'Status Error');
-        \Adept\error(debug_backtrace(), 'Status error');
-      }
-      */
     }
   }
 
   public function save()
   {
-    $request = new \Adept\Data\Item\Request();
-    $request->session = $this->session;
-    $request->ipaddress = $this->ip->id;
-    $request->useragent = $this->useragent->id;
-    $request->route = $this->route->id;
-    $request->url = $this->url->id;
-    $request->code = $this->status;
-    $request->milisec = $this->milisec;
-    $request->save();
+    $this->request->code = $this->code;
+
+    if ($this->code == 200) {
+      $this->request->status = 'Active';
+    } else if ($this->code == 403) {
+      $this->request->status = 'Block';
+    } else {
+      $this->request->status = 'Error';
+    }
+
+    $this->request->save();
   }
 }

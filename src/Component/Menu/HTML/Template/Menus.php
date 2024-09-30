@@ -1,12 +1,13 @@
 <?php
 
 use Adept\Application;
-use Adept\Document\HTML\Elements\Form\DropDown\Filter\Status;
+use Adept\Document\HTML\Elements\Form\DropDown;
 use Adept\Document\HTML\Elements\Form\DropDown\Filter\Secure;
 use Adept\Document\HTML\Elements\Form\Filter;
 use Adept\Document\HTML\Elements\Form\Textbox\Search;
 use Adept\Document\HTML\Elements\P;
 use Adept\Document\HTML\Elements\Table\Sortable;
+use Adept\Helper\Arrays;
 
 // Shortcuts
 $app = Application::getInstance();
@@ -24,14 +25,15 @@ $filter->children[] = new Search([
   'value'       => $get->getString('title', '')
 ]);
 
-$filter->children[] = new Status([
+$filter->children[] = new Dropdown([
   'name'        => 'status',
   'placeholder' => 'Status',
-  'value'       => (string)(($get->exists('status')) ? $get->getInt('status', 0) : '')
+  'value'       => (string)(($get->exists('status')) ? $get->getInt('status', 0) : ''),
+  'values'      => Arrays::ValueToArray(['Active', 'Inactive', 'Trash'])
 ]);
 
 $filter->children[] = new Secure([
-  'name'        => 'secure',
+  'name'        => 'isSecure',
   'placeholder' => 'Secure',
   'value'       => (string)(($get->exists('secure')) ? $get->getInt('secure', 0) : '')
 ]);

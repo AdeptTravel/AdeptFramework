@@ -85,18 +85,11 @@ class Url extends \Adept\Abstract\Data\Item
   public string $mime = '';
 
   /**
-   * Is the URL blocked
-   *
-   * @var bool
-   */
-  public bool $block = false;
-
-  /**
-   * The datetime the url was created
+   * Status - Active, Inactive, Block
    *
    * @var string
    */
-  public string $created;
+  public string $status = 'Active';
 
   /**
    * Undocumented function
@@ -218,6 +211,7 @@ class Url extends \Adept\Abstract\Data\Item
     ];
 
     // Set type & mime
+    // Note: If a type is added make sure it's included in the db tables enum
     switch ($extension) {
       case "css":
         $info->type = "CSS";
@@ -313,6 +307,26 @@ class Url extends \Adept\Abstract\Data\Item
       case "xml":
         $info->type = "XML";
         $info->mime = "application/xml";
+        break;
+
+      case 'zip':
+        $info->type = "Archive";
+        $info->mime = "application/zip";
+        break;
+
+      case 'gz':
+        $info->type = "Archive";
+        $info->mime = "application/gzip";
+        break;
+
+      case 'mp3':
+        $info->type = "Audio";
+        $info->mime = "audio/mpeg";
+        break;
+
+      case 'mp4':
+        $info->type = "Video";
+        $info->mime = "video/mp4";
         break;
 
       default:

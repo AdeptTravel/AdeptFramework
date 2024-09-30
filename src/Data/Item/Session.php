@@ -12,8 +12,18 @@ class Session extends \Adept\Abstract\Data\Item
   protected string $table = 'Session';
   protected string $index = 'token';
 
-  public int $user;
+  public int|null $userId;
   public string $token;
-  public bool $block;
-  public \DateTime $created;
+  public string $status = 'Active';
+
+  protected function getData(bool $sql = true): array
+  {
+    $data = parent::getData($sql);
+
+    if (isset($data['userId']) == 0) {
+      unset($data['userId']);
+    }
+
+    return $data;
+  }
 }

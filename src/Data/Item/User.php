@@ -49,13 +49,6 @@ class User extends \Adept\Abstract\Data\Item
    */
   public string $password = '';
 
-  /**
-   * Undocumented variable
-   *
-   * @var string
-   */
-  public string $token = '';
-
   //public string $prefix = '';
 
   /**
@@ -89,32 +82,19 @@ class User extends \Adept\Abstract\Data\Item
   /**
    * The status of the data object: published, unpublished, trashed, lost, archived, etc.
    *
-   * @var int
-   */
-  public int $status = 1;
-
-  /**
-   * public string $dob;
-   *
-   * @var DateTime
-   */
-  public string $created;
-
-  /**
-   * public DateTime $dob;
-   *
    * @var string
    */
-  public string $verified;
+  public string $status = '';
 
   /**
-   * public DateTime $dob;
-   *
    * @var string
    */
-  public string $validated;
+  public string $verifiedAt;
 
-  public int $advisor;
+  /**
+   * @var string
+   */
+  public string $validatedAt;
 
   /**
    * Undocumented function
@@ -138,9 +118,9 @@ class User extends \Adept\Abstract\Data\Item
       $post->get($prefix . 'password1', '')
     );
 
-    $this->firstname = $post->getName($prefix . 'firstname');
+    $this->firstname  = $post->getName($prefix . 'firstname');
     $this->middlename = $post->getName($prefix . 'middlename');
-    $this->lastname = $post->getName($prefix . 'lastname');
+    $this->lastname   = $post->getName($prefix . 'lastname');
 
     $dob = $post->getDate('dob');
 
@@ -154,7 +134,6 @@ class User extends \Adept\Abstract\Data\Item
   public function loadFromEmail(string $username, \DateTime $dob): bool
   {
     $app = \Adept\Application::getInstance();
-    //$status = $this->loadCache();
     $status = false;
 
     $query  = 'SELECT * FROM `' . $this->table . '` AS a';

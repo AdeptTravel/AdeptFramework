@@ -116,6 +116,27 @@ abstract class Item
    */
   public array $error = [];
 
+  /**
+   * Status - Active, Inactive, Block
+   *
+   * @var string
+   */
+  public string $status;
+
+  /**
+   * The created date as a MySQL string
+   *
+   * @var string
+   */
+  public string $createdOn;
+
+  /**
+   * The last updated date as a MySQL string
+   *
+   * @var string
+   */
+  public string $updatedOn;
+
   public function loadFromID(int $id): bool
   {
     $db     = \Adept\Application::getInstance()->db;
@@ -127,13 +148,11 @@ abstract class Item
       $params = [':id' => $id];
 
       if (($obj = $db->getObject($query, $params)) !== false) {
+        $this->originalData = (array)$obj;
         $this->loadFromObj($obj);
+
         $status = true;
       }
-    }
-
-    if ($status) {
-      $this->originalData = $this->getData();
     }
 
     return $status;
@@ -151,11 +170,10 @@ abstract class Item
 
       if (($obj = $db->getObject($query, $params)) !== false) {
         $status = true;
+        $this->originalData = (array)$obj;
         $this->loadFromObj($obj);
       }
     }
-
-    $this->originalData = $this->getData();
 
     return $status;
   }
@@ -178,48 +196,51 @@ abstract class Item
       $prefix .= '_';
     }
 
-    foreach ($properties as $p) {
-      $key = $p->name;
+    for ($i = 0; $i < count($properties); $i++) {
+      $key = $properties[$i]->name;
 
-      if ($key == 'error' || $key == 'id') {
+      if (in_array($key, ['id', 'createdOn', 'error'])) {
         continue;
       }
 
-      if ($p->getType() !== null) {
-        $type = $p->getType()->getName();
+      if ($properties[$i]->getType() !== null) {
+        $type = $properties[$i]->getType()->getName();
 
         if (array_key_exists($key, $this->postFilters)) {
           $method = 'get' . ucfirst($this->postFilters[$key]);
           $this->setVar($key, $post->$method($prefix . $key));
         } else {
 
-          switch ($type) {
-            case 'int':
-              $this->$key = $post->getInt($prefix . $key);
-              break;
+          if ($post->exists($key)) {
+            switch ($type) {
+              case 'int':
+                $this->$key = $post->getInt($prefix . $key);
+                break;
 
-            case 'bool':
-              $this->$key = $post->getBool($prefix . $key);
-              break;
+              case 'bool':
+                $this->$key = $post->getBool($prefix . $key);
+                break;
 
-            case 'string':
-              $this->$key = $post->getString($prefix . $key);
-              break;
+              case 'string':
+                $this->$key = $post->getString($prefix . $key);
+                $post->getString($prefix . $key) . '</div>';
+                break;
 
-            case 'object':
-              $this->$key = $post->getInt($prefix . $key);
-              break;
+              case 'object':
+                $this->$key = $post->getInt($prefix . $key);
+                break;
 
-            case 'DateTime':
-              $this->$key = $post->getDateTime($prefix . $key);
+              case 'DateTime':
+                $this->$key = $post->getDateTime($prefix . $key);
 
 
-              break;
+                break;
 
-            default:
-              $this->$key = new $type($post->getInt($prefix . $key));
+              default:
+                $this->$key = new $type($post->getInt($prefix . $key));
 
-              break;
+                break;
+            }
           }
         }
       }
@@ -258,6 +279,7 @@ abstract class Item
           }
         }
       } else {
+
         $status = $app->db->updateSingleTable($this->table, $data);
 
         if (!$status) {
@@ -297,16 +319,22 @@ abstract class Item
         continue;
       }
 
+      if (in_array($key, ['createdOn'])) {
+        continue;
+      }
+
       if (
         isset($this->$key)
         && !in_array($key, $this->excludeKeys)
         && !($this->id == 0 && in_array($key, $this->excludeKeysOnNew))
       ) {
 
+        //if ($key == 'updatedOn') {
+        //}
+
         switch ($type) {
           case 'string':
             if ($this->$key != '0000-00-00 00:00:00') {
-
               $data[$key] = trim($this->$key);
             }
 
@@ -600,23 +628,26 @@ abstract class Item
   {
     $status = false;
 
-    $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
-    $file = $file . '.php';
+    if (Application::getInstance()->conf->system->cache) {
 
-    if (file_exists($path . $file)) {
-      // Get the serialized cache data
-      $cache = file_get_contents($path . $file);
-      // Remove security block
-      $cache = substr($cache, 15);
-      // Unseralize the data
-      $data  = unserialize($cache);
+      $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
+      $file = $file . '.php';
 
-      // Set the objects variable from the cache data
-      foreach ($data as $k => $v) {
-        $this->$k = $v;
+      if (file_exists($path . $file)) {
+        // Get the serialized cache data
+        $cache = file_get_contents($path . $file);
+        // Remove security block
+        $cache = substr($cache, 15);
+        // Unseralize the data
+        $data  = unserialize($cache);
+
+        // Set the objects variable from the cache data
+        foreach ($data as $k => $v) {
+          $this->$k = $v;
+        }
+
+        $status = true;
       }
-
-      $status = true;
     }
 
     return $status;
@@ -631,24 +662,26 @@ abstract class Item
    */
   protected function cacheSave()
   {
-    $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
+    if (Application::getInstance()->conf->system->cache) {
+      $path = FS_SITE_CACHE . str_replace("\\", '/', get_class($this)) . '/';
 
-    $data = $this->getData();
+      $data = $this->getData();
 
-    $serialized = serialize($data);
-    $cache = '<?php die(); ?>' . $serialized;
+      $serialized = serialize($data);
+      $cache = '<?php die(); ?>' . $serialized;
 
-    if (!file_exists($path)) {
-      mkdir($path, 0774, true);
+      if (!file_exists($path)) {
+        mkdir($path, 0774, true);
+      }
+
+      file_put_contents($path . $this->id . '.php', $cache);
+      file_put_contents($path . hash('md5', $this->index) . '.php', $cache);
+
+      // Delete all table cache files related the the database table of this item
+      $path = str_replace("Data/Item/", "Data/Table/", $path);
+
+      array_map([$this, 'cacheDelete'], array_filter((array) glob($path . '*')));
     }
-
-    file_put_contents($path . $this->id . '.php', $cache);
-    file_put_contents($path . hash('md5', $this->index) . '.php', $cache);
-
-    // Delete all table cache files related the the database table of this item
-    $path = str_replace("Data/Item/", "Data/Table/", $path);
-
-    array_map([$this, 'cacheDelete'], array_filter((array) glob($path . '*')));
   }
 
   // Method to delete files and directories

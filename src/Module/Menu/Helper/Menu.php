@@ -19,7 +19,7 @@ class Menu
     $menu = new Ul();
 
     for ($i = 0; $i < count($items); $i++) {
-      if ($items[$i]->parent == $parent) {
+      if ($items[$i]->parentId == $parent) {
         $menu->children[] = Menu::getItem($i, $items);
       }
     }

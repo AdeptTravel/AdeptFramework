@@ -4,7 +4,6 @@ namespace Adept\Data\Table\Menu;
 
 defined('_ADEPT_INIT') or die();
 
-use Adept\Application;
 use Adept\Data\Item\Menu;
 
 class Item extends \Adept\Abstract\Data\Table
@@ -13,30 +12,28 @@ class Item extends \Adept\Abstract\Data\Table
   protected array $ignore = ['menuTitle'];
   protected array $like = ['title'];
   protected array $joinInner = [
-    'Menu' => 'menu'
+    'Menu' => 'menuId'
   ];
 
   protected array $joinLeft = [
-    'Route' => 'route'
+    'Route' => 'routeId'
   ];
 
   public string $sort = 'order';
 
   public string $menuTitle;
 
-  public int $menu;
-  public int $parent;
-  public int $route;
+  public int    $menuId;
+  public int    $parentId;
+  public int    $routeId;
   public string $url;
   public string $title;
   public string $image;
-  public string $imageAlt;
   public string $fa;
   public string $css;
   public string $params;
-  public int $order;
-  public int $status;
-  public string $created;
+  public string $activeOn;
+  public int    $displayOrder;
 
   protected function getFilterData(): array
   {
@@ -44,7 +41,7 @@ class Item extends \Adept\Abstract\Data\Table
       $menu = new Menu();
       $menu->loadFromIndex($this->menuTitle);
       if (!empty($menu->id)) {
-        $this->menu = $menu->id;
+        $this->menuId = $menu->id;
       }
     }
 

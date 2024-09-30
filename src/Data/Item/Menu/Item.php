@@ -38,17 +38,15 @@ class Item extends \Adept\Abstract\Data\Item
     'Route' => 'route'
   ];
 
-  public int    $menu;
-  public int    $parent = 0;
-  public int    $route;
-  public string $url = '';
-  public string $title = '';
-  public string $image = '';
-  public string $imageAlt = '';
-  public string $fa = '';
-  public string $css = '';
-  public string $params = '';
-  public int    $order = 0;
-  public int    $status = 0;
-  public string $created;
+  public int    $menuId;
+  public int    $parentId;
+  public int    $routeId;
+  public string $url;
+  public string $title;
+  public string $image;
+  public string $fa;
+  public string $css;
+  public string $params;
+  public string $activeOn;
+  public int    $displayOrder;
 }

@@ -32,22 +32,21 @@ class IPAddress extends \Adept\Abstract\Data\Item
   protected string $table = 'IPAddress';
   protected string $index = 'ipaddress';
 
-  public string $ipaddress = '';
+  public string $ipAddress = '';
   public string $encoded;
-  public bool $block = false;
-  public string $created = '0000-00-00 00:00:00';
+  public string $status = 'Active';
 
   public function __construct(bool $current = false)
   {
     if ($current) {
-      $ipaddress = '';
+      $ipAddress = '';
 
       if (!empty($_SERVER["HTTP_CF_CONNECTING_IP"])) {
         // Cloudflair
-        $ipaddress = $_SERVER["HTTP_CF_CONNECTING_IP"];
+        $ipAddress = $_SERVER["HTTP_CF_CONNECTING_IP"];
       } else if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
         // Primary
-        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+        $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
       } else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         // Get proxy list
         $list = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
@@ -56,27 +55,27 @@ class IPAddress extends \Adept\Abstract\Data\Item
         foreach ($list as $ip) {
           if (!empty($ip)) {
             // First IP
-            $ipaddress = $ip;
+            $ipAddress = $ip;
             break;
           }
         }
       } else if (!empty($_SERVER['HTTP_X_FORWARDED'])) {
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+        $ipAddress = $_SERVER['HTTP_X_FORWARDED'];
       } else if (!empty($_SERVER['HTTP_X_CLUSTER_CLIENT_IP'])) {
-        $ipaddress = $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
+        $ipAddress = $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
       } else if (!empty($_SERVER['HTTP_FORWARDED_FOR'])) {
-        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        $ipAddress = $_SERVER['HTTP_FORWARDED_FOR'];
       } else if (!empty($_SERVER['HTTP_FORWARDED'])) {
-        $ipaddress = $_SERVER['HTTP_FORWARDED'];
+        $ipAddress = $_SERVER['HTTP_FORWARDED'];
       } else if (!empty($_SERVER['REMOTE_ADDR'])) {
-        $ipaddress = $_SERVER['REMOTE_ADDR'];
+        $ipAddress = $_SERVER['REMOTE_ADDR'];
       }
 
-      $ipaddress = filter_var($ipaddress, FILTER_VALIDATE_IP);
+      $ipAddress = filter_var($ipAddress, FILTER_VALIDATE_IP);
 
-      if (!$this->loadFromIndex($ipaddress)) {
-        $this->ipaddress = $ipaddress;
-        $this->encoded = inet_pton($ipaddress);
+      if (!$this->loadFromIndex($ipAddress)) {
+        $this->ipAddress = $ipAddress;
+        $this->encoded = inet_pton($ipAddress);
         $this->save();
       }
     }

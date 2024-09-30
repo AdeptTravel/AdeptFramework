@@ -37,8 +37,8 @@ class Menus extends \Adept\Abstract\Component\HTML\Items
       $data->status = $get->getInt('status', 1);
     }
 
-    if ($get->exists('secure')) {
-      $data->secure = $get->getBool('secure', false);
+    if ($get->exists('isSecure')) {
+      $data->isSecure = $get->getBool('isSecure', false);
     }
 
     $data->sort = $get->getString('sort', 'route');

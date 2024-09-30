@@ -64,6 +64,7 @@ abstract class GetVars
   {
     $val = $default;
 
+
     switch ($this->type) {
       case 'Get':
 
@@ -132,7 +133,8 @@ abstract class GetVars
         $exists = (isset($_GET[$key]) && (!empty($_GET[$key]) || $_GET[$key] == 0));
         break;
       case 'Post':
-        $exists = !(empty($_POST[$key]) && $_GET[$key] != 0);
+        $exists = (isset($_POSt[$key]) && !empty($_POSt[$key]));
+
         break;
       case 'Server':
         $exists = !(empty($_SESSION[$key]) && $_GET[$key] != 0);
@@ -277,6 +279,7 @@ abstract class GetVars
   public function getString(string $key, string $default = '', int $limit = 64): string
   {
     $raw = $this->get($key, $default, $limit);
+
 
     $val = strip_tags($raw);
     $val = addslashes($val);

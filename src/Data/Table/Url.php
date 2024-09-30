@@ -13,79 +13,72 @@ class Url extends \Adept\Abstract\Data\Items
   public string $sort     = 'url';
 
   /**
-   * Undocumented variable
+   * The full url with QueryString
+   *
+   * @var string
+   */
+  public string $raw;
+
+  /**
+   * The filtered URL
    *
    * @var string
    */
   public string $url;
 
   /**
-   * Undocumented variable
+   * The scheme ie. HTTP|HTTPS
    *
    * @var string
    */
   public string $scheme;
 
   /**
-   * Undocumented variable
+   * The host name
    *
    * @var string
    */
   public string $host;
 
   /**
-   * Undocumented variable
+   * The path
    *
    * @var string
    */
   public string $path;
 
   /**
-   * Undocumented variable
+   * The path seperated into an array
    *
    * @var array
    */
   public array $parts;
 
   /**
-   * Undocumented variable
+   * The file for the request, index.html is default
    *
    * @var string
    */
   public string $file;
 
   /**
-   * Undocumented variable
+   * The extension of the request ie. html|css etc.
    *
    * @var string
    */
   public string $extension;
 
   /**
-   * Undocumented variable
+   * Type of request 
    *
    * @var string
    */
   public string $type;
 
   /**
-   * Undocumented variable
+   * Mime type of the request
    *
    * @var string
    */
   public string $mime;
-
-  /**
-   * Undocumented variable
-   *
-   * @var bool
-   */
-  public bool $block;
-
-  /**
-   * Undocumented variable
-   *
-   * @var string
-   */
-  public string $created;
 }

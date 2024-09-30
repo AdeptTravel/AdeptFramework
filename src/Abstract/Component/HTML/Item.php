@@ -41,11 +41,8 @@ abstract class Item extends \Adept\Abstract\Component\HTML
 
     $item = $this->getItem($id);
 
-    //echo '<pre>' . print_r($_POST, true) . '</pre>';
-    //echo '<pre>' . print_r($item, true) . '</pre>';
-    //die();
     if (strpos($action, 'save') !== false) {
-      $item = $this->getItem();
+      $item = $this->getItem($id);
 
       $item->loadFromPost($post);
 
@@ -74,5 +71,5 @@ abstract class Item extends \Adept\Abstract\Component\HTML
     }
   }
 
-  abstract function getItem(int $id = 0): \Adept\Abstract\Data\Item;
+  abstract function getItem(int $id): \Adept\Abstract\Data\Item;
 }

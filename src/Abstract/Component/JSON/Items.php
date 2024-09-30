@@ -47,6 +47,8 @@ abstract class Items extends \Adept\Abstract\Component\JSON
 
   public function toggle(int $id, string $col, int $val): bool
   {
+
+    file_put_contents($col . ' - ' . $val, FS_SITE_LOG . 'debug.log', FILE_APPEND);
     $item = $this->getItem($id);
     $item->$col = $val;
     $status = $item->save();

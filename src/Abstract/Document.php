@@ -64,7 +64,7 @@ abstract class Document
 
     // Used to determine the component, option, and format
     $component  = $route->component;
-    $option     = $route->option;
+    $option     = $route->view;
     $format     = $url->type;
     $namespace  = null;
 

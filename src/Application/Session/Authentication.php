@@ -4,10 +4,9 @@ namespace Adept\Application\Session;
 
 defined('_ADEPT_INIT') or die('No Access');
 
-use \Adept\Application\Database;
-use \Adept\Application\Session\Data;
-use \Adept\Application\Session\Request;
-use \Adept\Data\Item\User;
+use Adept\Application;
+use Adept\Application\Session\Data;
+use Adept\Data\Item\User;
 
 class Authentication
 {
@@ -53,7 +52,10 @@ class Authentication
 
     if (($id = $data->server->getInt('auth.userid', 0)) > 0) {
       $this->user->loadFromId($id);
-      $this->status = ($this->user->id > 0 && $this->user->verified != '0000-00-00 00:00:00');
+      $this->status = (
+        $this->user->id > 0 &&
+        $this->user->status == 'Active' &&
+        $this->user->verifiedAt != '0000-00-00 00:00:00');
     }
   }
 
@@ -66,14 +68,17 @@ class Authentication
    *
    * @return bool
    */
-  public function login(string $username, string $password, \Adept\Application\Session\Request &$request): bool
+  public function login(string $username, string $password): bool
   {
     $result = 'Fail';
-    $failed = '';
+    $reason = '';
+
+    $session = Application::getInstance()->session;
+    $request = &$session->request;
 
     if (!$this->status) {
 
-      $db = \Adept\Application::getInstance()->db;
+      $db = Application::getInstance()->db;
       $params = [$username];
 
       // Username isn't in a security hold (timeout)
@@ -83,51 +88,55 @@ class Authentication
       $query .= " WHERE `username` = ?";
       $query .= " AND `password` <> ''";
 
-      $user = $db->getObject($query, $params);
+      $users = $db->getObjects($query, $params);
+      $user  = NULL;
 
-      if (isset($user->id)) {
-        // Username exists
+      $result = 'Fail';
+      $reason = 'Nonexistent';
 
-        if ($user->status) {
-          // User status is active
+      for ($i = 0; $i < count($users); $i++) {
+        $user = $users[$i];
 
-          if ($user->verified != '0000-00-00 00:00:00') {
-            // User has been verified
+        if (!empty($user->id)) {
+          // Username exists
 
-            if (password_verify($password, $user->password)) {
-              // Password matches
+          if ($user->status == 'Active') {
+            // User status is active
 
-              $result = 'Success';
-              $session = $this->data->server->getInt('session.id', 0);
+            if ($user->verifiedAt != '0000-00-00 00:00:00') {
+              // User has been verified
+              if (password_verify($password, $user->password)) {
+                // Password matches
+                $result = 'Success';
 
-              $this->data->server->set('auth.userid', $user->id);
-              $this->data->server->set('auth.token', '');
+                $this->data->server->set('auth.userid', $user->id);
+                $this->data->server->set('auth.token', $this->newToken());
 
-              $db->update(
-                "UPDATE `Session` SET `token` = ? WHERE `id` = ?",
-                [$session, $this->newToken()]
-              );
+                $session->token = $this->data->server->getString('auth.token');
+
+                // Break out of the loop
+                break;
+              } else {
+                // Password is incorrect
+
+                $result = 'Fail';
+                $reason = 'Password';
+              }
             } else {
-              // Password is incorrect
+              // User hasn't verified their email address
 
               $result = 'Fail';
-              $failed = 'Password';
+              $reason = 'Verified';
+
+              // Break out of the loop
+              break;
             }
           } else {
-            // User hasn't verified their email address
-
+            // User is deactivated via the status value
             $result = 'Fail';
-            $failed = 'Verified';
+            $reason = $user->status;
           }
-        } else {
-          // User is deactivated via the status value
-          $result = 'Fail';
-          $failed = 'Deactivated';
         }
-      } else {
-        // No username exists
-        $result = 'Fail';
-        $failed = 'Nonexistent';
       }
     } else {
       // Username is in a timeout for being bad
@@ -135,16 +144,21 @@ class Authentication
     }
 
     $query = "INSERT INTO `LogAuth`";
-    $query .= " (`username`, `useragent`, `ipaddress`, `result`, `failed`)";
+    $query .= " (`sessionId`, `requestId`,`useragentId`, `ipAddressId`, `username`, `result`, `reason`)";
     $query .= " VALUES";
-    $query .= " (?,?,?,?,?)";
+    $query .= " (?,?,?,?,?,?,?)";
+
+    // Save the request to the DB to get the ID
+    $request->save();
 
     $params = [
-      $username,
+      $session->id,
+      $request->request->id,
       $request->useragent->id,
-      $request->ip->id,
+      $request->ipAddress->id,
+      $username,
       $result,
-      $failed
+      $reason
     ];
 
     $db->insert($query, $params);

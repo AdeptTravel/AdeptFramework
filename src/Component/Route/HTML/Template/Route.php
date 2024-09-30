@@ -1,23 +1,19 @@
 <?php
 
 use Adept\Application;
-use Adept\Document\HTML\Elements\A;
-use Adept\Document\HTML\Elements\Div;
 use Adept\Document\HTML\Elements\Form;
 use Adept\Document\HTML\Elements\Form\Row;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\Component;
-use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\Option;
 use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\Template;
-use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
+use Adept\Document\HTML\Elements\Form\Row\DropDown\Route\View;
+use Adept\Document\HTML\Elements\Form\Row\DropDown;
 use Adept\Document\HTML\Elements\Form\Row\Input;
 use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
-use Adept\Document\HTML\Elements\H3;
-use Adept\Document\HTML\Elements\Hr;
-
 use Adept\Document\HTML\Elements\Input\Hidden;
 use Adept\Document\HTML\Elements\Input\Toggle;
 use Adept\Document\HTML\Elements\Tab;
 use Adept\Document\HTML\Elements\Tabs;
+use Adept\Helper\Arrays;
 
 // Shortcuts
 $app  = Application::getInstance();
@@ -48,10 +44,11 @@ $tabDetails = new Tab([
   'title' => 'Details'
 ]);
 
-$tabDetails->children[] = new Status([
-  'label' => 'Status',
-  'name'  => 'status',
-  'value' => (string)$item->status
+$tabDetails->children[] = new Dropdown([
+  'label'        => 'Status',
+  'name'         => 'status',
+  'value'        => (string)$item->status,
+  'values'       => Arrays::ValueToArray(['Active', 'Block', 'Inactive', 'Trash'])
 ]);
 
 $tabDetails->children[] = new Component([
@@ -62,11 +59,11 @@ $tabDetails->children[] = new Component([
 ]);
 
 
-$tabDetails->children[] = new Option([
+$tabDetails->children[] = new View([
   'required' => true,
-  'label' => 'Option',
-  'name' => 'option',
-  'value' => $item->option,
+  'label' => 'View',
+  'name' => 'view',
+  'value' => $item->view,
 ]);
 
 $tabDetails->children[] = new Template([
@@ -77,9 +74,9 @@ $tabDetails->children[] = new Template([
 ]);
 
 $form->children[] = new DateTime([
-  'name'     => 'created',
+  'name'     => 'createdOn',
   'label'    => 'Created',
-  'value'    => $item->created,
+  'value'    => $item->createdOn,
   'readonly' => true
 ]);
 
@@ -105,16 +102,14 @@ $tabSecurity = new Tab([
   'title' => 'Security'
 ]);
 
-$tabSecurity->children[] = new Row(['label' => 'Allow Get'], [new Toggle(['name' => 'get', 'checked' => $item->get])]);
-$tabSecurity->children[] = new Row(['label' => 'Allow Post'], [new Toggle(['name' => 'post', 'checked' => $item->post])]);
-$tabSecurity->children[] = new Row(['label' => 'Allow Email'], [new Toggle(['name' => 'email', 'checked' => $item->email])]);
-$tabSecurity->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);
-$tabSecurity->children[] = new Row(['label' => 'Block Route'], [new Toggle(['name' => 'block', 'checked' => $item->block])]);
+$tabSecurity->children[] = new Row(['label' => 'Allow Get'], [new Toggle(['name' => 'allowGet', 'checked' => $item->allowGet])]);
+$tabSecurity->children[] = new Row(['label' => 'Allow Post'], [new Toggle(['name' => 'allowPost', 'checked' => $item->allowPost])]);
+$tabSecurity->children[] = new Row(['label' => 'Allow Email'], [new Toggle(['name' => 'allowEmail', 'checked' => $item->allowEmail])]);
+$tabSecurity->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'isSecure', 'checked' => $item->isSecure])]);
+
 
 $tabs->children[] = $tabSecurity;
 
 $form->children[] = $tabs;
 
 echo $form->getBuffer();
-
-//echo '<pre>' . print_r($item, true) . '</pre>';

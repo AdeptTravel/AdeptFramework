@@ -107,30 +107,6 @@ class Media extends \Adept\Abstract\Data\Item
    */
   public string $summary = '';
 
-
-  /**
-   * The status of the data object: published, unpublished, trashed, lost, archived, etc.
-   *
-   * @var int
-   */
-  public int $status = 1;
-
-  /**
-   * The creation date of the file.  On Unix/Linux we can't get the created
-   * date so this is the date the record was first stored in the database.
-   *
-   * @var string
-   */
-  public string $created;
-
-  /**
-   * The modified date of the file, pulled from the filesystem.  Used for
-   * verifying file changes.
-   *
-   * @var string
-   */
-  public string $modified;
-
   public function loadInfo()
   {
     if (strpos($this->file, FS_SITE_MEDIA) !== false) {

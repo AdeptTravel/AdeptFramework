@@ -16,10 +16,8 @@ namespace Adept\Application;
 defined('_ADEPT_INIT') or die();
 
 use \Adept\Application\Session\Authentication;
-use \Adept\Application\Database;
 use \Adept\Application\Session\Data;
 use \Adept\Application\Session\Request;
-use \Adept\Data\Item\Url;
 
 /**
  * \Adept\Application\Session
@@ -39,13 +37,6 @@ class Session
    * @var \Adept\Application\Session\Authentication
    */
   public Authentication $auth;
-
-  /**
-   * Is the session blocked
-   *
-   * @var boolean
-   */
-  public $block = false;
 
   /**
    * Undocumented variable
@@ -75,6 +66,8 @@ class Session
    */
   public string $token = '';
 
+  public string $status;
+
   /**
    * Constructor
    *
@@ -89,29 +82,30 @@ class Session
     $this->auth   = new Authentication($this->data);
     $this->token  = $this->data->server->getString('session.token', session_id(), 32);
 
-    $id = $this->data->server->getInt('session.id', 0);
+    $this->id = $this->data->server->getInt('session.id', 0);
 
-    if ($id == 0) {
+    if ($this->id == 0) {
       $session = new \Adept\Data\Item\Session();
 
       if (!$session->loadFromIndex($this->token)) {
-
-        $session->user = $this->auth->user->id;
+        //$session->userId = $this->auth->user->id;
         $session->token = $this->token;
 
         if ($session->save()) {
 
           $this->id = $session->id;
 
-          $this->data->server->set('session.id', $id);
+          $this->data->server->set('session.id', $this->id);
           $this->data->server->set('session.token', $this->token);
-          $this->data->server->set('session.block', false);
+          $this->data->server->set('session.status', 'Allow');
 
           $this->request = new Request($this->id);
         } else {
           die('Session Error');
           //\Adept\error(debug_backtrace(), 'Session ID', 'No Session ID is available');
         }
+      } else {
+        $this->id = $session->id;
       }
     }
 
@@ -126,22 +120,22 @@ class Session
       && empty($this->token)
       && time() > ($time + (20 * 60))
     ) {
+
       $this->data->server->set('auth.userid', 0);
 
       $redirect = (!empty($this->request->url->path))
         ? '?redirect=' . $this->request->url->path
         : '';
 
-      $this->request->redirect('/login' . $redirect, false);
+      $this->request->redirect('/login' . $redirect, 302);
     }
-
 
     $this->data->server->set('session.timestamp', time());
     $this->data->server->set('session.token', $this->token);
 
-    $this->block   = $this->data->server->getBool('session.block');
+    $this->status   = $this->data->server->getString('session.status');
 
-    if ($this->request->route->secure && !$this->auth->status) {
+    if ($this->request->route->isSecure && !$this->auth->status) {
 
       $redirect = (!empty($this->request->url->path))
         ? '?redirect=' . $this->request->url->path
@@ -149,35 +143,14 @@ class Session
 
       $this->request->redirect('/login' . $redirect, false);
     }
-
-    //
-    // Security Checks
-    //
-
-    if (
-      !$this->request->route->get
-      || ($this->request->route->secure
-        && !$this->auth->status)
-    ) {
-      $this->request->data->get->purge();
-    }
-
-    if (
-      !$this->request->route->post
-      || ($this->request->route->post
-        && $this->request->route->secure
-        && !$this->auth->status)
-    ) {
-      $this->request->data->post->purge();
-    }
   }
 
-  public function setBlock(bool $block)
+  public function setBlock()
   {
-    if ($this->data->server->getBool('session.block') != $block && $this->id > 0) {
+    if ($this->data->server->getString('session.status') != 'Block' && $this->id > 0) {
       $session = new \Adept\Data\Item\Session();
       $session->loadFromID($this->id);
-      $session->block = true;
+      $session->status = 'Block';
       $session->save();
     }
   }

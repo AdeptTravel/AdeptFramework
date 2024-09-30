@@ -13,8 +13,7 @@ class Menu extends \Adept\Abstract\Data\Table
 
   public string $title;
   public string $css;
-  public int $status;
-  public bool $secure;
+  public bool   $isSecure;
 
   protected function getItem(int $id): \Adept\Data\Item\Menu
   {

@@ -3,11 +3,12 @@
 use Adept\Application;
 use Adept\Document\HTML\Elements\Form;
 use Adept\Document\HTML\Elements\Form\Row;
-use Adept\Document\HTML\Elements\Form\Row\DropDown\Status;
+use Adept\Document\HTML\Elements\Form\Row\DropDown;
 use Adept\Document\HTML\Elements\Form\Row\Input;
 use Adept\Document\HTML\Elements\Form\Row\Input\DateTime;
 use Adept\Document\HTML\Elements\Input\Hidden;
 use Adept\Document\HTML\Elements\Input\Toggle;
+use Adept\Helper\Arrays;
 
 // Shortcuts
 $app  = Application::getInstance();
@@ -37,10 +38,11 @@ $form->children[] = new Input([
   'required' => true
 ]);
 
-$form->children[] = new Status([
-  'label' => 'Status',
-  'name'  => 'status',
-  'value' => (string)$item->status
+$form->children[] = new Dropdown([
+  'label'        => 'Status',
+  'name'         => 'status',
+  'value'        => (string)$item->status,
+  'values'       => Arrays::ValueToArray(['Active', 'Inactive', 'Trash'])
 ]);
 
 $form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);

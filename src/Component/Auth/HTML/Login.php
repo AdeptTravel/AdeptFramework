@@ -13,17 +13,7 @@ use \Adept\Document\HTML\Body\Status;
 class Login extends \Adept\Abstract\Component\HTML
 {
   /**
-   * Undocumented variable
-   *
-   * @var \Adept\Application\Session\Authentication
-   */
-  public Authentication $auth;
-
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application        $app
-   * @param  \Adept\Document\HTML\Head $head
+   * Init
    */
   public function __construct()
   {
@@ -45,7 +35,7 @@ class Login extends \Adept\Abstract\Component\HTML
 
       if (!empty($username) && !empty($password)) {
 
-        if ($auth->login($username, $password, $app->session->request)) {
+        if ($auth->login($username, $password)) {
 
           $this->status->addSuccess('Success', 'You are now logged in!');
 

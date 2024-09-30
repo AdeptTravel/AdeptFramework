@@ -36,25 +36,22 @@ class Content extends \Adept\Abstract\Data\Item
 
   protected array  $excludeKeys = ['path'];
 
-  public int       $parent = 0;
-  public int       $route;
-  public string    $type;
-  public string    $subtype;
-  public string    $title;
-  public string    $summary;
-  public string    $content;
-  public int       $image = 0;
-  public object    $seo;
-  public object    $media;
-  public object    $params;
-  public int       $status = 1;
-  public \DateTime $publish;
-  public \DateTime $archive;
-  public \DateTime $created;
-  public \DateTime $modified;
-  public int       $order;
-
-  public array     $path;
+  public int    $parentId = 0;
+  public int    $routeId;
+  public string $type;
+  public string $subtype = '';
+  public string $title;
+  public string $summary;
+  public string $content;
+  public int    $image = 0;
+  public object $seo;
+  public object $media;
+  public object $params;
+  public string $status = 'Published';
+  public string $activeOn;
+  public string $archiveAt;
+  public int    $displayOrder;
+  public array  $path;
 
   public function getParent(): \Adept\Data\Item\Content
   {

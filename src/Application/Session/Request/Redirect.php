@@ -27,9 +27,8 @@ use \Adept\Data\Item\Url;
  * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
  * @license    BSD 2-Clause; See LICENSE.txt
  */
-class Route extends \Adept\Data\Item\Route
+class Redirect extends \Adept\Data\Item\Redirect
 {
-
   public function __construct(Url $url)
   {
     // Clean the extension off the path
@@ -46,10 +45,6 @@ class Route extends \Adept\Data\Item\Route
       if (!isset($this->$ext) || !$this->$ext) {
         $this->status = 'Block';
       }
-    }
-
-    if ($this->html && empty($this->template)) {
-      $this->template = \Adept\Application::getInstance()->conf->site->template;
     }
   }
 }

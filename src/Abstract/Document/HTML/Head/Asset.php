@@ -102,7 +102,7 @@ class Asset
 
       $fileComponent = strtolower($this->path . 'component/' .
         $app->session->request->route->component . '/' .
-        $app->session->request->route->option . '.' . $this->extension);
+        $app->session->request->route->view . '.' . $this->extension);
 
       if (file_exists($fileComponent)) {
         $this->addFile(str_replace(FS_SITE, '', $fileComponent));
