@@ -66,7 +66,7 @@ class Database
       $params[$i] = trim($params[$i]);
     }
 
-    return $this->execute($query, $params);
+    return ($this->execute($query, $params) !== false);
   }
 
   /**
@@ -145,7 +145,7 @@ class Database
 
   public function update(string $query, array $params): bool
   {
-    return $this->execute($query, $params);
+    return ($this->execute($query, $params) !== false);
   }
 
   /**
@@ -193,8 +193,14 @@ class Database
 
   public function getColumns($table): array|bool
   {
-    $stmt = $this->execute($query, $params);
-    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    //$stmt = $this->execute("DESCRIBE `$table`");
+    //return $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $stmt = $this->connection->prepare("DESCRIBE `$table`");
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    return $result;
   }
 
   public function getString(string $query, array $params = []): string|bool
@@ -245,7 +251,8 @@ class Database
   public function getObject(string $query, array $params = []): object|bool
   {
     $stmt = $this->execute($query, $params);
-    return $stmt->fetchObject();
+    $result = $stmt->fetchObject();
+    return $result;
   }
 
   /**
@@ -327,17 +334,19 @@ class Database
 
   protected function execute(string $query, array $params = []): \PDOStatement|bool
   {
-
     if (Application::getInstance()->conf->log->query) {
       Application::getInstance()->log->logQuery($query, $params, $this->getQueryDebug($query, $params));
     }
 
     try {
-
       $stmt = $this->connection->prepare($query);
-      return $stmt->execute($params);
-    } catch (\PDOException $e) {
 
+      if ($stmt->execute($params)) {
+        return $stmt;
+      } else {
+        return false;
+      }
+    } catch (\PDOException $e) {
       throw new \Adept\Exceptions\Database\PDOException(
         'PDO Exception',
         $this->formatErrorMessage($e, $query, $params),
