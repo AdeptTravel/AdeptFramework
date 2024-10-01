@@ -35,7 +35,7 @@ class Log
 
   protected function log(string $file, string $data)
   {
-    file_put_contents(FS_LOG . $file, $data, FILE_APPEND);
+    file_put_contents(FS_SITE_LOG . $file, $data, FILE_APPEND);
   }
 
   public function logError() {}
@@ -45,9 +45,13 @@ class Log
 
   public function logQuery(string $query, array $params, string $debug)
   {
-    $this->log(
-      'query.log',
-      "\nDatabase Query: $query\nParams: " . print_r($params, true) . "\n\nDebug Query: $debug\n"
-    );
+    $data = "\nDatabase Query: $query\n";
+
+    if (!empty($params)) {
+      $data .= "Params: " . print_r($params, true) . "\n\n";
+      $data .= "Debug Query: $debug\n";
+    }
+
+    $this->log('query.log', $data);
   }
 }

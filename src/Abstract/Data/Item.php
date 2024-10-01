@@ -196,8 +196,15 @@ abstract class Item
       $prefix .= '_';
     }
 
+    //echo '<pre>' . print_r($properties, true) . '</pre>';
+
     for ($i = 0; $i < count($properties); $i++) {
       $key = $properties[$i]->name;
+      /*
+      echo '<p>Key ' . $key . '<br />Type: ' .
+        $properties[$i]->getType()->getName() .
+        '<br>Value: ' . $post->getString($prefix . $key) . '</p>';
+      */
 
       if (in_array($key, ['id', 'createdOn', 'error'])) {
         continue;
@@ -211,7 +218,7 @@ abstract class Item
           $this->setVar($key, $post->$method($prefix . $key));
         } else {
 
-          if ($post->exists($key)) {
+          if ($post->exists($prefix . $key)) {
             switch ($type) {
               case 'int':
                 $this->$key = $post->getInt($prefix . $key);
@@ -223,7 +230,6 @@ abstract class Item
 
               case 'string':
                 $this->$key = $post->getString($prefix . $key);
-                $post->getString($prefix . $key) . '</div>';
                 break;
 
               case 'object':

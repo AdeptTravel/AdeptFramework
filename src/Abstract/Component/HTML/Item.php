@@ -42,8 +42,6 @@ abstract class Item extends \Adept\Abstract\Component\HTML
     $item = $this->getItem($id);
 
     if (strpos($action, 'save') !== false) {
-      $item = $this->getItem($id);
-
       $item->loadFromPost($post);
 
       if ($id > 0) {

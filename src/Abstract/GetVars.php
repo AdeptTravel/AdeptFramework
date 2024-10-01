@@ -133,7 +133,7 @@ abstract class GetVars
         $exists = (isset($_GET[$key]) && (!empty($_GET[$key]) || $_GET[$key] == 0));
         break;
       case 'Post':
-        $exists = (isset($_POSt[$key]) && !empty($_POSt[$key]));
+        $exists = (isset($_POST[$key]) && !empty($_POST[$key]));
 
         break;
       case 'Server':

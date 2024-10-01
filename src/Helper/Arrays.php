@@ -28,7 +28,6 @@ defined('_ADEPT_INIT') or die();
 {
   public static function ValueToArray(array $original)
   {
-
     $updated = [];
 
     for ($i = 0; $i < count($original); $i++) {
