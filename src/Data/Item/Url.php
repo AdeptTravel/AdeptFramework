@@ -99,6 +99,8 @@ class Url extends \Adept\Abstract\Data\Item
    */
   public function __construct(bool $current = false)
   {
+    parent::__construct();
+
     if ($current) {
       $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
         ? "https"

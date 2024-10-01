@@ -38,6 +38,8 @@ class IPAddress extends \Adept\Abstract\Data\Item
 
   public function __construct(bool $current = false)
   {
+    parent::__construct();
+
     if ($current) {
       $ipAddress = '';
 

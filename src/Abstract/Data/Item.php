@@ -6,6 +6,7 @@ defined('_ADEPT_INIT') or die('No Access');
 
 use \Adept\Application;
 use \Adept\Application\Session\Request\Data\Post;
+use stdClass;
 
 abstract class Item
 {
@@ -74,18 +75,11 @@ abstract class Item
   protected array $filter = [];
 
   /**
-   * The last dataset returned
-   *
-   * @var array
-   */
-  protected array $data;
-
-  /**
    * The original data, used to 
    *
-   * @var array
+   * @var object
    */
-  protected array $originalData = [];
+  protected object $originalData;
 
   /**
    * Undocumented variable
@@ -131,11 +125,23 @@ abstract class Item
   public string $createdOn;
 
   /**
+   * The last dataset returned
+   *
+   * @var object
+   */
+  public object $data;
+
+  /**
    * The last updated date as a MySQL string
    *
    * @var string
    */
   public string $updatedOn;
+
+  public function __construct()
+  {
+    $this->originalData = new stdClass();
+  }
 
   public function loadFromID(int $id): bool
   {
@@ -148,7 +154,6 @@ abstract class Item
       $params = [':id' => $id];
 
       if (($obj = $db->getObject($query, $params)) !== false) {
-        $this->originalData = (array)$obj;
         $this->loadFromObj($obj);
 
         $status = true;
@@ -170,7 +175,6 @@ abstract class Item
 
       if (($obj = $db->getObject($query, $params)) !== false) {
         $status = true;
-        $this->originalData = (array)$obj;
         $this->loadFromObj($obj);
       }
     }
@@ -180,6 +184,9 @@ abstract class Item
 
   public function loadFromObj(object $obj)
   {
+    $this->data = $obj;
+    $this->setOriginalData($obj);
+
     foreach ($obj as $k => $v) {
       if (!empty($v)) {
         $this->setVar($k, $v);
@@ -200,13 +207,8 @@ abstract class Item
 
     for ($i = 0; $i < count($properties); $i++) {
       $key = $properties[$i]->name;
-      /*
-      echo '<p>Key ' . $key . '<br />Type: ' .
-        $properties[$i]->getType()->getName() .
-        '<br>Value: ' . $post->getString($prefix . $key) . '</p>';
-      */
 
-      if (in_array($key, ['id', 'createdOn', 'error'])) {
+      if (in_array($key, ['id', 'createdOn', 'data', 'error'])) {
         continue;
       }
 
@@ -247,6 +249,8 @@ abstract class Item
 
                 break;
             }
+
+            $this->data->$key = $this->$key;
           }
         }
       }
@@ -306,11 +310,11 @@ abstract class Item
   /**
    * Get's the current object as an array, used when storing the data in the DB or caching
    *
-   * @return array
+   * @return object
    */
-  protected function getData(bool $sql = true): array
+  protected function getData(bool $sql = true): object
   {
-    $data       = [];
+    $data       = new stdClass();
     $reflection = new \ReflectionClass($this);
     $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
 
@@ -325,7 +329,7 @@ abstract class Item
         continue;
       }
 
-      if (in_array($key, ['createdOn'])) {
+      if (in_array($key, ['createdOn', 'data'])) {
         continue;
       }
 
@@ -335,41 +339,38 @@ abstract class Item
         && !($this->id == 0 && in_array($key, $this->excludeKeysOnNew))
       ) {
 
-        //if ($key == 'updatedOn') {
-        //}
-
         switch ($type) {
           case 'string':
             if ($this->$key != '0000-00-00 00:00:00') {
-              $data[$key] = trim($this->$key);
+              $data->$key = trim($this->$key);
             }
 
             break;
 
           case 'int':
 
-            $data[$key] = (int)$this->$key;
+            $data->$key = (int)$this->$key;
 
             break;
 
           case 'bool':
 
-            $data[$key] = ($this->$key) ? 1 : 0;
+            $data->$key = ($this->$key) ? 1 : 0;
             break;
 
           case 'array':
 
-            $data[$key] = json_encode($this->$key);
+            $data->$key = json_encode($this->$key);
             break;
 
           case 'DateTime':
 
-            $val = $data[$key] = $this->$key->format('Y-m-d H:i:s');
+            $val = $data->$key = $this->$key->format('Y-m-d H:i:s');
 
             if ($this->$key->format('Y') != '-0001' && $val != '0000-01-01 00:00:00') {
-              $data[$key] = $val;
+              $data->$key = $val;
             } else {
-              $data[$key] = '0000-00-00 00:00:00';
+              $data->$key = '0000-00-00 00:00:00';
             }
 
             break;
@@ -378,10 +379,10 @@ abstract class Item
 
             if (strpos($type, "Adept\\Data\\") !== false) {
               //$this->$key->save();
-              $data[$key] = $this->$key->id;
+              $data->$key = $this->$key->id;
             } else {
               // Encode object as JSON
-              $data[$key] = json_encode($this->$key);
+              $data->$key = json_encode($this->$key);
             }
 
             break;
@@ -482,6 +483,25 @@ abstract class Item
     ];
   }
 
+  protected function setOriginalData(object $data)
+  {
+    $this->originalData = new stdClass();
+    $reflection = new \ReflectionClass($this);
+    $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
+
+    $this->excludeKeys[] = 'error';
+
+    for ($i = 0; $i < count($properties); $i++) {
+      $key  = $properties[$i]->name;
+
+      if (in_array($key, ['data', 'error'])) {
+        continue;
+      }
+
+      $this->originalData->$key = (isset($data->$key)) ? $data->$key : null;
+    }
+  }
+
   protected function setVar(string $key, $val)
   {
     if (property_exists($this, $key)) {
@@ -531,12 +551,8 @@ abstract class Item
    *
    * @return bool
    */
-  protected function changed(array $data = []): bool
+  protected function changed(object $data): bool
   {
-    if (empty($data)) {
-      $data = $this->getData();
-    }
-
     return ($this->originalData != $data);
   }
 

@@ -106,7 +106,7 @@ class Database
    * 
    * @return int
    **/
-  public function insertSingleTableGetId(string $table, array $data): int
+  public function insertSingleTableGetId(string $table, object $data): int
   {
     $id = 0;
 
@@ -114,25 +114,19 @@ class Database
     $key = '';
     $val = '';
 
-    $i = count($data);
-
     foreach ($data as $k => $v) {
-      $key .= "`$k`";
-      $val .= '?';
+      $key .= "`$k`, ";
+      $val .= '?, ';
 
       if (is_bool($v)) {
         $params[] = ($v) ? 1 : 0;
       } else {
         $params[] = trim($v);
       }
-
-      if ($i > 1) {
-        $key .= ', ';
-        $val .= ', ';
-
-        $i = $i - 1;
-      }
     }
+
+    $key = substr($key, 0, -2);
+    $val = substr($val, 0, -2);
 
     $query  = "INSERT INTO `$table` ($key) VALUES ($val)";
 
@@ -152,11 +146,11 @@ class Database
    * Update into a database
    * 
    * @param string $table The database table to insert into
-   * @param array $data An array of key->values to be used with the query
+   * @param object $data An array of key->values to be used with the query
    * 
    * @return bool
    **/
-  public function updateSingleTable(string $table, array $data): bool
+  public function updateSingleTable(string $table, object $data): bool
   {
     $params = [];
     $set    = '';
@@ -290,20 +284,19 @@ class Database
     return $this->connection->lastInsertId();
   }
 
-  public function isDuplicate(string $table, array $data): bool
+  public function isDuplicate(string $table, object $data): bool
   {
     $query = "SELECT count(*) FROM `$table` WHERE ";
     $params = [];
 
-    if (count($data) > 0) {
-      foreach ($data as $k => $v) {
-        $query .= "`$k` = ? AND ";
-        $params[] = $v;
-      }
 
-      // Remove AND form end of Query after the foreach function
-      $query = substr($query, 0, strlen($query) - 4);
+    foreach ($data as $k => $v) {
+      $query .= "`$k` = ? AND ";
+      $params[] = $v;
     }
+
+    // Remove AND form end of Query after the foreach function
+    $query = substr($query, 0, strlen($query) - 4);
 
     return ($this->getInt($query, $params) > 0);
   }

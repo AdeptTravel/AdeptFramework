@@ -31,17 +31,19 @@ class Item extends \Adept\Abstract\Data\Item
   protected string $index = 'title';
 
   protected array $joinInner = [
-    'Menu' => 'menu'
+    'Menu' => 'menuId'
   ];
 
   protected array $joinLeft = [
-    'Route' => 'route'
+    'Route' => 'routeId',
+    'Url' => 'urlId'
   ];
 
   public int    $menuId;
   public int    $parentId;
   public int    $routeId;
-  public string $url;
+  public int    $urlId;
+  public string $type;
   public string $title;
   public string $image;
   public string $fa;

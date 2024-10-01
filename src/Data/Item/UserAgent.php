@@ -23,6 +23,8 @@ class Useragent extends \Adept\Abstract\Data\Item
 
   public function __construct(bool $current = false)
   {
+    parent::__construct();
+
     if ($current) {
       $useragent = $_SERVER['HTTP_USER_AGENT'];
 

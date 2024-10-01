@@ -16,12 +16,12 @@ class Session extends \Adept\Abstract\Data\Item
   public string $token;
   public string $status = 'Active';
 
-  protected function getData(bool $sql = true): array
+  protected function getData(bool $sql = true): object
   {
     $data = parent::getData($sql);
 
-    if (isset($data['userId']) == 0) {
-      unset($data['userId']);
+    if (isset($data->userId) == 0) {
+      unset($data->userId);
     }
 
     return $data;
