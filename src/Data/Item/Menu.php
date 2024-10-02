@@ -32,7 +32,7 @@ class Menu extends \Adept\Abstract\Data\Item
   protected string $table = 'Menu';
   protected string $index = 'title';
 
-  protected string $title;
-  protected string $css;
-  protected bool   $isSecure;
+  public string $title;
+  public string $css;
+  public bool   $isSecure;
 }

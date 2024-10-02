@@ -33,7 +33,7 @@ $form->children[] = new Input([
 $form->children[] = new Input([
   'label' => 'CSS Class',
   'name' => 'css',
-  'value' => $item->css,
+  'value' => (empty($item->css)) ? '' : $item->css,
   'placeholder' => 'CSS Class',
   'required' => true
 ]);
@@ -45,12 +45,12 @@ $form->children[] = new Dropdown([
   'values'       => Arrays::ValueToArray(['Active', 'Inactive', 'Trash'])
 ]);
 
-$form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->secure])]);
+$form->children[] = new Row(['label' => 'Is Secure'], [new Toggle(['name' => 'secure', 'checked' => $item->isSecure])]);
 
 $form->children[] = new DateTime([
   'name'     => 'created',
   'label'    => 'Created',
-  'value'    => $item->created,
+  'value'    => $item->createdOn,
   'readonly' => true
 ]);
 
