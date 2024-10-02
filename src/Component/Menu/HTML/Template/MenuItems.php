@@ -50,8 +50,9 @@ $sortable->recursive = true;
 $sortable->select = true;
 
 $sortable->addCol('status', 'Status', ['fa-solid', 'fa-circle-check']);
+$sortable->addCol('type', 'Type');
 $sortable->addCol('title', 'Menu Item', ['main'], true);
-$sortable->addCol('url', 'URL');
+$sortable->addCol('link', 'Link');
 $sortable->addCol('menuTitle', 'Menu');
 $sortable->addCol('id', 'ID');
 

@@ -26,8 +26,6 @@ $form = new Form([
   'method' => 'post',
 ]);
 
-
-
 $form->children[] = new Input([
   'required' => true,
   'label' => 'Title',
@@ -60,14 +58,10 @@ $form->children[] = new Item([
 $form->children[] = new DropDown([
   'label'      => 'Link Type',
   'name'       => 'linktype',
-  'value'      => (!empty($item->url)) ? 'Url' : 'Route',
+  'value'      => $item->type,
   'allowEmpty' => false,
   'filter'     => false,
-  'values'     => [
-    'Route'    => 'Route',
-    'Url'      => 'Url',
-    'Title'    => 'Title'
-  ]
+  'values'     => Arrays::ValueToArray(['Route', 'External Url', 'Internal URL', 'Heading'])
 ]);
 
 $form->children[] = new Route([
@@ -84,41 +78,17 @@ $form->children[] = new Input([
   'label'       => 'URL',
   'showOn'      => ['linktype=Url'],
   'name'        => 'url',
-  'value'       => $item->url,
+  'value'       => ($item->type == 'Url') ? $item->urlId : '',
   'placeholder' => 'Url'
 ]);
 
-$form->children[] = new Row([
-  'required' => true,
-  'label'    => ' Image'
-], [new Image(
-  [
-    'name'  => 'image',
-    'value' => $item->image,
-  ]
-)]);
-
-$form->children[] = new Input([
-  'required'    => true,
-  'label'       => 'Image Alt',
-  'name'        => 'imageAlt',
-  'value'       => $item->imageAlt,
-  'placeholder' => 'Image Alt'
-]);
-
-$form->children[] = new Input([
-  'required'    => true,
-  'label'       => 'Font Awesome',
-  'name'        => 'fa',
-  'value'       => $item->fa,
-  'placeholder' => 'Font Awesome'
-]);
+// TODO - Add in image support
 
 $form->children[] = new Input([
   'required'    => true,
   'label'       => 'CSS Class',
   'name'        => 'css',
-  'value'       => $item->css,
+  'value'       => (!empty($item->css)) ? $item->css : '',
   'placeholder' => 'CSS Class'
 ]);
 

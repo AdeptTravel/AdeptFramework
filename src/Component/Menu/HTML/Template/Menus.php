@@ -45,7 +45,7 @@ $sortable = new Sortable([], $table->getData());
 $sortable->addCol('id', 'ID');
 $sortable->addCol('status', 'Status', ['fa-solid', 'fa-circle-check']);
 $sortable->addCol('title', 'Menu', ['main'], true);
-$sortable->addCol('secure', 'Secure', ['fa-solid', 'fa-lock']);
-$sortable->addCol('created', 'Created');
+$sortable->addCol('isSecure', 'Secure', ['fa-solid', 'fa-lock']);
+$sortable->addCol('createdOn', 'Created');
 
 echo $sortable->getBuffer();

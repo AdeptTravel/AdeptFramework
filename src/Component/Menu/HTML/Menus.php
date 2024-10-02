@@ -41,8 +41,8 @@ class Menus extends \Adept\Abstract\Component\HTML\Items
       $data->isSecure = $get->getBool('isSecure', false);
     }
 
-    $data->sort = $get->getString('sort', 'route');
-    $data->dir = $get->getString('dir', 'asc');
+    $data->sort = $get->getString('sort', '');
+    $data->dir = $get->getString('dir', 'ASC');
 
     return $data;
   }

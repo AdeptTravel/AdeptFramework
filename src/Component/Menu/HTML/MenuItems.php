@@ -49,7 +49,7 @@ class MenuItems extends \Adept\Abstract\Component\HTML\Items
       $data->status = $get->getInt('status', 1);
     }
 
-    $data->sort = $get->getString('sort', 'route');
+    $data->sort = $get->getString('sort', '');
     $data->dir  = $get->getString('dir', 'asc');
 
     return $data;
