@@ -43,10 +43,9 @@ class Item extends \Adept\Abstract\Data\Item
   public int    $parentId;
   public int    $routeId;
   public int    $urlId;
+  public string $imageId;
   public string $type;
   public string $title;
-  public string $image;
-  public string $fa;
   public string $css;
   public string $params;
   public string $activeOn;
