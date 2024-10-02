@@ -265,7 +265,8 @@ class Sortable extends Table
 						'value' => $row->id
 					]);
 				} else {
-					$td->html = $row->$index;
+
+					$td->html = (empty($row->$index)) ? '' : $row->$index;
 				}
 			}
 
