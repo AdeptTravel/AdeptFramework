@@ -50,19 +50,16 @@ class Menu
         'text' => $item->title
       ]);
 
-      //if (!empty($item->fa)) {
-      $li->children[] = new I(['css' => explode(' ', $item->fa)]);
-      //}
-
+      /*
       if (!empty($item->image)) {
         $a->children[] = new Img([
           'alt' => ((!empty($item->imageAlt)) ? $item->alt : $item->title)
         ]);
       }
+        */
 
       $li->children[] = $a;
     } else {
-      $li->children[] = new I(['css' => explode(' ', $item->fa)]);
       $li->children[] = new Span(['text' => $item->title]);
     }
 
