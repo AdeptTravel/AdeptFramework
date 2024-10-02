@@ -131,8 +131,12 @@ abstract class Table
           $query = $this->getQuery();
         }
 
-        $query .= $this->getFilterQuery($filter);
-        $query .= $this->getSortQuery();
+        $query .= $this->getFilterQuery($filter, $recursive);
+        $query .= $this->getSortQuery($recursive);
+
+        //if (get_class($this) == 'Adept\Data\Table\Menu\Item') {
+        //  die($query);
+        //}
 
         $db = \Adept\Application::getInstance()->db;
 
@@ -181,8 +185,6 @@ abstract class Table
     return $item->save();
   }
 
-
-
   protected function getQuery(): string
   {
     $query  = $this->getSelectQuery();
@@ -194,33 +196,50 @@ abstract class Table
 
   protected function getRecursiveQuery(): string
   {
-    $query  = ' WITH RECURSIVE cte AS (';
-    $query .= '  SELECT';
-    $query .= '    `' . $this->table . '`.*,';
-    $query .= '    CAST(`' . $this->table . '`.`order` AS CHAR(200)) AS `path`,';
-    $query .= '    0 AS `level`';
-    $query .= '  FROM ';
-    $query .= '    `' . $this->table . '`';
-    $query .= '  WHERE ';
-    $query .= '    `' . $this->table . '`.`parent` = 0';
 
-    $query .= '  UNION ALL';
+    $query  = 'WITH RECURSIVE cte AS (';
 
-    $query .= '  SELECT ';
-    $query .= '    t.*,';
-    $query .= "    CONCAT(`cte`.`path`, ' / ', `t`.`order`) AS `path`,";
-    $query .= '    `cte`.`level` + 1 AS `level`';
-    $query .= '  FROM';
-    $query .= '    `' . $this->table . '` t';
-    $query .= '  INNER JOIN';
-    $query .= '    `cte` ON `t`.`parent` = `cte`.`id`';
-    $query .= '  WHERE ';
-    $query .= '    `cte`.`level` < 1000';
+    // Root level query 
+    $query .= 'SELECT';
+    $query .= ' `' . $this->table . '`.*,';
+
+    if (property_exists($this, 'title')) {
+      $query .= ' CAST(`' . $this->table . '`.`title` AS CHAR(200)) AS `titlePath`,';
+    }
+
+    if (property_exists($this, 'displayOrder')) {
+      $query .= ' CAST(`' . $this->table . '`.`displayOrder` AS CHAR(200)) AS `orderPath`,';
+    }
+
+    $query .= ' 0 AS `level`';
+
+    $query .= ' FROM `' . $this->table . '`';
+    $query .= ' WHERE `MenuItem`.`parentId` IS NULL';
+
+    $query .= ' UNION ALL';
+
+    // Recursive case: Get child items
+
+    $query .= ' SELECT';
+    $query .= ' child.*,';
+
+    if (property_exists($this, 'title')) {
+      $query .= " CONCAT(cte.`titlePath`, '/ ', child.`title`) AS `titlePath`,";
+    }
+
+    if (property_exists($this, 'displayOrder')) {
+      $query .= " CONCAT(cte.`displayOrder`, '/ ', child.`id`) AS `orderPath`,";
+    }
+
+    $query .= ' cte.`level` + 1 AS `level`';
+    $query .= ' FROM `' . $this->table . '` child';
+    $query .= ' INNER JOIN cte ON child.`parentId` = cte.`id`';
+
     $query .= ' ) ';
 
     $query .= ' ' . $this->getSelectQuery(true);
 
-    $query .= ' FROM `cte` ';
+    $query .= ' FROM cte ';
 
     $query .= $this->getJoinQuery(true);
 
@@ -235,21 +254,25 @@ abstract class Table
     $cols = $db->getColumns($this->table);
 
     if ($recursive) {
-      $cols[] = 'path';
+      if (property_exists($this, 'title')) {
+        $cols[] = 'titlePath';
+      }
+
+      if (property_exists($this, 'displayOrder')) {
+        $cols[] = 'orderPath';
+      }
+
       $cols[] = 'level';
     }
 
     for ($i = 0; $i < count($cols); $i++) {
-      if (!empty($table)) {
-        $cols[$i] = "`$table`.`$cols[$i]`";
-      } else {
-        $cols[$i] = "`$cols[$i]`";
-      }
+      $cols[$i] = "`$table`.`$cols[$i]`";
     }
 
     $joins = array_merge($this->joinInner, $this->joinLeft);
 
     if (!empty($joins)) {
+
       foreach ($joins as $table => $col) {
         $tmp = $db->getColumns($table);
 
@@ -264,17 +287,17 @@ abstract class Table
     $query = 'SELECT ';
 
     for ($i = 0; $i < count($cols); $i++) {
-      if ($i > 0) {
-        $query .= ', ';
-      }
-
       $parts = explode('.', str_replace('`', '', $cols[$i]));
-      if ($parts[0] == $this->table) {
+
+      if ($parts[0] == $this->table || $parts[0] == 'cte') {
         $as = $parts[1];
       } else {
         $as = strtolower($parts[0]) . ucfirst($parts[1]);
       }
 
+      if ($i > 0) {
+        $query .= ', ';
+      }
 
       $query .= $cols[$i] . " AS  `$as`";
     }
@@ -309,30 +332,31 @@ abstract class Table
     return $query;
   }
 
-  protected function getFilterQuery(array $filter = []): string
+  protected function getFilterQuery(array $filter = [], bool $recursive = false): string
   {
+    $table = ($recursive) ? 'cte' : '`' . $this->table . '`';
     $query = '';
 
     if (!empty($filter)) {
 
       foreach ($filter as $key => $val) {
         $query .=  ((empty($query)) ? ' WHERE ' : ' AND ');
-        $query .= ' `' . $this->table .  '`.`' . $key . '` ';
+        $query .= ' ' . $table .  '.`' . $key . '`';
 
         if (in_array($key, $this->like)) {
-          $query .= 'LIKE';
+          $query .= ' LIKE ';
         } else {
           $query .= '=';
         }
 
-        $query .= ' :' . $key;
+        $query .= ':' . $key;
       }
     }
 
     if (!empty($this->empty)) {
       for ($i = 0; $i < count($this->empty); $i++) {
         $query .= ((strpos($query, ' WHERE ') === false) ? ' WHERE ' : ' AND ');
-        $query .= $this->empty[$i] . " = ''";
+        $query .= $this->empty[$i] . "=''";
       }
     }
 
@@ -341,9 +365,6 @@ abstract class Table
         $query .= ((strpos($query, ' WHERE ') === false) ? ' WHERE ' : ' AND ');
         $query .= $this->notEmpty[$i] . " <> ''";
       }
-    }
-
-    if (!array_key_exists('status', $filter)) {
     }
 
     return $query;
@@ -413,12 +434,26 @@ abstract class Table
     return $filter;
   }
 
-  protected function getSortQuery()
+  protected function getSortQuery(bool $recursive = false)
   {
     $query = '';
+    $sort = $this->sort;
+    $dir = $this->dir;
 
-    if (!empty($this->sort) && !empty($this->dir) && property_exists($this, $this->sort)) {
-      $query = ' ORDER BY `' . $this->sort . '` ' . $this->dir;
+    if (empty($sort) && property_exists($this, 'displayOrder')) {
+      $sort = ($recursive) ? 'orderPath' : 'displayOrder';
+    }
+
+    if (empty($dir) || ($dir != 'ASC' && $dir != 'DESC')) {
+      $dir = 'ASC';
+    }
+
+    if ($sort == 'title' && $recursive) {
+      $sort = 'titlePath';
+    }
+
+    if (!empty($sort)) {
+      $query = ' ORDER BY `' . $sort . '` ' . $dir;
     }
 
     return $query;
