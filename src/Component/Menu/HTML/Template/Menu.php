@@ -55,5 +55,3 @@ $form->children[] = new DateTime([
 ]);
 
 echo $form->getBuffer();
-
-//echo '<pre>' . print_r($item, true) . '</pre>';
