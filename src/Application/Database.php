@@ -154,7 +154,6 @@ class Database
   {
     $params = [];
     $set    = '';
-    $i      = count($data) - 1;
 
     foreach ($data as $k => $v) {
 
@@ -162,21 +161,18 @@ class Database
         continue;
       }
 
-      $set .= "`$k` = ?";
+      $set .= "`$k` = ?, ";
 
       if (is_bool($v)) {
         $params[] = ($v) ? 1 : 0;
       } else {
         $params[] = trim($v);
       }
-
-      if ($i > 1) {
-        $set .= ', ';
-        $i = $i - 1;
-      }
     }
 
-    $params[] = $data['id'];
+    $set = substr($set, 0, -2);
+
+    $params[] = $data->id;
 
     $query  = "UPDATE `$table`";
     $query .= " SET $set";
@@ -187,9 +183,6 @@ class Database
 
   public function getColumns($table): array|bool
   {
-    //$stmt = $this->execute("DESCRIBE `$table`");
-    //return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
     $stmt = $this->connection->prepare("DESCRIBE `$table`");
     $stmt->execute();
     $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
