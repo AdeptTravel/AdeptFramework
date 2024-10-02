@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS `MenuItem`;
 DROP TABLE IF EXISTS `LogAuth`;
 DROP TABLE IF EXISTS `Request`;
 DROP TABLE IF EXISTS `Session`;
-
+DROP TABLE IF EXISTS `MediaImage`;
 
 # No forign key
 DROP TABLE IF EXISTS `IPAddress`;
@@ -31,7 +31,6 @@ CREATE TABLE `IPAddress` (
   INDEX idxEncoded (`encoded`),
   INDEX idxStatus (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
-
 
 CREATE TABLE `Media` (
   `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -158,18 +157,40 @@ CREATE TABLE `Useragent` (
 ## Has forign key
 ##
 
+CREATE TABLE `MediaImage` (
+  `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `mediaId`         INT UNSIGNED NOT NULL,
+  `file`            VARCHAR(256) NOT NULL UNIQUE,
+  `width`           INT DEFAULT 0,
+  `height`          INT DEFAULT 0,
+  `size`            INT DEFAULT 0,
+  `status`          ENUM('Active', 'Archive', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
+  `createdOn`       DATETIME DEFAULT NOW(),
+  `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`mediaId`) REFERENCES `Media`(`id`) ON DELETE CASCADE,
+  INDEX idxPath (`file`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `Content` (
   `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `parentId`        INT UNSIGNED DEFAULT 0,
   `routeId`         INT UNSIGNED,
-  `imageId`         INT UNSIGNED DEFAULT NULL,
+  `imageId`         INT UNSIGNED,
   `type`            ENUM('Article', 'Category', 'Component', 'Tag') NOT NULL,
   `subtype`         ENUM('', 'Blog', 'News', 'Video') DEFAULT '',
-  `title`           VARCHAR(128) NOT NULL,
+  `title`           VARCHAR(60) NOT NULL,
   `summary`         TEXT DEFAULT NULL,
   `content`         TEXT DEFAULT NULL,
-  `seo`             JSON CHECK (JSON_VALID(`seo`)),
-  `media`           JSON CHECK (JSON_VALID(`media`)),
+  `metaSummary`     VARCHAR(128) NOT NULL,
+  `metaDescription` TEXT DEFAULT NULL,
+  `ogTitle`         VARCHAR(60),
+  `ogDescription`   VARCHAR(300),
+  `ogLocale`        VARCHAR(10),
+  `ogImageId`       INT UNSIGNED,
+  `xTitle`          VARCHAR(60) NOT NULL,
+  `xDescription`    VARCHAR(300),
+  `xImageId`        INT UNSIGNED,
+  `xCardType`       ENUM('summary', 'summary_large_image', 'app', 'player'),
   `params`          JSON CHECK (JSON_VALID(`params`)),
   `status`          ENUM('Active', 'Archive', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
   `activeOn`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -177,8 +198,10 @@ CREATE TABLE `Content` (
   `createdOn`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `displayOrder`    INT DEFAULT 0,
-  FOREIGN KEY (`routeId`) REFERENCES `Route`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`imageId`) REFERENCES `Media`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`routeId`)   REFERENCES `Route`(`id`)      ON DELETE SET NULL,
+  FOREIGN KEY (`imageId`)   REFERENCES `MediaImage`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`ogImageId`) REFERENCES `MediaImage`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`xImageId`)  REFERENCES `MediaImage`(`id`) ON DELETE SET NULL,
   INDEX idxType (`type`),
   INDEX idxStatus (`status`),
   INDEX idxPublishAt (`activeOn`)
@@ -187,22 +210,24 @@ CREATE TABLE `Content` (
 CREATE TABLE `MenuItem` (
   `id`              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `menuId`          INT UNSIGNED DEFAULT NULL,
-  `parentId`        INT UNSIGNED DEFAULT NULL,
+  `parentId`        INT UNSIGNED DEFAULT 0,
   `routeId`         INT UNSIGNED DEFAULT NULL,
-  `url`             VARCHAR(256) DEFAULT NULL,
+  `urlId`           INT UNSIGNED DEFAULT NULL,
+  `imageId`         INT UNSIGNED DEFAULT NULL,
+  `type`            ENUM('Heading', 'External Url', 'Internal Url', 'Spacer', 'Route'),
   `title`           VARCHAR(128) NOT NULL,
-  `image`           VARCHAR(256) DEFAULT NULL,
-  `fa`              VARCHAR(64) DEFAULT NULL,
   `css`             VARCHAR(64) DEFAULT NULL,
   `params`          JSON DEFAULT NULL,
   `status`          ENUM('Active', 'Inactive', 'Trash') NOT NULL DEFAULT 'Active',
-  `activeOn`       DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `activeOn`        DATETIME DEFAULT CURRENT_TIMESTAMP,
   `createdOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedOn`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `displayOrder`    INT DEFAULT 0,
-  FOREIGN KEY (`menuId`)   REFERENCES `Menu`(`id`)     ON DELETE CASCADE,
-  FOREIGN KEY (`parentId`) REFERENCES `MenuItem`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`routeId`)  REFERENCES `Route`(`id`)    ON DELETE SET NULL,
+  FOREIGN KEY (`menuId`)   REFERENCES `Menu`(`id`)       ON DELETE CASCADE,
+  FOREIGN KEY (`parentId`) REFERENCES `MenuItem`(`id`)   ON DELETE SET NULL,
+  FOREIGN KEY (`routeId`)  REFERENCES `Route`(`id`)      ON DELETE SET NULL,
+  FOREIGN KEY (`urlId`)    REFERENCES `Url`(`id`)        ON DELETE SET NULL,
+  FOREIGN KEY (`imageId`)  REFERENCES `MediaImage`(`id`) ON DELETE SET NULL,
   INDEX `idxMenuId` (`menuId`),
   INDEX `idxStatus` (`status`),
   INDEX `idxDisplayOrder` (`displayOrder`)
@@ -292,21 +317,18 @@ VALUES
 ('content/category',      'Content',   'Categories',     '',        1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 'Active'),
 ('content/category/edit', 'Content',   'Category',       '',        1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 'Active');
 
-
-
-INSERT INTO `MenuItem` (`menuId`, `parentId`, `routeId`, `displayOrder`, `title`, `fa`) VALUES
-(1,  NULL,     6, 1, 'Dashboard', 'fa-solid fa-chart-column'),
-(1,  NULL,  NULL, 2, 'Content', 'fa-solid fa-file-lines'),
-(1,     2,     17, 1, 'Articles', ''),
-(1,     2,    19, 2, 'Categories', ''),
-(1,  NULL,  NULL, 3, 'Media', 'fa-solid fa-photo-film'),
-(1,     6,    15, 1, 'Images', ''),
-(1,  NULL,  NULL, 4, 'Menu', 'fa-solid fa-table-list'),
-(1,     8,    11, 1, 'Menus', ''),
-(1,     8,    13, 2, 'Menu Items', ''),
-(1,  NULL,  NULL, 5, 'System', 'fa-solid fa-gear'),
-(1,    11,     7, 1, 'Routes', '');
-
+INSERT INTO `MenuItem` (`menuId`, `parentId`, `routeId`, `displayOrder`, `type`, `title`) VALUES
+(1,  NULL,     6, 1,   'Route', 'Dashboard'),
+(1,  NULL,  NULL, 2, 'Heading', 'Content'),
+(1,     2,    17, 1,   'Route', 'Articles'),
+(1,     2,    19, 2,   'Route', 'Categories'),
+(1,  NULL,  NULL, 3, 'Heading', 'Media'),
+(1,     6,    15, 1,   'Route', 'Images'),
+(1,  NULL,  NULL, 4, 'Heading', 'Menu'),
+(1,     8,    11, 1,   'Route', 'Menus'),
+(1,     8,    13, 2,   'Route', 'Menu Items'),
+(1,  NULL,  NULL, 5, 'Heading', 'System'),
+(1,    11,     7, 1,   'Route', 'Routes');
 
 INSERT INTO `User` (`username`, `password`, `firstname`, `middlename`, `lastname`, `status`, `dob`, `createdOn`, `verifiedAt`, `validatedAt`) VALUES (
   'brandon@adept.travel',
