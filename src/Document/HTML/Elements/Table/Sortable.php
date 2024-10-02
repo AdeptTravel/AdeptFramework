@@ -250,8 +250,13 @@ class Sortable extends Table
 
 					$text = $row->$index;
 
-					if (isset($row->level)) {
-						$text = ' ' . str_repeat("-", $row->level) . ' ' . $text;
+					if (!empty($row->level)) {
+						//$text = str_pad('', $row->level, '&nbsp;&nbsp;', STR_PAD_LEFT) . ' - ' . $text;
+						$text = '•&nbsp;&nbsp;' . $text;
+						//echo $row->level . ' - ';
+						for ($p = 0; $p < $row->level; $p++) {
+							$text = '&nbsp;&nbsp;' . $text;
+						}
 					}
 
 					$td->children[] = new A([

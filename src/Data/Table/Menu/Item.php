@@ -21,6 +21,11 @@ class Item extends \Adept\Abstract\Data\Table
     'MediaImage' => 'imageId'
   ];
 
+  protected array $recursiveSort = [
+    'title',
+    'displayOrder'
+  ];
+
   public string $sort = '';
 
   public string $menuTitle;
