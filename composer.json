@@ -3,24 +3,31 @@
     "description": "A PHP framework for creating websites, content management systems, consumer resource management systems, etc.",
     "type": "library",
     "require": {
+        "php": ">=8.2",
         "phpmailer/phpmailer": "^6.9",
         "dompdf/dompdf": "^2.0",
         "whichbrowser/parser": "^2.1",
         "anlutro/curl": "^1.5",
         "james-heinrich/getid3": "^1.9",
         "ezyang/htmlpurifier": "^4.17",
-        "web-auth/webauthn-lib": "^5.0"
+        "web-auth/webauthn-lib": "^5.0",
+        "php-di/php-di": "^6.3"
     },
-    "license": "BSD-3-Clause",
     "autoload": {
         "psr-4": {
             "Adept\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Adept\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Brandon J. Yaniz",
-            "email": "brandon@adept.travel"
+            "email": "brandon@yaniz.co"
         }
-    ]
+    ],
+    "license": "BSD-3-Clause"
 }
