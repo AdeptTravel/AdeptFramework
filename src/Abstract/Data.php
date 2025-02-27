@@ -15,7 +15,6 @@ abstract class Data
    */
   protected string $cache;
 
-
   abstract protected function getCacheFile(): string;
 
   public function cachePurge()

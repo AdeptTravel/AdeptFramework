@@ -2,6 +2,8 @@
 
 namespace Adept\Document\HTML\Elements\Select\Route;
 
+use Adept\Application;
+
 defined('_ADEPT_INIT') or die();
 
 class Option extends \Adept\Abstract\Document\HTML\Element
@@ -10,7 +12,8 @@ class Option extends \Adept\Abstract\Document\HTML\Element
 	protected string $tag = 'select';
 
 	// Element Specific Attributes
-	public string $autocomplete;
+	public bool
+		$autocomplete;
 	public bool   $autofocus;
 	public bool   $disabled;
 	public string $form;
@@ -28,8 +31,6 @@ class Option extends \Adept\Abstract\Document\HTML\Element
 		$this->label = '- Option -';
 
 		parent::__construct($attr, []);
-
-
 
 		$data = [];
 
@@ -78,7 +79,7 @@ class Option extends \Adept\Abstract\Document\HTML\Element
 	public function getBuffer(): string
 	{
 
-		$this->head->javascript->addFile('form.conditional.js');
+		Application::getInstance()->html->head->javascript->addAsset('Core/Form/Conditional');
 
 		$this->children[] = new \Adept\Document\HTML\Elements\Option([
 			'value' => '',

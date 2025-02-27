@@ -1,0 +1,13 @@
+{
+  "title": "Dashboard Template",
+  "description": "The Dashboard Template is used for administration areas or dashboard applications for CRM/CMS/ERP usage.",
+  "license": "BSD",
+  "copyright": "2021-2025 The Adept Traveler, Inc.",
+  "author": "Brandon J. Yaniz",
+  "company": "The Adept Traveler",
+  "website": "",
+  "module": [
+    "menu",
+    "controls"
+  ]
+}

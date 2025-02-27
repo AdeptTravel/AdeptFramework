@@ -9,10 +9,9 @@ use \Adept\Application\Database;
 class Media extends \Adept\Abstract\Data\Item
 {
 
-  protected string $table = 'Media';
-  //protected string $index = '';
-
-  protected array $uniqueKeys = ['file'];
+  protected string $table      = 'Media';
+  protected string $index      = 'file';
+  protected array  $uniqueKeys = ['file'];
 
   /**
    * ENUM('Audio', 'Image', 'Video'),
@@ -20,13 +19,6 @@ class Media extends \Adept\Abstract\Data\Item
    * @var string
    */
   public string $type;
-
-  /**
-   * The mimetype of the file.
-   *
-   * @var string
-   */
-  public string $mime;
 
   /**
    * The relative path to the file.  Used for filtering the list view.
@@ -40,7 +32,7 @@ class Media extends \Adept\Abstract\Data\Item
    *
    * @var string
    */
-  public string $file = '';
+  public string $file;
 
   /**
    * A websafe version of the filename.  For example 'This is an Image.png'
@@ -49,7 +41,14 @@ class Media extends \Adept\Abstract\Data\Item
    *
    * @var string
    */
-  public string $alias = '';
+  public string $alias;
+
+  /**
+   * The mimetype of the file.
+   *
+   * @var string
+   */
+  public string $mime;
 
   /**
    * The files extension, used when creating optimized versions of the file.
@@ -63,49 +62,51 @@ class Media extends \Adept\Abstract\Data\Item
    *
    * @var int
    */
-  public int $width = 0;
+  public int $width;
 
   /**
    * Undocumented variable
    *
    * @var int
    */
-  public int $height = 0;
+  public int $height;
 
   /**
    * Undocumented variable
    *
    * @var int
    */
-  public int $duration = 0;
+  public int $duration;
 
   /**
    * Filesize
    *
    * @var int
    */
-  public int $size = 0;
+  public int $size;
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public string $title = '';
+  public string $title;
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public string $caption = '';
+  public string $caption;
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public string $summary = '';
+  public string $summary;
+
+  public string $status = 'Active';
 
   public function loadInfo()
   {
@@ -131,52 +132,55 @@ class Media extends \Adept\Abstract\Data\Item
         $this->path = substr($this->file, 0, strrpos($this->file, '/'));
 
         if (empty($this->title)) {
-          $this->title = substr($file, strrpos($file, '/') + 1);
-          $this->title = substr($this->title, 0, strrpos($this->title, '.'));
+          $this->title = $this->generateTitle($this->file);
         }
 
         if (empty($this->alias)) {
-          $this->alias = substr($this->file, 1);
-          $this->alias = substr($this->alias, 0, strrpos($this->alias, '.'));
-          $this->alias = strtolower($this->alias);
-          $this->alias = str_replace(' ', '-', $this->alias);
-        }
-
-        while (strpos($this->alias, '--') !== false) {
-          $this->alias = str_replace('--', '-', $this->alias);
-        }
-
-        while ($this->aliasExists($this->alias)) {
-          if (preg_match('/-(\d+)$/', $this->alias, $matches)) {
-            // Increment the number by 1
-            $number = (int)$matches[1] + 1;
-            // Replace the old number with the new number
-            $this->alias = preg_replace('/-\d+$/', '-' . $number, $this->alias);
-          } else {
-            // Add '-0' to the alias if it doesn't end with a dash and a number
-            $this->alias = $this->alias . '-0';
-          }
+          $this->alias = $this->generateAlias($this->file);
         }
 
         $this->size      = filesize($file);
+        $this->updatedAt = \DateTime::createFromFormat('Y-m-d H:i:s', date("Y-m-d H:i:s", filemtime($file)));
+        //$this->updatedAt = date("Y-m-d H:i:s", filemtime($file));
 
-        $this->modified  = date("Y-m-d H:i:s", filemtime($file));
-
-        if ($this->type == 'Image') {
-          $info = getimagesize($file);
-          $this->width  = $info[0];
-          $this->height = $info[1];
-        } else {
-          $getID3 = new \getID3();
-          $id3 = $getID3->analyze($file);
-
-          if ($type == 'Video') {
-            $this->width  = $id3['video']['resolution_x'];
-            $this->height = $id3['video']['resolution_y'];
-          }
-        }
+        $dimensions   = $this->getDimensions($file);
+        $this->width  = $dimensions->width;
+        $this->height = $dimensions->height;
       }
     }
+  }
+
+  protected function generateTitle(string $file): string
+  {
+    $title = substr($file, strrpos($file, '/') + 1);
+    $title = substr($title, 0, strrpos($title, '.'));
+    return $title;
+  }
+
+  protected function generateAlias(string $file): string
+  {
+    $alias = substr($file, 1);
+    $alias = substr($alias, 0, strrpos($alias, '.'));
+    $alias = strtolower($alias);
+    $alias = str_replace(' ', '-', $alias);
+
+    while (strpos($alias, '--') !== false) {
+      $alias = str_replace('--', '-', $alias);
+    }
+
+    while ($this->aliasExists($alias)) {
+      if (preg_match('/-(\d+)$/', $alias, $matches)) {
+        // Increment the number by 1
+        $number = (int)$matches[1] + 1;
+        // Replace the old number with the new number
+        $alias = preg_replace('/-\d+$/', '-' . $number, $alias);
+      } else {
+        // Add '-0' to the alias if it doesn't end with a dash and a number
+        $alias = $alias . '-0';
+      }
+    }
+
+    return $alias;
   }
 
   protected function aliasExists(string $alias): bool
@@ -200,5 +204,14 @@ class Media extends \Adept\Abstract\Data\Item
     }
 
     return $status;
+  }
+
+  protected function getDimensions(string $file): object
+  {
+    return (object)[
+      'width' => 0,
+      'height' => 0,
+      'duration' => 0
+    ];
   }
 }

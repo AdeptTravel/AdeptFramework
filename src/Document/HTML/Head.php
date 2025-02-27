@@ -75,7 +75,7 @@ class Head
     $app = \Adept\Application::getInstance();
     $conf = $app->conf->site;
 
-    $html = '<base href="https://' . $conf->url . '">';
+    $html = '<base href="https://' . $app->session->request->url->host . '">';
     $html .= '<title>' . $this->meta->title . ' - ' . $conf->name . '</title>';
 
     $html .= $this->meta->getBuffer();

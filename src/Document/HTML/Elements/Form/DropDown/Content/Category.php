@@ -21,8 +21,9 @@ class Category extends \Adept\Document\HTML\Elements\Form\DropDown
 			$attr['placeholder'] = 'Category';
 		}
 
-		$items = new \Adept\Data\Table\Content\Category();
-		$data = $items->getList();
+		$table = new \Adept\Data\Table\Content\Category();
+		$data = $table->getData();
+
 
 		for ($i = 0; $i < count($data); $i++) {
 			$this->values[$data[$i]->id] = $data[$i]->title;

@@ -9,7 +9,5 @@ use \Adept\Application\Database;
 class Category extends \Adept\Data\Table\Content
 {
   protected string $table = 'Content';
-
   public string $type = 'Category';
-  public bool $recursive = true;
 }

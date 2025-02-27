@@ -1,0 +1,40 @@
+.tabs {}
+
+.tabs>.tabnav {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  background: #34495E;
+  border-radius: 7px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.tabs>.tabnav>button {
+  margin: 0;
+  color: #fff;
+  background: transparent;
+
+}
+
+.tabs>.tabnav>.active {
+  background: var(--blue);
+}
+
+.tabs>.tab {
+  display: none;
+}
+
+.tabs>.tab.active {
+  display: block;
+  /*
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  */
+}
+
+.tabs>.tab>h3 {
+  width: 100%;
+}

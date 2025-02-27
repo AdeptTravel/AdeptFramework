@@ -41,7 +41,6 @@ class Redirect extends \Adept\Data\Item\Redirect
     }
 
     if ($this->loadFromIndex($route)) {
-
       if (!isset($this->$ext) || !$this->$ext) {
         $this->status = 'Block';
       }

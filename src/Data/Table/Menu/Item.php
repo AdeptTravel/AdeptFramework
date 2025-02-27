@@ -9,21 +9,25 @@ use Adept\Data\Item\Menu;
 class Item extends \Adept\Abstract\Data\Table
 {
   protected string $table = 'MenuItem';
-  protected array $ignore = ['menuTitle'];
+  protected array $ignore = ['recursiveLevel', 'menuTitle'];
   protected array $like = ['title'];
   protected array $joinInner = [
-    'Menu' => 'menuId'
+    'Menu'  => 'menuId'
   ];
 
   protected array $joinLeft = [
-    'Route'      => 'routeId',
-    'Url'        => 'urlId',
-    'MediaImage' => 'imageId'
+    'Route' => 'routeId',
+    'Url'   => 'urlId',
+    'Media' => 'imageId'
+  ];
+
+  protected array $joinColumnMap = [
+    'menuTitle' => 'Menu.Title'
   ];
 
   protected array $recursiveSort = [
     'title',
-    'displayOrder'
+    'sortOrder'
   ];
 
   public string $sort = '';
@@ -40,7 +44,13 @@ class Item extends \Adept\Abstract\Data\Table
   public string $css;
   public string $params;
   public string $activeOn;
-  public int    $displayOrder;
+  public int    $sortOrder;
+
+  public function __construct()
+  {
+    parent::__construct();
+  }
+
 
   protected function getFilterData(): array
   {
@@ -56,10 +66,9 @@ class Item extends \Adept\Abstract\Data\Table
     return parent::getFilterData();
   }
 
-  public function getData(bool $recursive = false): array
+  public function getData(bool $recursive = true): array
   {
-    //$items = parent::getData($recursive);
-    $items = parent::getData(true);
+    $items = parent::getData($recursive);
 
     for ($i = 0; $i < count($items); $i++) {
       if ($items[$i]->type == 'Route') {
@@ -74,7 +83,7 @@ class Item extends \Adept\Abstract\Data\Table
     return $items;
   }
 
-  protected function getItem(int $id): \Adept\Data\Item\Route
+  public function getItem(int $id): \Adept\Data\Item\Route
   {
     $item = new \Adept\Data\Item\Route();
     $item->loadFromId($id);

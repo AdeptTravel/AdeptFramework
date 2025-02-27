@@ -1,0 +1,171 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+hr {
+  border: 0;
+  border-top: 1px #999 solid;
+  margin: 2rem 0;
+}
+
+.full {
+  width: 100%;
+  min-width: var(--min-width);
+}
+
+.three-quarters {
+  display: inline-block;
+  width: 75%;
+  min-width: var(--min-width);
+}
+
+.half {
+  width: calc(50% - 1rem);
+  min-width: var(--min-width);
+}
+
+.quarter {
+  width: 25%;
+  min-width: var(--min-width);
+}
+
+.two-thirds {
+  width: 66%;
+  min-width: var(--min-width);
+}
+
+.third {
+  width: 33%;
+  min-width: var(--min-width);
+}
+
+#site {
+  display: grid;
+  grid-template-columns: 240px auto;
+  grid-template-rows: 68px 72px minmax(min-content, calc(100vh - 45px));
+
+}
+
+#head {
+  display: flex;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  background: #222;
+}
+
+#head i {
+  font-size: 24px;
+  line-height: 68px;
+  color: #eee;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+#head h1 {
+  width: 100%;
+}
+
+#controls {
+  position: sticky;
+  top: 0px;
+  z-index: 9;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  align-self: start;
+
+  display: flex;
+  gap: .5rem;
+  flex-wrap: nowrap;
+
+  padding: .7rem;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px #ccc solid;
+}
+
+#controls>button {
+  margin: 0;
+  background: #ddd;
+  color: #000;
+}
+
+#controls>button:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+#controls>button.close:hover {
+  background: var(--red);
+}
+
+#menu {
+  grid-column: 1 / 2;
+  grid-row: 1 / 5;
+  background: #253544;
+}
+
+#menu .top {
+  display: flex;
+  height: 68px;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  background: #222;
+}
+
+#menu .top h1 {
+  display: block;
+  height: 45px;
+  margin: 0;
+  padding: 0 rem;
+  font-size: 28px;
+  line-height: 45px;
+  color: #fff;
+}
+
+main {
+  grid-column: 2 / 3;
+  grid-row: 3 / 4;
+  padding: 1rem;
+}
+
+main.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+main>article {
+  padding: 1rem;
+  height: fit-content;
+}
+
+main>article>header {
+  border-bottom: 1px #ccc solid;
+  padding: 0 1rem;
+}
+
+main>article>header>h3 {
+  font-size: 12pt;
+  font-weight: bold;
+  line-height: 14pt;
+}
+
+main>article>footer {
+  padding: 0 1rem;
+  border-top: 1px #ccc solid;
+}
+
+#site>footer {
+  border-bottom: 1px #ccc solid;
+  grid-column: 2 / 3;
+  grid-row: 4 / 5;
+  background: #222;
+}

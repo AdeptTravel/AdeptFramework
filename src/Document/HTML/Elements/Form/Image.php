@@ -5,97 +5,88 @@ namespace Adept\Document\HTML\Elements\Form;
 defined('_ADEPT_INIT') or die();
 
 use Adept\Application;
-use \Adept\Document\HTML\Elements\A;
 use \Adept\Document\HTML\Elements\Button;
 use \Adept\Document\HTML\Elements\Div;
-use \Adept\Document\HTML\Elements\Input;
 use \Adept\Document\HTML\Elements\Input\Hidden;
-use \Adept\Document\HTML\Elements\Li;
-use \Adept\Document\HTML\Elements\Span;
-use \Adept\Document\HTML\Elements\Ul;
 
 class Image extends \Adept\Document\HTML\Elements\Div
 {
-  // Form element attributes
-  public string $name;
-  public bool   $required = false;
+  public array $attr;
 
-  public bool   $autofocus;
-  public bool   $disabled;
-  public string $form;
-  public string $value = '';
+  public string $value;
 
-  // Input specific attributes
-  public string $accept;
-  public string $alt;
-  public string $dirname;
-  public string $formaction;
-  public string $formenctype;
-  public string $formmethod;
-  public bool   $formnovalidate;
-  public string $formtarget;
-  public int    $height;
-  public string $max;
-  public int    $maxlength;
-  public string $min;
-  public int    $minlength;
-  public bool   $multiple;
-  public string $pattern;
-  public string $placeholder;
-  public bool   $readonly = true;
-  public int    $size;
-  public string $src;
-  public string $step;
-  public string $type;
-  public string $usemap;
-  public int    $width;
-  // Custom param
-  public bool   $allowEmpty = true;
-  public array  $optionShowOn = [];
-  public array  $optionHideOn = [];
-  // Duplicate, here for reference only
-  //public bool   $required; 
-  //public string $label = '';
+  public function __construct(array $attr = [], array $children = [], bool $validate = false, bool $status = true)
+  {
+    $attrs = [];
+
+    if (!empty($attr['css'])) {
+      $attrs['css'] = $attr['css'];
+    }
+
+    $attrs['css'][] = 'image';
+
+    parent::__construct($attrs, $children);
+
+    $this->attr = $attr;
+  }
 
   public function getBuffer(): string
   {
     $app = Application::getInstance();
-    $app->html->head->css->addFile('form.image.css');
-    $app->html->head->javascript->addFile('form.image.js');
+
+    $app->html->head->css->addAsset('Core/Modal');
+    $app->html->head->css->addAsset('Core/Form/Image');
+    $app->html->head->javascript->addAsset('Core/Modal');
+    $app->html->head->javascript->addAsset('Core/Form/Image');
 
     $path  = '';
-    $title = '';
+    $data  = new \Adept\Data\Item\Media\Image();
 
     if (!empty($this->value)) {
-      $data  = new \Adept\Data\Item\Media\Image((int)$this->value);
-      $path  = $data->getRelPath(150, 1050);
-      $title = $data->title;
+      $data->loadFromId((int)$this->value);
+      $path = $data->getRelPath(360, 203);
     }
 
-    $this->children[] =  new \Adept\Document\HTML\Elements\Img([
-      'src' => $path,
+    if (empty($path)) {
+      $this->css[] = 'empty';
+    }
+
+
+    $this->children[] = new Hidden([
+      'value' => $data->id,
+      'name' => (!empty($this->attr['name'])) ? $this->attr['name'] : ''
     ]);
 
     $this->children[] = new Div([
+      'css' => ['placeholder']
+    ]);
+
+    $this->children[] = new \Adept\Document\HTML\Elements\Img([
+      'src' => $path
+    ]);
+
+    $this->children[] = new div([
       'css' => ['title'],
-      'text' => $title
+      'text' => (isset($data->title)) ? $data->title : ''
     ]);
 
-    $this->children[] = new Div([
+    $controls = new Div([
       'css' => ['controls']
     ]);
 
-    end($this->children)->children[] = new Button([
+    $controls->children[] = new Button([
       'css' => ['select'],
       'title' => 'Select',
       'text' => 'Select'
     ]);
 
-    end($this->children)->children[] = new Button([
+    $controls->children[] = new Button([
       'css' => ['clear'],
       'title' => 'clear',
       'text' => 'Clear'
     ]);
+
+    $this->children[] = $controls;
 
     return parent::getBuffer();
   }

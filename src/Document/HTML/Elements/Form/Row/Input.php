@@ -18,7 +18,7 @@ class Input extends \Adept\Document\HTML\Elements\Form\Row
   // Input Specific Attributes
   public string $accept;
   public string $alt;
-  public string $autocomplete;
+  public bool   $autocomplete;
   public bool   $autofocus;
   public bool   $checked;
   public string $dirname;
@@ -50,10 +50,11 @@ class Input extends \Adept\Document\HTML\Elements\Form\Row
 
   public function __construct(array $attr = [], array $children = [], bool $validate = false, bool $status = true)
   {
+
     parent::__construct($attr, $children);
 
     $this->css[] = 'input';
-
+    /*
     $attr = [
       'accept',
       'alt',
@@ -88,10 +89,13 @@ class Input extends \Adept\Document\HTML\Elements\Form\Row
       'value',
       'width'
     ];
-
+    */
     //$input = new Elements\Input([]);
-    $input = new $this->inputNameSpace([]);
+    //$input = new $this->inputNameSpace([]);
+    $input = new $this->inputNameSpace($attr);
 
+
+    /*
     for ($i = 0; $i < count($attr); $i++) {
       $key = $attr[$i];
 
@@ -108,6 +112,7 @@ class Input extends \Adept\Document\HTML\Elements\Form\Row
         }
       }
     }
+    */
 
     $this->children[] = $input;
   }

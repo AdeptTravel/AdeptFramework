@@ -1,0 +1,18 @@
+.filter {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.filter>fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 0;
+  border: 1px #aaa solid;
+  background: #f6f6f6;
+}
+
+.filter>fieldset>legend {
+  font-weight: bold;
+}

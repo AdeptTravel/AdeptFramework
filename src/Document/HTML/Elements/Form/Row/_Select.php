@@ -13,7 +13,8 @@ class Select extends \Adept\Document\HTML\Elements\Form\Row
   public bool $required = false;
 
   // Select Specific Attributes
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public bool   $disabled;
   public string $form;

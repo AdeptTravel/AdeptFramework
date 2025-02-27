@@ -9,7 +9,7 @@ use Adept\Application;
 use Adept\Document\HTML\Head;
 use Adept\Document\HTML\Body\Status;
 
-class HTML extends \Adept\Abstract\Component
+abstract class HTML extends \Adept\Abstract\Component
 {
   /**
    * Undocumented variable
@@ -25,12 +25,6 @@ class HTML extends \Adept\Abstract\Component
    */
   public Status $status;
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application        $app
-   * @param  \Adept\Document\HTML\Head $head
-   */
   public function __construct()
   {
     $app = Application::getInstance();
@@ -43,20 +37,25 @@ class HTML extends \Adept\Abstract\Component
   // just get rid of it, not sure yet.
   public function getHTML(string $template): string
   {
+
     $app        = Application::getInstance();
     $buffer     = '';
-    $request    = &$app->session->request;
-    $component  = $request->route->component;
-    $option     = $request->route->view;
-    $type       = $request->url->type;
 
     if (!empty($template)) {
       $template = '.' . $template;
     }
 
+    $path =
+      $app->session->request->route->type . '/' .
+      $app->session->request->route->component . '/' .
+      $app->session->request->route->area . '/' .
+      $app->session->request->url->type . '/' .
+      'Template/' .
+      $app->session->request->route->view . $template . '.php';
+
     if (
-      file_exists($file = FS_CORE_COMPONENT . "$component/$type/Template/$option$template.php")
-      || file_exists($file = FS_SITE_COMPONENT . "$component/$type/Template/$option$template.php")
+      file_exists($file = FS_CORE_COMPONENT . $path)
+      || file_exists($file = FS_SITE_COMPONENT . $path)
     ) {
       ob_start();
 
@@ -69,4 +68,6 @@ class HTML extends \Adept\Abstract\Component
 
     return $buffer;
   }
+
+  //abstract public static function getBreadcrumbTitle(string $area, string $view, array $args = []): string;
 }

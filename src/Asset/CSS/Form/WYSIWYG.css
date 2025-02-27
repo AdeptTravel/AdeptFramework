@@ -1,0 +1,35 @@
+div.row.wysiwyg {
+  max-width: 100%;
+}
+
+div.wysiwyg {
+  position: relative;
+  width: 100%;
+  max-height: 10rem;
+  height: fit-content;
+  padding-right: 1rem;
+}
+
+div.wysiwyg>.toolbar {}
+
+div.wysiwyg>.editor {
+  height: fit-content;
+  min-height: 10rem;
+  max-height: 60vh;
+  overflow: scroll;
+}
+
+div.wysiwyg>.source {
+  display: none;
+}
+
+div.wysiwyg>.toggle {
+  width: 100%;
+  padding: 1rem 1rem 0;
+  text-align: right;
+}
+
+div.wysiwyg button.toggle {
+  width: fit-content;
+  height: fit-content;
+}

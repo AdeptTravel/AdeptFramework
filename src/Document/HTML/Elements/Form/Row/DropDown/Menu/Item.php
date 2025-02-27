@@ -27,7 +27,12 @@ class Item extends \Adept\Document\HTML\Elements\Form\Row\DropDown
 		$data  = $table->getData();
 
 		for ($i = 0; $i < count($data); $i++) {
-			$this->values[$data[$i]->id] = $data[$i]->title;
+			$title = $data[$i]->title;
+
+			if ($data[$i]->level > 0) {
+				$title = str_repeat('&nbsp', $data[$i]->level) . '- ' . $title;
+			}
+			$this->values[$data[$i]->id] = $title;
 		}
 	}
 }

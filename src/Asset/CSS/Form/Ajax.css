@@ -1,0 +1,57 @@
+input:disabled {
+  background-color: transparent;
+  font-weight: bold;
+  border-color: #fff;
+}
+
+form.ajax div.row.edit input {
+  width: calc(100% - 2.3rem);
+}
+
+form.ajax div.row .status {
+  right: 7rem;
+}
+
+div.row.edit>.status {
+  display: none;
+}
+
+div.row.edit>.controls {
+  display: flex;
+  gap: 1rem;
+}
+
+div.row.edit>.controls i {
+  cursor: pointer;
+}
+
+div.row.edit>.controls i.save,
+div.row.edit>.controls i.cancel {
+  display: none;
+}
+
+div.row.edit>.controls i.save {
+  color: var(--blue);
+}
+
+div.row.edit>.controls i.cancel {
+  color: var(--red);
+}
+
+form.ajax div.row.editing input {
+  width: calc(100% - 5rem);
+}
+
+div.row.editing>.controls i.edit {
+  display: none;
+}
+
+div.row.editing>.controls i.save,
+div.row.editing>.controls i.cancel {
+  display: inline-block;
+}
+
+div.row.edit>.controls>i {
+  font-size: 1.6rem;
+  line-height: 2.4rem;
+}

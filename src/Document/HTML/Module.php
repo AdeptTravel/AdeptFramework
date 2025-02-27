@@ -5,48 +5,68 @@ namespace Adept\Document\HTML;
 defined('_ADEPT_INIT') or die();
 
 use \Adept\Application;
-use \Adept\Document\HTML\Head;
+use \Adept\Data\Table\Module as Table;
+use \Adept\Data\Item\Module as Item;
 
 class Module
 {
+
   protected array $data;
 
-  public function getModule(string $tag): string
+  public function __construct()
   {
-    // Tag format  - module:Path/To/Module:args=as&key=val
+    $table = new Table();
+    $this->data  = $table->getData();
+  }
+
+  public function getBuffer(string $type, string $name, object|null $params = null): string
+  {
     $buffer = '';
 
-    $parts = explode(':', $tag);
+    if ($type == 'area') {
+      $template = Application::getInstance()->session->request->route->template;
 
-    if ($parts >= 2) {
-      $args = [];
+      for ($i = 0; $i < count($this->data); $i++) {
+        if ($this->data[$i]->template == $template && $this->data[$i]->area == $name) {
+          $params = json_decode($this->data[$i]->params);
 
-      if (count($parts) == 3) {
-        parse_str($parts[2], $args);
+          if ($module = $this->getModule($this->data[$i]->module, $params)) {
+            $buffer .= $module->getBuffer();
+          }
+        }
       }
-
-      if (($file = $this->getFile($parts[1])) !== false) {
-        ob_start();
-        include($file);
-        $buffer = ob_get_contents();
-        ob_end_clean();
+    } else if ($type == 'module') {
+      if ($module = $this->getModule($name, $params)) {
+        $buffer = $module->getBuffer();
       }
     }
 
     return $buffer;
   }
 
-  protected function getFile(string $path): string|bool
+  public function getModule(string $path, object|null $params): \Adept\Abstract\Document\HTML\Module|null
   {
-    $paths = [FS_SITE_MODULE, FS_CORE_MODULE];
-    $file = false;
+    $module = null;
+    $namespace = '';
+    $parts = explode('/', $path);
 
-    for ($i = 0; $i < count($paths); $i++) {
-      if (file_exists($file = $paths[$i] . $path . '/' . '/Module.php')) {
-        break;
-      }
+    $path .= '/' . end($parts);
+
+    if (file_exists(FS_SITE_MODULE . $path . '.php')) {
+      $namespace = "\\Module\\" . str_replace('/', '\\', $path);
+    } else if (file_exists(FS_CORE_MODULE . $path . '.php')) {
+      $namespace = "\\Adept\\Module\\" . str_replace('/', '\\', $path);
+    } else {
+      die(__FILE__ . '(' . __LINE__ . ') - Error, no module found at ' . $path);
     }
 
-    return $file;
+    if (class_exists($namespace)) {
+      $module = new $namespace($params);
+    } else {
+      // TODO: Add more graceful error checking here
+      die(__FILE__ . '(' . __LINE__ . ') - Error, no module found for ' . $namespace);
+    }
+
+    return $module;
   }
 }

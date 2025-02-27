@@ -21,11 +21,13 @@ class Image
   public Size $intro;
   public Size $full;
   public Size $thumbnail;
+  public Size $editor;
 
   public function __construct()
   {
     $this->intro      = new Size();
     $this->full       = new Size();
     $this->thumbnail  = new Size();
+    $this->editor     = new Size();
   }
 }

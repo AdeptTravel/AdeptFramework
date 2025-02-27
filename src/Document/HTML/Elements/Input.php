@@ -12,7 +12,7 @@ class Input extends \Adept\Abstract\Document\HTML\Element
 	// Element Specific Attributes
 	public string $accept;
 	public string $alt;
-	public string $autocomplete;
+	public bool $autocomplete;
 	public bool   $autofocus;
 	public bool   $checked;
 	public string $dirname;

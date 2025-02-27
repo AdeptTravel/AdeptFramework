@@ -1,0 +1,12 @@
+{
+  "title": "Admin Controls",
+  "description": "Core Administration Controls for use with List and Item Components.",
+  "license": "BSD",
+  "copyright": "2021-2025 The Adept Traveler, Inc.",
+  "author": "Brandon J. Yaniz",
+  "company": "The Adept Traveler",
+  "website": "",
+  "params": {
+    "menutitle": ""
+  },
+}

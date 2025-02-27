@@ -14,7 +14,8 @@ class TextArea extends \Adept\Document\HTML\Elements\Form\Row
   public string $label;
 
   // Textarea Specific Attributes
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public int    $cols;
   public string $dirname;

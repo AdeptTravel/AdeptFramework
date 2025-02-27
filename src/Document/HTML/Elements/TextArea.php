@@ -10,7 +10,8 @@ class TextArea extends \Adept\Abstract\Document\HTML\Element
 	protected string $tag = 'textarea';
 
 	// Element Specific Attributes
-	public string $autocomplete;
+	public bool
+		$autocomplete;
 	public bool   $autofocus;
 	public int    $cols;
 	public string $dirname;

@@ -1,0 +1,12 @@
+{
+  "title": "Menu",
+  "description": "Core menu module.",
+  "license": "BSD",
+  "copyright": "2021-2025 The Adept Traveler, Inc.",
+  "author": "Brandon J. Yaniz",
+  "company": "The Adept Traveler",
+  "website": "",
+  "params": {
+    "menutitle": ""
+  },
+}

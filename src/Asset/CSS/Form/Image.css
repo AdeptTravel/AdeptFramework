@@ -1,0 +1,55 @@
+.image {
+  width: fit-content;
+  border: 1px #aaa solid;
+  background: #efefef;
+}
+
+.row.image {
+  background: none;
+  border: none;
+}
+
+.image img {
+  display: block;
+  border: none;
+  width: 360px;
+  height: 203px;
+  margin: 0;
+
+  element {
+    object-fit: cover;
+  }
+
+  .image .placeholder,
+  .image.empty img {
+    display: none;
+  }
+
+  .image.empty .placeholder {
+    display: block;
+    border: none;
+    width: 360px;
+    height: 203px;
+  }
+
+  .row.image .title {
+    width: 100%;
+    height: 34px;
+    overflow: hidden;
+    padding: 8px 0 8px 8px;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  .row.image .controls>button {
+    margin: 0;
+  }
+
+  .row.image .controls>button[class="select"] {
+    width: 260px;
+  }
+
+  .row.image .controls>button[class="clear"] {
+    width: 100px;
+    background: var(--red);
+  }

@@ -11,11 +11,12 @@ class Menu extends \Adept\Abstract\Data\Table
 
   public string $sort = 'title';
 
+  public string $host;
   public string $title;
   public string $css;
   public bool   $isSecure;
 
-  protected function getItem(int $id): \Adept\Data\Item\Menu
+  public function getItem(int $id): \Adept\Data\Item\Menu
   {
     $item = new \Adept\Data\Item\Menu($id);
     $item->loadFromId($id);

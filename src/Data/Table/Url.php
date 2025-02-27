@@ -81,4 +81,11 @@ class Url extends \Adept\Abstract\Data\Items
    * @var string
    */
   public string $mime;
+
+  public function getItem(int $id = 0): \Adept\Data\Item\Url
+  {
+    $item = new \Adept\Data\Item\Url();
+    $item->loadFromId($id);
+    return $item;
+  }
 }

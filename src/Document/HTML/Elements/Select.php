@@ -10,7 +10,8 @@ class Select extends \Adept\Abstract\Document\HTML\Element
 	protected string $tag = 'select';
 
 	// Element Specific Attributes
-	public string $autocomplete;
+	public bool
+		$autocomplete;
 	public bool   $autofocus;
 	public bool   $disabled;
 	public string $form;

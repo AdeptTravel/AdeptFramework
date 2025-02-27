@@ -12,32 +12,43 @@ class Route extends \Adept\Abstract\Data\Table
   public string $sort = 'route';
 
   /**
+   * The host or domain name the route is associated with
+   *
+   * @var string
+   */
+  public string $host;
+
+  /**
    * The route
    *
    * @param string
    */
-  public string $route = '';
+  public string $route;
+
+  public string $type;
+
+  public string $area;
 
   /**
    * The component
    *
    * @var string
    */
-  public string $component = '';
+  public string $component;
 
   /**
    * The component option aka what area of the component should be loaded
    *
    * @var string
    */
-  public string $view = '';
+  public string $view;
 
   /**
    * The view template
    *
    * @var string
    */
-  public string $template = '';
+  public string $template;
 
   /**
    * Allow access to the HTML component
@@ -124,9 +135,9 @@ class Route extends \Adept\Abstract\Data\Table
   public bool $isCacheable;
 
 
-  protected function getItem(int $id): \Adept\Data\Item\Route
+  public function getItem(int $id = 0): \Adept\Data\Item\Route
   {
-    $item = new \Adept\Data\Item\Route($id);
+    $item = new \Adept\Data\Item\Route();
     $item->loadFromId($id);
     return $item;
   }

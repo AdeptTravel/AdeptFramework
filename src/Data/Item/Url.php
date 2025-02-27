@@ -85,7 +85,7 @@ class Url extends \Adept\Abstract\Data\Item
   public string $mime = '';
 
   /**
-   * Status - Active, Inactive, Block
+   * Status - Active, Block, Honeypot
    *
    * @var string
    */
@@ -142,7 +142,6 @@ class Url extends \Adept\Abstract\Data\Item
       if (substr($url, -1) == '/') {
         $url = substr($url, 0, -1);
       }
-
 
       if (!$this->loadFromIndex($url)) {
         // Set URL

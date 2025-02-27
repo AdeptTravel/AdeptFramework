@@ -14,7 +14,7 @@ class Form extends \Adept\Abstract\Document\HTML\Element
 	// Element Specific Attributes
 	public string $acceptcharset;
 	public string $action;
-	public string $autocomplete;
+	public bool   $autocomplete;
 	public string $enctype;
 	public string $method;
 	public string $name;

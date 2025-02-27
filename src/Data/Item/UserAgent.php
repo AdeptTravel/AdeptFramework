@@ -12,12 +12,12 @@ class Useragent extends \Adept\Abstract\Data\Item
   protected string $table = 'Useragent';
   protected string $index = 'useragent';
 
-  public string $useragent = '';
-  public string $friendly  = '';
-  public string $browser = '';
-  public string $os = '';
-  public string $device = '';
-  public string $type = '';
+  public string $useragent;
+  public string $friendly;
+  public string $browser;
+  public string $os;
+  public string $device;
+  public string $type;
   public bool   $isDetected = false;
   public string $status = 'Allow';
 

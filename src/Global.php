@@ -27,6 +27,7 @@ define('FS_SITE_MODULE',            FS_SITE . 'site/Module/');
 define('FS_SITE_TEMPLATE',          FS_SITE . 'site/Template/');
 
 // System specific paths
+define('FS_CORE_ASSET',         FS_CORE . 'Asset/');
 define('FS_CORE_COMPONENT',         FS_CORE . 'Component/');
 define('FS_CORE_MODULE',            FS_CORE . 'Module/');
 define('FS_CORE_TEMPLATE',          FS_CORE . 'Template/');
@@ -36,3 +37,5 @@ define('ITEM_STATUS_OFF',           0);
 define('ITEM_STATUS_ON',            1);
 define('ITEM_STATUS_ARCHIVE',       2);
 define('ITEM_STATUS_MISSING',       3);
+
+date_default_timezone_set('America/Chicago');

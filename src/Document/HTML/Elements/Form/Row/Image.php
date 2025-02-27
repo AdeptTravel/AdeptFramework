@@ -11,7 +11,8 @@ class Image extends \Adept\Document\HTML\Elements\Form\Row
   public string $label;
 
   // Textarea Specific Attributes
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public bool   $disabled;
   public string $name;
@@ -22,12 +23,20 @@ class Image extends \Adept\Document\HTML\Elements\Form\Row
 
   public function __construct(array $attr = [], array $children = [], bool $validate = false, bool $status = true)
   {
-    parent::__construct($attr, $children);
+    $attrs = [];
+
+    if (!empty($attr['css'])) {
+      $attrs['css'] = $attr['css'];
+    }
+
+    if (!empty($attr['label'])) {
+      $attrs['label'] = $attr['label'];
+    }
+
+    parent::__construct($attrs, $children);
 
     $this->css[] = 'image';
 
-    $this->children[] = new \Adept\Document\HTML\Elements\Form\Image([
-      'value' => $this->value
-    ]);
+    $this->children[] = new \Adept\Document\HTML\Elements\Form\Image($attr);
   }
 }

@@ -2,6 +2,7 @@
 
 namespace Adept\Application\Session;
 
+// Prevent direct access to the script
 defined('_ADEPT_INIT') or die('No Access');
 
 use Adept\Application;
@@ -11,173 +12,148 @@ use Adept\Data\Item\User;
 class Authentication
 {
 
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Application\Session\Data
-   */
   protected Data $data;
-
-  /**
-   * Failed login delay in seconds
-   *
-   * @var int
-   */
-  public int $delay = 0;
-
-  /**
-   * Undocumented variable
-   *
-   * @var bool
-   */
+  public int $count = 0;
+  public \DateTime $delay;
   public bool $status = false;
-
-  /**
-   * The current user if logged in
-   *
-   * @var \Adept\Data\Item\User
-   */
   public User $user;
 
-  /**
-   * Undocumented function
-   *
-   * @param  \Adept\Application\Database      $db
-   * @param  \Adept\Application\Session\Data  $data
-   */
   public function __construct(Data &$data)
   {
     $this->data = $data;
     $this->user = new User();
 
+    // Check if a user ID is stored in session data
     if (($id = $data->server->getInt('auth.userid', 0)) > 0) {
       $this->user->loadFromId($id);
       $this->status = (
         $this->user->id > 0 &&
         $this->user->status == 'Active' &&
-        $this->user->verifiedAt != '0000-00-00 00:00:00');
+        $this->user->verifiedOn != '0000-00-00 00:00:00'
+      );
     }
   }
 
-  /**
-   * Undocumented function
-   *
-   * @param  string                             $username
-   * @param  string                             $password
-   * @param  \Adept\Application\Session\Request $request
-   *
-   * @return bool
-   */
   public function login(string $username, string $password): bool
   {
-    $result = 'Fail';
-    $reason = '';
-
-    $session = Application::getInstance()->session;
-    $request = &$session->request;
-
     if (!$this->status) {
-
-      $db = Application::getInstance()->db;
-      $params = [$username];
-
-      // Username isn't in a security hold (timeout)
-
-      // TODO: Move to \Adept\Data\Item\User
-      $query  = "SELECT * FROM `User`";
-      $query .= " WHERE `username` = ?";
-      $query .= " AND `password` <> ''";
-
-      $users = $db->getObjects($query, $params);
-      $user  = NULL;
-
       $result = 'Fail';
-      $reason = 'Nonexistent';
+      $reason = '';
 
-      for ($i = 0; $i < count($users); $i++) {
-        $user = $users[$i];
+      $session = Application::getInstance()->session;
+      $request = &$session->request;
+      $db = Application::getInstance()->db;
 
-        if (!empty($user->id)) {
-          // Username exists
+      $last = $db->getObject(
+        'SELECT * FROM `LogAuth` WHERE `sessionId` = ? AND `delay` > NOW() ORDER BY `delay` DESC LIMIT 1',
+        [$session->id]
+      );
 
-          if ($user->status == 'Active') {
-            // User status is active
+      if ($last !== false) {
+        $this->count = $last->failCount;
+        $this->count++;
+        $this->delay = $this->calcDelay($last->failCount, $last->delay);
+        $this->logAuthAttempt($session, $request, $username, 'Delay', '', $this->count, $this->delay->format('Y-m-d H:i:s'));
+      } else {
+        $this->count = 0;
+        $this->delay = new \DateTime();
 
-            if ($user->verifiedAt != '0000-00-00 00:00:00') {
-              // User has been verified
-              if (password_verify($password, $user->password)) {
-                // Password matches
-                $result = 'Success';
+        // Proceed with login attempt
+        $params = [$username];
 
-                $this->data->server->set('auth.userid', $user->id);
-                $this->data->server->set('auth.token', $this->newToken());
+        // TODO: Move to \Adept\Data\Item\User
+        $query  = "SELECT * FROM `User`";
+        $query .= " WHERE `username` = ?";
+        $query .= " AND `password` <> ''";
 
-                $session->token = $this->data->server->getString('auth.token');
+        $users = $db->getObjects($query, $params);
+        $user  = null;
+
+        $result = 'Fail';
+        $reason = 'Nonexistent';
+
+        foreach ($users as $user) {
+          if (!empty($user->id)) {
+            // Username exists
+
+            if ($user->status == 'Active') {
+              // User status is active
+
+              if ($user->verifiedOn != '0000-00-00 00:00:00') {
+                // User has been verified
+                if (password_verify($password, $user->password)) {
+                  // Password matches
+                  $this->status = true;
+
+                  $this->data->server->set('auth.userid', $user->id);
+                  $this->data->server->set('auth.token', $this->newToken());
+
+                  $session->token = $this->data->server->getString('auth.token');
+
+                  // Log the successful attempt
+                  $this->logAuthAttempt($session, $request, $username, 'Success');
+                  break;
+                } else {
+                  // Password is incorrect
+                  $result = 'Fail';
+                  $reason = 'Password';
+                }
+              } else {
+                // User hasn't verified their email address
+                $result = 'Fail';
+                $reason = 'Unverified';
 
                 // Break out of the loop
                 break;
-              } else {
-                // Password is incorrect
-
-                $result = 'Fail';
-                $reason = 'Password';
               }
             } else {
-              // User hasn't verified their email address
-
+              // User is deactivated via the status value
               $result = 'Fail';
-              $reason = 'Verified';
-
-              // Break out of the loop
-              break;
+              $reason = 'Deactivated';
             }
-          } else {
-            // User is deactivated via the status value
-            $result = 'Fail';
-            $reason = $user->status;
           }
         }
+
+        if (!$this->status) {
+          // Log the failed attempt
+          $this->count++;
+          $this->delay = $this->calcDelay($this->count, $this->delay->format('Y-m-d H:i:s'));
+          //logAuthAttempt($session, $request, string $username, string $result, int $count = 0, string $reason = '', string $delay = '0000-00-00 00:00:00'): void
+          $this->logAuthAttempt($session, $request, $username, $result, $reason, $this->count, $this->delay->format('Y-m-d H:i:s'));
+        }
       }
-    } else {
-      // Username is in a timeout for being bad
-      $result = 'Delay';
     }
 
-    $query = "INSERT INTO `LogAuth`";
-    $query .= " (`sessionId`, `requestId`,`useragentId`, `ipAddressId`, `username`, `result`, `reason`)";
-    $query .= " VALUES";
-    $query .= " (?,?,?,?,?,?,?)";
-
-    // Save the request to the DB to get the ID
-    $request->save();
-
-    $params = [
-      $session->id,
-      $request->request->id,
-      $request->useragent->id,
-      $request->ipAddress->id,
-      $username,
-      $result,
-      $reason
-    ];
-
-    $db->insert($query, $params);
-
-    return ($result == 'Success');
+    return $this->status;
   }
 
+  /**
+   * Logs out the current user by purging session data
+   *
+   * @return void
+   */
   public function logout()
   {
     $this->data->server->purge();
+    $this->status = false;
   }
 
+  /**
+   * Generates a new secure token
+   *
+   * @param int  $length  Length of the token
+   * @param bool $lower   Include lowercase letters
+   * @param bool $upper   Include uppercase letters
+   * @param bool $numbers Include numbers
+   *
+   * @return string The generated token
+   */
   public static function newToken(
     int $length = 32,
     bool $lower = true,
     bool $upper = true,
     bool $numbers = true
   ): string {
-
     $seed = '';
 
     if ($lower) {
@@ -198,11 +174,10 @@ class Authentication
 
     $count = strlen($seed);
     $token = '';
-    // Generate initial random bytes
-    $bytes = random_bytes($count);
-    // Make sure we only pick characters that are in our pool of accepted characters
+
+    // Generate the token using the seed characters
     for ($i = 0; $i < $length; $i++) {
-      $token .= $seed[mt_rand(0, $count - 1)];
+      $token .= $seed[random_int(0, $count - 1)];
     }
 
     return $token;
@@ -262,5 +237,57 @@ class Authentication
       "SELECT COUNT(*) FROM `user_token` WHERE `type` = ? AND `token` = ? AND `created` < NOW() AND `expires` > NOW()",
       [$type, $token]
     ) == 1);
+  }
+
+  protected function calcDelay(int $count, string $date = ''): \DateTime
+  {
+    $offset = 1;
+
+    for ($i = 0; $i <= $count; $i++) {
+      $offset = $offset * 2;
+    }
+    $now = new \DateTime();
+    $delay = new \DateTime($date);
+    $delay->add(new \DateInterval("PT{$offset}S"));
+
+    return $delay;
+  }
+
+  /**
+   * Logs an authentication attempt
+   *
+   * @param \Adept\Application\Session       $session The current session object
+   * @param \Adept\Application\Session\Request $request The current request object
+   * @param string                           $username The username attempted
+   * @param string                           $result   The result of the attempt ('Success', 'Fail', 'Delay')
+   * @param string                           $reason   The reason for the result
+   *
+   * @return void
+   */
+  protected function logAuthAttempt($session, $request, string $username, string $result, string $reason = '', int $count = 0, string $delay = '0000-00-00 00:00:00'): void
+  {
+    $db = Application::getInstance()->db;
+
+    $query = "INSERT INTO `LogAuth`";
+    $query .= " (`sessionId`, `requestId`, `useragentId`, `ipAddressId`, `username`, `result`, `reason`, `failCount`, `delay`, `createdAt`)";
+    $query .= " VALUES";
+    $query .= " (?,?,?,?,?,?,?,?,?,NOW())";
+
+    // Save the request to the DB to get the ID
+    $request->save();
+
+    $params = [
+      $session->id,
+      $request->request->id,
+      $request->useragent->id,
+      $request->ipAddress->id,
+      $username,
+      $result,
+      $reason,
+      $count,
+      $delay
+    ];
+
+    $db->insert($query, $params);
   }
 }

@@ -19,7 +19,8 @@ class DropDown extends \Adept\Document\HTML\Elements\Div
   // Form element attributes
   public string $name;
   public bool   $required = false;
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public bool   $disabled;
   public string $form;
@@ -63,11 +64,10 @@ class DropDown extends \Adept\Document\HTML\Elements\Div
   public function getBuffer(): string
   {
     $app = Application::getInstance();
-
-    $app->html->head->javascript->addFile('form.dropdown.js');
+    $app->html->head->javascript->addAsset('Core/Form/DropDown');
 
     if (!empty($this->conditions)) {
-      $app->html->head->javascript->addFile('form.conditional.js');
+      $app->html->head->javascript->addAsset('Core/Form/Conditional');
     }
 
     $this->css[]   = 'dropdown';

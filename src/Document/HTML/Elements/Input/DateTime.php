@@ -6,5 +6,5 @@ defined('_ADEPT_INIT') or die();
 
 class DateTime extends \Adept\Document\HTML\Elements\Input
 {
-  public string $type = 'datetime-local"';
+  public string $type = 'datetime-local';
 }

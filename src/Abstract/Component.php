@@ -6,7 +6,7 @@ defined('_ADEPT_INIT') or die('No Access');
 
 use \Adept\Application;
 
-class Component
+abstract class Component
 {
   public function getBuffer(string $template = ''): string
   {

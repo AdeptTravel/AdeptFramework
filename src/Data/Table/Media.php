@@ -2,13 +2,17 @@
 
 namespace Adept\Data\Table;
 
+use Adept\Application;
+
 defined('_ADEPT_INIT') or die();
 
-class Media extends \Adept\Abstract\Data\Items
+class Media extends \Adept\Abstract\Data\Table
 {
-  protected string $errorName = 'Media';
-  protected string $table     = 'media';
-  public string $sort         = 'title';
+  protected string $table     = 'Media';
+  protected array $uniqueKeys = ['file'];
+  protected array $like       = ['file'];
+
+  public string $sort = 'file';
 
   /**
    * ENUM('Audio', 'Image', 'Video'),
@@ -18,28 +22,37 @@ class Media extends \Adept\Abstract\Data\Items
   public string $type;
 
   /**
-   * Undocumented variable
+   * The relative path to the file.  Used for filtering the list view.
    *
    * @var string
    */
-  public string $path = '';
+  public string $path;
 
   /**
-   * Undocumented variable
+   * The relative path + the file name.
    *
    * @var string
    */
-  public string $file;
+  public string $file = '';
 
   /**
-   * The formatted filename
+   * A websafe version of the filename.  For example 'This is an Image.png'
+   * would become 'this_is_an_image'.  Used for naming optimized version of the
+   * file.
    *
    * @var string
    */
-  public string $alias;
+  public string $alias = '';
 
   /**
-   * Undocumented variable
+   * The mimetype of the file.
+   *
+   * @var string
+   */
+  public string $mime;
+
+  /**
+   * The files extension, used when creating optimized versions of the file.
    *
    * @var string
    */
@@ -67,7 +80,7 @@ class Media extends \Adept\Abstract\Data\Items
   public int $duration;
 
   /**
-   * Undocumented variable
+   * Filesize
    *
    * @var int
    */
@@ -78,38 +91,46 @@ class Media extends \Adept\Abstract\Data\Items
    *
    * @var string
    */
-  public string $title;
+  public string $title = '';
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public string $caption;
+  public string $caption = '';
 
   /**
    * Undocumented variable
    *
    * @var string
    */
-  public string $summary;
+  public string $summary = '';
 
 
   public function getDirs(): array
   {
-
+    $dirs = [];
     $path = FS_SITE_MEDIA . $this->type . $this->path;
 
-    $iterator = new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS);
-    $dirs = [];
+    if (file_exists($path)) {
+      $iterator = new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS);
 
-    foreach ($iterator as $info) {
-      if ($info->isDir()) {
-        $dirs[] = $info->getFilename();
+      foreach ($iterator as $info) {
+        if ($info->isDir()) {
+          $dirs[] = $info->getFilename();
+        }
       }
-    }
 
-    sort($dirs);
+      sort($dirs);
+    } else {
+
+      $db = Application::getInstance()->db;
+      $db->update(
+        "UPDATE `Media` SET `Status` = 'Trash' WHERE `path` LIKE ?",
+        [$this->path . '%']
+      );
+    }
 
     return $dirs;
   }
@@ -118,35 +139,64 @@ class Media extends \Adept\Abstract\Data\Items
   {
     $path = FS_SITE_MEDIA . $this->type . $this->path;
 
-    $iterator = new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS);
-    $files = [];
+    if (file_exists($path)) {
 
-    foreach ($iterator as $info) {
+      $iterator = new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS);
+      $files = [];
 
-      if ($info->isFile()) {
-        $file = $this->path . '/' . $info->getFilename();
+      foreach ($iterator as $info) {
 
-        $ns = "\\Adept\\Data\\Item\\Media\\" . $this->type;
-        $media = new $ns($file, false);
-        $media->loadInfo();
+        if ($info->isFile()) {
+          $file = $this->path . '/' . $info->getFilename();
+          $media = $this->getItem();
+          $media->loadFromIndex($file);
 
-        if ($media->hasChanged()) {
+
+
+          if ($media->id == 0) {
+            $media->file = $file;
+          }
+
+          $media->loadInfo();
+
+          if ($media->hasChanged()) {
+            $media->save();
+          }
+
+          $files[] = $file;
+        }
+      }
+
+      $list = $this->getData();
+
+      for ($i = 0; $i < count($list); $i++) {
+        if (!in_array($list[$i]->file, $files)) {
+          $ns = "\\Adept\\Data\\Item\\Media\\" . $this->type;
+          $media = new $ns($list[$i]->file, false);
+          $media->status = ITEM_STATUS_MISSING;
           $media->save();
         }
-
-        $files[] = $file;
       }
+    } else {
+      // Path doesn't exist, update database.
+
+      $db = Application::getInstance()->db;
+      $db->update(
+        "UPDATE `Media` SET `Status` = 'Trash' WHERE `path` LIKE ?",
+        [$this->path . '%']
+      );
+    }
+  }
+
+  public function getItem(int $id = 0): \Adept\Data\Item\Media
+  {
+    $ns = "\\Adept\\Data\\Item\\Media\\" . $this->type;
+    $item = new $ns();
+
+    if ($id > 0) {
+      $item->loadFromId($id);
     }
 
-    $list = $this->getList();
-
-    for ($i = 0; $i < count($list); $i++) {
-      if (!in_array($list[$i]->file, $files)) {
-        $ns = "\\Adept\\Data\\Item\\Media\\" . $this->type;
-        $media = new $ns($list[$i]->file, false);
-        $media->status = ITEM_STATUS_MISSING;
-        $media->save();
-      }
-    }
+    return $item;
   }
 }

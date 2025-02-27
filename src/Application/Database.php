@@ -1,47 +1,68 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Adept\Application;
 
-use \PDO;
-use \Adept\Application;
-use \Adept\Abstract\Configuration\Database as Configuration;
 
+use PDO;
+use Adept\Application;
+use Adept\Application\Configuration;
+use Adept\Application\Database\Query;
+
+// Prevent direct access to the script
 defined('_ADEPT_INIT') or die();
 
-
+/**
+ * \Adept\Application\Database
+ *
+ * Handles database interactions using PDO
+ *
+ * @package    AdeptFramework
+ * @author     Brandon J. Yaniz
+ * @copyright  2021-2024 The Adept Traveler, Inc.
+ * @license    BSD 2-Clause; See LICENSE.txt
+ * @version    1.1.0
+ */
 class Database
 {
   /**
-   * The database connection object
+   * The PDO database connection object.
    *
-   * @var  \PDO $connection
+   * @var PDO
    */
-  protected \PDO $connection;
-
+  protected PDO $connection;
 
   /**
-   * Undocumented function
+   * Constructor.
    *
-   * @param  \Adept\Abstract\Configuration $configuration
+   * Initializes the database connection using the provided configuration.
+   *
+   * @param Configuration $conf Database configuration object
+   * @throws \Adept\Exceptions\Database\PDOException If the connection fails
    */
-  public function __construct(Configuration &$conf)
+  public function __construct(Configuration $conf)
   {
+    // Build the DSN (Data Source Name). Extendable to include port, charset, etc.
     $dsn  = 'mysql:';
-    $dsn .= 'host=' . $conf->host . ';';
-    $dsn .= 'dbname=' . $conf->database . ';';
+    $dsn .= 'host=' . $conf->getString('Database.Host') . ';';
+    $dsn .= 'dbname=' . $conf->getString('database.database') . ';';
 
     try {
+      // Create a new PDO connection with specified options.
       $this->connection = new PDO(
-        $dsn,                                                 // DSN
-        $conf->username,                                      // Username
-        $conf->password,    // Password
-        array(                                                // Options
-          PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-          PDO::ATTR_EMULATE_PREPARES => true,
-          PDO::ATTR_PERSISTENT => true
-        )
+        $dsn,                        // DSN
+        $conf->getString('database.username'),  // Username
+        $conf->getString('database.password '), // Password
+        [
+          PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+          // Using native prepared statements is preferable if supported
+          PDO::ATTR_EMULATE_PREPARES   => true,
+          PDO::ATTR_PERSISTENT         => true
+        ]
       );
     } catch (\PDOException $e) {
+      // Throw a custom exception if the connection fails.
       throw new \Adept\Exceptions\Database\PDOException(
         'Database Connection Error',
         $e->getMessage(),
@@ -53,169 +74,297 @@ class Database
   }
 
   /**
-   * Insert into a database table
-   * 
-   * @param string $query The query to be executed
-   * @param array $params An array of key->values to be used with the query
-   * 
-   * @return bool
-   **/
-  public function insert(string $query, array $params = []): bool
+   * Process a single parameter.
+   *
+   * Trims strings, converts booleans to integers, and leaves null values unchanged.
+   *
+   * @param mixed $value The parameter to process.
+   * @return mixed The processed parameter.
+   */
+  private function processParam($value)
   {
-    for ($i = 0; $i < count($params); $i++) {
-      $params[$i] = trim($params[$i]);
+    if (is_bool($value)) {
+      return $value ? 1 : 0;
+    } else if (is_null($value)) {
+      return null;
     }
 
+    return is_string($value) ? trim($value) : $value;
+  }
+
+  /**
+   * Process an array of parameters.
+   *
+   * @param array $params The parameters to process.
+   * @return array The processed parameters.
+   */
+  private function processParams(array $params): array
+  {
+    return array_map([$this, 'processParam'], $params);
+  }
+
+  /**
+   * Generate a debug version of a parameter.
+   *
+   * Wraps strings in quotes, returns numeric values as-is, and shows 'NULL' for null values.
+   *
+   * @param mixed $param The parameter to format.
+   * @return string The formatted parameter.
+   */
+  private function debugParam($param): string
+  {
+    if (is_null($param)) {
+      return 'NULL';
+    } elseif (is_numeric($param)) {
+      return (string)$param;
+    } else {
+      return "'" . addslashes((string)$param) . "'";
+    }
+  }
+
+  /**
+   * Get a debug version of the query with parameters replaced.
+   *
+   * @param string $query  The SQL query with placeholders.
+   * @param array  $params The parameters to replace in the query.
+   * @return string The debug version of the query.
+   */
+  public function getQueryDebug(string $query, array $params): string
+  {
+    // Create a copy of parameters to avoid modifying the original array.
+    $paramsCopy = $params;
+    // Replace each placeholder with the corresponding processed parameter.
+    $query = preg_replace_callback('/\?/', function ($match) use (&$paramsCopy) {
+      return $this->debugParam(array_shift($paramsCopy));
+    }, $query);
+
+    return $query;
+  }
+
+  /**
+   * Execute a prepared statement with parameters.
+   *
+   * Logs the query if logging is enabled, prepares the SQL statement,
+   * and executes it with the provided parameters.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params The parameters bound to the query.
+   * @return \PDOStatement|bool Returns the PDOStatement on success, false on failure.
+   * @throws \Adept\Exceptions\Database\PDOException If query execution fails.
+   */
+  protected function execute(string $query, array $params = []): \PDOStatement|bool
+  {
+    // Log the query if logging is enabled.
+    if (Application::getInstance()->conf->log->query) {
+      Application::getInstance()->log->logQuery(
+        $query,
+        $params,
+        $this->getQueryDebug($query, $params)
+      );
+    }
+
+    try {
+      // Prepare the SQL statement.
+      $stmt = $this->connection->prepare($query);
+
+      // Execute the statement with processed parameters.
+      if ($stmt->execute($this->processParams($params))) {
+        return $stmt;
+      } else {
+        return false;
+      }
+    } catch (\PDOException $e) {
+      // Throw a custom exception if the execution fails.
+      throw new \Adept\Exceptions\Database\PDOException(
+        'PDO Exception',
+        $this->formatErrorMessage($e, $query, $params),
+        __NAMESPACE__,
+        __CLASS__,
+        __METHOD__
+      );
+    }
+  }
+
+  public function query(Query $builder): array
+  {
+    $sql = $builder->getQuery();
+    $params = $builder->getParams();
+    return $this->fetchAll($sql, $params);
+  }
+
+  /**
+   * Insert data into a database table.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return bool Returns true on success, false on failure.
+   */
+  public function insert(string $query, array $params = []): bool
+  {
     return ($this->execute($query, $params) !== false);
   }
 
   /**
-   * Insert into a database table
-   * 
-   * @param string $query The query to be executed
-   * @param array $params An array of key->values to be used with the query
-   * 
-   * @return bool
-   **/
+   * Insert data into a database table and get the last inserted ID.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return int Returns the last inserted ID.
+   */
   public function insertGetId(string $query, array $params = []): int
   {
-    $result = 0;
-
-    for ($i = 0; $i < count($params); $i++) {
-
-      $params[$i] = trim($params[$i]);
-
-      if (is_bool($params[$i])) {
-        $params[$i] = ($params[$i]) ? 1 : 0;
-      }
-    }
-
     if ($this->execute($query, $params) !== false) {
-      $result = (int)$this->connection->lastInsertId();
+      return (int)$this->connection->lastInsertId();
     }
 
-
-    return $result;
+    return 0;
   }
 
   /**
-   * Insert into a database and get the id generated
-   * 
-   * @param string $table The database table to insert into
-   * @param array $data An array of key->values to be used with the query
-   * 
-   * @return int
-   **/
+   * Insert data into a single table and get the last inserted ID.
+   *
+   * Builds the query dynamically from an object containing key-value pairs.
+   *
+   * @param string $table The database table to insert into.
+   * @param object $data  An object with columns as keys and corresponding values.
+   * @return int Returns the last inserted ID.
+   */
   public function insertSingleTableGetId(string $table, object $data): int
   {
-    $id = 0;
-
     $params = [];
-    $key = '';
-    $val = '';
+    $keys = [];
+    $placeholders = [];
 
+    // Build the query keys and placeholders.
     foreach ($data as $k => $v) {
-      $key .= "`$k`, ";
-      $val .= '?, ';
-
-      if (is_bool($v)) {
-        $params[] = ($v) ? 1 : 0;
-      } else {
-        $params[] = trim($v);
-      }
+      $keys[] = "`$k`";
+      $placeholders[] = '?';
+      $params[] = $this->processParam($v);
     }
 
-    $key = substr($key, 0, -2);
-    $val = substr($val, 0, -2);
+    // Create comma-separated lists of keys and placeholders.
+    $keysStr = implode(', ', $keys);
+    $placeholdersStr = implode(', ', $placeholders);
 
-    $query  = "INSERT INTO `$table` ($key) VALUES ($val)";
+    // Construct the SQL query.
+    $query = "INSERT INTO `$table` ($keysStr) VALUES ($placeholdersStr)";
 
+    // Execute the insert and return the last inserted ID.
     if ($this->insert($query, $params)) {
-      $id = (int)$this->connection->lastInsertId();
+      return (int)$this->connection->lastInsertId();
     }
 
-    return $id;
+    return 0;
   }
 
+  /**
+   * Update data in a database table.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return bool Returns true on success, false on failure.
+   */
   public function update(string $query, array $params): bool
   {
     return ($this->execute($query, $params) !== false);
   }
 
   /**
-   * Update into a database
-   * 
-   * @param string $table The database table to insert into
-   * @param object $data An array of key->values to be used with the query
-   * 
-   * @return bool
-   **/
+   * Update data in a single table.
+   *
+   * Builds the UPDATE query dynamically from an object, skipping the 'id' field.
+   *
+   * @param string $table The database table to update.
+   * @param object $data  An object with columns as keys and corresponding values.
+   * @return bool Returns true on success, false on failure.
+   */
   public function updateSingleTable(string $table, object $data): bool
   {
     $params = [];
-    $set    = '';
+    $set = [];
 
+    // Build the SET part of the query.
     foreach ($data as $k => $v) {
-
-      if ($k == 'id') {
-        continue;
+      if ($k === 'id') {
+        continue; // Skip the 'id' field for updating.
       }
 
-      $set .= "`$k` = ?, ";
-
-      if (is_bool($v)) {
-        $params[] = ($v) ? 1 : 0;
-      } else {
-        $params[] = trim($v);
-      }
+      $set[] = "`$k` = ?";
+      $params[] = $this->processParam($v);
     }
 
-    $set = substr($set, 0, -2);
-
+    // Add the 'id' for the WHERE clause.
     $params[] = $data->id;
 
-    $query  = "UPDATE `$table`";
-    $query .= " SET $set";
-    $query .= " WHERE `id` = ?";
+    // Create a comma-separated SET string.
+    $setStr = implode(', ', $set);
+
+    // Construct the SQL query.
+    $query = "UPDATE `$table` SET $setStr WHERE `id` = ?";
 
     return $this->update($query, $params);
   }
 
-  public function getColumns($table): array|bool
+  /**
+   * Get the columns of a table.
+   *
+   * @param string $table The database table name.
+   * @return array|bool Returns an array of column names or false on failure.
+   */
+  public function getColumns(string $table): array|bool
   {
-    $stmt = $this->connection->prepare("DESCRIBE `$table`");
-    $stmt->execute();
-    $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $cols = [];
 
-    return $result;
+    $key = 'Database.Table.' . $table . '.Columns';
+
+    if (apcu_exists($key)) {
+      $cols = apcu_fetch($key);
+    } else {
+
+      $stmt = $this->connection->prepare("DESCRIBE `$table`");
+      $stmt->execute();
+
+      $cols =  $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+      apcu_store($key, $cols, Application::getInstance()->conf->database->cacheColTTL);
+    }
+
+    return $cols;
   }
 
+  /**
+   * Get a single string value from the database.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return string|bool Returns the string value or false on failure.
+   */
   public function getString(string $query, array $params = []): string|bool
   {
     $result = $this->getValue($query, $params);
-
-    if ($result === null) {
-      $result = '';
-    }
-
-    return ($result === false) ? false : (string)$result;
+    return ($result === false || $result === null) ? '' : (string)$result;
   }
 
+  /**
+   * Get a single integer value from the database.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return int Returns the integer value.
+   */
   public function getInt(string $query, array $params = []): int
   {
     $result = $this->getValue($query, $params);
-
-    if ($result === null) {
-      $int = 0;
-    }
-
-    if ($result === false) {
-      $result = 0;
-    }
-
-    return (int)$result;
+    return ($result === false || $result === null) ? 0 : (int)$result;
   }
 
+  /**
+   * Get a single value from the database.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return string|int|bool|null Returns the value or false on failure.
+   */
   public function getValue(string $query, array $params = []): string|int|bool|null
   {
     $stmt = $this->execute($query, $params);
@@ -223,31 +372,37 @@ class Database
   }
 
   /**
-   * Undocumented function
+   * Get multiple values from the database.
    *
-   * @param string $query
-   * @param array $params
-   * @return array|bool
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return array|bool Returns an array of values or false on failure.
    */
   public function getValues(string $query, array $params = []): array|bool
   {
     $stmt = $this->execute($query, $params);
-    return $result = $stmt->fetchAll();
-  }
-
-  public function getObject(string $query, array $params = []): object|bool
-  {
-    $stmt = $this->execute($query, $params);
-    $result = $stmt->fetchObject();
-    return $result;
+    return $stmt->fetchAll();
   }
 
   /**
-   * Undocumented function
+   * Get a single object from the database.
    *
-   * @param string $query
-   * @param array $params
-   * @return array|bool
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return object|bool Returns the object or false on failure.
+   */
+  public function getObject(string $query, array $params = []): object|bool
+  {
+    $stmt = $this->execute($query, $params);
+    return $stmt->fetchObject();
+  }
+
+  /**
+   * Get multiple objects from the database.
+   *
+   * @param string $query  The SQL query to be executed.
+   * @param array  $params An array of values to be bound to the query parameters.
+   * @return array|bool Returns an array of objects or false on failure.
    */
   public function getObjects(string $query, array $params = []): array|bool
   {
@@ -256,44 +411,64 @@ class Database
   }
 
   /**
-   * Delete a record
+   * Delete a record from the database.
    *
-   * @param  string     $table
-   * @param  int|string $id
-   * @param  string     $col
-   *
-   * @return void
+   * @param string     $table The database table name.
+   * @param int|string $id    The ID of the record to delete.
+   * @param string     $col   The column name to match the ID against (default is 'id').
+   * @return bool             Returns true on success, false on failure.
    */
-  public function delete(string $table, int|string $id, string $col = 'id')
+  public function delete(string $table, int|string $id, string $col = 'id'): bool
   {
-    return $this->update(
-      "DELETE FROM `$table` WHERE `$col` = ?",
-      [$id]
-    );
+    return $this->update("DELETE FROM `$table` WHERE `$col` = ?", [$id]);
   }
 
+  /**
+   * Get the last inserted ID.
+   *
+   * @return int Returns the last inserted ID.
+   */
   public function getLastId(): int
   {
-    return $this->connection->lastInsertId();
+    return (int)$this->connection->lastInsertId();
   }
 
+  /**
+   * Check if a record is a duplicate.
+   *
+   * Constructs a WHERE clause from the provided data and checks if any record exists.
+   *
+   * @param string $table The database table name.
+   * @param object $data  An object containing key-value pairs to check for duplicates.
+   * @return bool Returns true if a duplicate exists, false otherwise.
+   */
   public function isDuplicate(string $table, object $data): bool
   {
-    $query = "SELECT count(*) FROM `$table` WHERE ";
     $params = [];
+    $conditions = [];
 
-
+    // Build the WHERE clause.
     foreach ($data as $k => $v) {
-      $query .= "`$k` = ? AND ";
-      $params[] = $v;
+      $conditions[] = "`$k` = ?";
+      $params[] = $this->processParam($v);
     }
 
-    // Remove AND form end of Query after the foreach function
-    $query = substr($query, 0, strlen($query) - 4);
+    $whereClause = implode(' AND ', $conditions);
+    $query = "SELECT count(*) FROM `$table` WHERE $whereClause";
 
     return ($this->getInt($query, $params) > 0);
   }
 
+  /**
+   * Format the error message for exceptions.
+   *
+   * Provides details about the error, query, parameters, and a debug version of the query.
+   *
+   * @param \PDOException $e      The PDO exception object.
+   * @param string        $query  The SQL query that caused the exception.
+   * @param array         $params The parameters bound to the query.
+   * @return string The formatted error message.
+   */
   protected function formatErrorMessage(\PDOException $e, string $query, array $params): string
   {
     $out = '';
@@ -309,37 +484,33 @@ class Database
     return $out;
   }
 
-  public function getQueryDebug(string $query, array $params)
+  /**
+   * Begin a database transaction.
+   *
+   * @return bool True on success, false on failure.
+   */
+  public function beginTransaction(): bool
   {
-    $query = preg_replace_callback('/\?/', function ($match) use (&$params) {
-      return array_shift($params) . ' ' . "\n";
-    }, $query);
-
-    return $query;
+    return $this->connection->beginTransaction();
   }
 
-  protected function execute(string $query, array $params = []): \PDOStatement|bool
+  /**
+   * Commit the current transaction.
+   *
+   * @return bool True on success, false on failure.
+   */
+  public function commit(): bool
   {
-    if (Application::getInstance()->conf->log->query) {
-      Application::getInstance()->log->logQuery($query, $params, $this->getQueryDebug($query, $params));
-    }
+    return $this->connection->commit();
+  }
 
-    try {
-      $stmt = $this->connection->prepare($query);
-
-      if ($stmt->execute($params)) {
-        return $stmt;
-      } else {
-        return false;
-      }
-    } catch (\PDOException $e) {
-      throw new \Adept\Exceptions\Database\PDOException(
-        'PDO Exception',
-        $this->formatErrorMessage($e, $query, $params),
-        __NAMESPACE__,
-        __CLASS__,
-        __METHOD__
-      );
-    }
+  /**
+   * Roll back the current transaction.
+   *
+   * @return bool True on success, false on failure.
+   */
+  public function rollback(): bool
+  {
+    return $this->connection->rollBack();
   }
 }

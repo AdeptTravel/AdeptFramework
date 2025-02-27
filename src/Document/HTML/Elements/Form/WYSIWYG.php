@@ -17,7 +17,8 @@ class WYSIWYG extends \Adept\Document\HTML\Elements\Div
   // Form element attributes
   public string $name;
   public bool   $required = false;
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public bool   $disabled;
   public string $value = '';
@@ -34,33 +35,32 @@ class WYSIWYG extends \Adept\Document\HTML\Elements\Div
   //public bool   $required; 
 
   public bool $font = false;
-  public bool $fontsize = true;
+  public bool $fontsize = false;
   public bool $bold = true;
   public bool $italic = true;
   public bool $underline = true;
-  public bool $strike = true;
-  public bool $color = true;
-  public bool $background = true;
-  public bool $subscript = true;
-  public bool $superscript = true;
-  public bool $h1 = true;
-  public bool $h2 = true;
-  public bool $h3 = true;
-  public bool $h4 = true;
+  public bool $strike = false;
+  public bool $color = false;
+  public bool $background = false;
+  public bool $subscript = false;
+  public bool $superscript = false;
+  public bool $h1 = false;
+  public bool $h2 = false;
+  public bool $h3 = false;
+  public bool $h4 = false;
   public bool $h5 = false;
-  public bool $blockquote = true;
-  public bool $codeblock = true;
-  public bool $list = true;
-  public bool $indent = true;
-  public bool $align = true;
-  public bool $link = true;
-  public bool $image = true;
+  public bool $blockquote = false;
+  public bool $codeblock = false;
+  public bool $list = false;
+  public bool $indent = false;
+  public bool $align = false;
+  public bool $link = false;
+  public bool $image = false;
   public bool $video = false;
   public bool $clean = true;
 
   public function getBuffer(): string
   {
-
     if (empty($this->id)) {
       $id = 'formWUSIWYG' . $this->name;
       $this->id = $id;
@@ -68,11 +68,17 @@ class WYSIWYG extends \Adept\Document\HTML\Elements\Div
       $id = $this->id;
     }
 
-    $app = Application::getInstance();
+    $html = $this->value;
+    unset($this->value);
 
-    $app->html->head->css->addFile('form.wysiwyg.css');
-    $app->html->head->css->addFile('quill.snow.css');
-    $app->html->head->javascript->addFile('quill.js');
+    $app = Application::getInstance();
+    $app->html->head->javascript->addFile('https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js');
+
+    $app->html->head->css->addAsset('Core/Form/WYSIWYG');
+    $app->html->head->css->addFile('https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css');
+    //$app->html->head->css->addAsset('Core/Form/WYSIWYG/Snow');
+    //$app->html->head->javascript->addAsset('Core/Form/WYSIWYG/Quill');
+
 
     $this->css[]   = 'wysiwyg';
 
@@ -185,14 +191,20 @@ class WYSIWYG extends \Adept\Document\HTML\Elements\Div
     end($toolbar->children)->children[] = new Button(['css' => ['ql-clean'], 'title' => 'Cleanup ']);
 
     $editor = new Div([
-      'css' => ['editor'],
+      'css'  => ['editor'],
+      'html' => $html
     ]);
 
-    $source = new TextArea(['name' => $this->name, 'css' => ['source']]);
+    //$source = new TextArea(['name' => $this->name, 'css' => ['source']]);
+    $source = new TextArea([
+      'name' => $this->name,
+      'css'  => ['source'],
+      'html' => $html
+    ]);
 
     $toggle = new Div(['css' => ['toggle']], [
       new Button([
-        'css' => ['toggle'],
+        'css'  => ['toggle'],
         'text' => 'Toggle Editor'
       ])
     ]);

@@ -1,155 +1,156 @@
 <?php
 
-/**
- * \Adept\Application
- *
- * The application object
- *
- * @package    AdeptFramework
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
-
 namespace Adept;
 
 defined('_ADEPT_INIT') or die();
 
-require_once('Global.php');
+use DI\ContainerBuilder;
+use Adept\Application\Configuration;
+use Adept\Application\Database;
+use Adept\Application\Debug;
+use Adept\Application\Log;
+use Adept\Application\Session;
+use Adept\Application\Email;
 
-use \Adept\Abstract\Configuration;
-use \Adept\Application\Database;
-use \Adept\Application\Email;
-use \Adept\Application\Log;
-use \Adept\Application\Session;
-
-/**
- * \Adept\Application
- *
- * The application object
- *
- * @package    AdeptFramework
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
 class Application
 {
-
-  private static Application $instance;
-
   /**
-   * The configuration object
-   * 
-   * @var \Adept\Abstract\Configuration;
+   * The PHP-DI container instance.
    */
-  public Configuration $conf;
+  protected \DI\Container $container;
 
   /**
-   * The database object
+   * The document object.
+   */
+  protected object $document;
+
+  /**
+   * Application status.
+   */
+  protected string $status = 'Allow';
+
+  /**
+   * Constructor.
    *
-   * @var \Adept\Application\Database
-   */
-  public Database $db;
-
-  /**
-   * The logging object
+   * @param array $config Configuration array.
    *
-   * @var \Adept\Application\Log
+   * @throws \RuntimeException on configuration or security failures.
    */
-  public Log $log;
-
-  public \Adept\Document\CSV $csv;
-  public \Adept\Document\HTML $html;
-  public \Adept\Document\JSON $json;
-  public \Adept\Document\PDF $pdf;
-  public \Adept\Document\XML $xml;
-  public \Adept\Document\ZIP $zip;
-
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Application\Email
-   */
-  public Email $email;
-
-  /**
-   * The session object
-   *
-   * @var \Adept\Application\Session
-   */
-  public Session $session;
-
-  public string $status = 'Allow';
-
-  /**
-   * Constructor
-   *
-   * @param \Adept\Abstract\Configuration $conf
-   */
-  public function __construct(Configuration $conf)
+  public function __construct(array $config)
   {
-    $this->conf = $conf;
-    $this->log = new Log();
+    // Build the container using PHP-DI's ContainerBuilder.
+    $builder = new ContainerBuilder();
+    $builder->addDefinitions([
+      // Configuration: initialized with the provided config array.
+      'config' => function () use ($config) {
+        return new Configuration($config);
+      },
+      // Debug and Log objects.
+      'debug' => \DI\create(Debug::class),
+      'log'   => \DI\create(Log::class),
+      // Database depends on configuration.
+      'db'    => \DI\create(Database::class)
+        ->constructor(\DI\get('config')),
+      // Session is created without dependencies (adjust as needed).
+      'session' => \DI\create(Session::class),
+      // Email is conditionally created based on session data.
+      'email' => function (\DI\Container $c) {
+        $session = $c->get('session');
+        if ($session->request->route->allowEmail) {
+          return new Email($c->get('config'));
+        }
+        return null;
+      },
+    ]);
 
-    // This is a basic config/security check.  We want to make sure that the 
-    // host matches the site conf.  It might not because of a misconfigured
-    // webserver, or the user is being "cute".  Whatever the reason we won't
-    // waste time on them.
+    $this->container = $builder->build();
 
-    $url = filter_var((!empty($_SERVER['HTTP_HOST']))
-      ? $_SERVER['HTTP_HOST']
-      : $_SERVER['SERVER_NAME'], FILTER_SANITIZE_URL);
+    // Load configuration overrides.
+    $this->container->get('config')->load();
 
-    // If the requiested url dosn't match the configured url we stop
-    if ($url !== $conf->site->url) {
+    // Run security and initialization routines.
+    $this->validateHost();
+    $this->checkBlockingConditions();
+    $this->initializeDocument();
+  }
+
+  /**
+   * Validates the current host against allowed hosts in configuration.
+   *
+   * @throws \RuntimeException if the host is not permitted.
+   */
+  protected function validateHost(): void
+  {
+    $config = $this->container->get('config');
+    $host = filter_var($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'], FILTER_SANITIZE_URL);
+    $allowedHosts = $config->getArray('site.host');
+    if (!in_array($host, $allowedHosts, true)) {
       http_response_code(400);
-      \Adept\Error::halt(
-        E_ERROR,
-        "The URL $url doesn't match the allowed url " . $conf->site->url,
-        __FILE__,
-        __LINE__
-      );
-      //\Adept\error(debug_backtrace(), 'Invalid URL', "The URL $url doesn't match the allowed url $conf->site->url");
+      throw new \RuntimeException("The URL '$host' is not registered.");
     }
+  }
 
-    self::$instance = &$this;
-
-    $this->db = new Database($conf->database);
-    $this->session = new Session();
-
-    if ($this->session->request->route->allowEmail) {
-      $this->email = new \Adept\Application\Email($conf);
-    }
-
-    // Check various block lists
+  /**
+   * Checks various blocking conditions based on session and request data.
+   *
+   * @throws \RuntimeException if any block condition is met.
+   */
+  protected function checkBlockingConditions(): void
+  {
+    $session = $this->container->get('session');
+    $req = $session->request;
     if (
-      ($this->session->status == 'Block')
-      || ($this->session->request->ipAddress->status == 'Block')
-      || ($this->session->request->route->status == 'Block')
-      || ($this->session->request->url->status == 'Block')
-      || ($this->session->request->useragent->status == 'Block')
+      $session->status === 'Block' ||
+      $req->ipAddress->status === 'Block' ||
+      $req->route->status === 'Block' ||
+      $req->url->status === 'Block' ||
+      $req->useragent->status === 'Block'
     ) {
-      // TODO: Handle this through the request object
       $this->status = 'Block';
       http_response_code(403);
-      die('<h1>403 - Forbidden</h1>');
+      throw new \RuntimeException("403 - Forbidden");
+    }
+  }
+
+  /**
+   * Initializes the document object based on the current request.
+   *
+   * @throws \RuntimeException if the document type is unsupported.
+   */
+  protected function initializeDocument(): void
+  {
+    $session = $this->container->get('session');
+    $type = $session->request->url->type;
+    $documentClass = "\\Adept\\Document\\" . ucfirst($type);
+
+    if (!class_exists($documentClass)) {
+      throw new \RuntimeException("Document type '$documentClass' does not exist.");
     }
 
-    $namespace = "\\Adept\\Document\\" . $this->session->request->url->type;
-    $doc = $this->session->request->url->extension;
-    $this->$doc = new $namespace();
-    $this->$doc->loadComponent();
+    $this->document = new $documentClass();
+
+    if (!method_exists($this->document, 'loadComponent')) {
+      throw new \RuntimeException("Document class '$documentClass' must implement loadComponent().");
+    }
+
+    $this->document->loadComponent();
   }
 
-  public function render()
+  /**
+   * Renders the document's buffered output.
+   */
+  public function render(): void
   {
-    $doc = $this->session->request->url->extension;
-    echo $this->$doc->getBuffer();
+    echo $this->document->getBuffer();
   }
 
-  public static function getInstance()
+  /**
+   * Returns the DI container instance.
+   *
+   * @return \DI\Container
+   */
+  public function getContainer(): \DI\Container
   {
-    return self::$instance;
+    return $this->container;
   }
 }

@@ -39,15 +39,15 @@ class Item extends \Adept\Abstract\Data\Item
     'Url' => 'urlId'
   ];
 
-  public int    $menuId;
-  public int    $parentId;
-  public int    $routeId;
-  public int    $urlId;
-  public string $imageId;
-  public string $type;
-  public string $title;
-  public string $css;
-  public string $params;
-  public string $activeOn;
-  public int    $displayOrder;
+  public int       $menuId;
+  public int       $parentId;
+  public int       $routeId;
+  public int       $urlId;
+  public string    $imageId;
+  public string    $type;
+  public string    $title;
+  public string    $css;
+  public string    $params;
+  public \DateTime $activeOn;
+  public int       $sortOrder;
 }

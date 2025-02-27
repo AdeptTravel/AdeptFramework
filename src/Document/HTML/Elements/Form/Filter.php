@@ -19,8 +19,8 @@ class Filter extends \Adept\Document\HTML\Elements\Form
     parent::__construct($attr, $children);
 
     $app = Application::getInstance();
-    $app->html->head->css->addFile('form.filter.css');
-    $app->html->head->javascript->addFile('form.filter.js');
+    $app->html->head->css->addAsset('Core/Form/Filter');
+    $app->html->head->javascript->addAsset('Core/Form/Filter');
   }
 
   public function getBuffer(): string

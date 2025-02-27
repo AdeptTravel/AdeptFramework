@@ -15,7 +15,8 @@ class Search extends \Adept\Document\HTML\Elements\Div
   // Form element attributes
   public string $name = 'search';
   public bool   $required = false;
-  public string $autocomplete;
+  public bool
+    $autocomplete;
   public bool   $autofocus;
   public bool   $disabled;
   public string $form;

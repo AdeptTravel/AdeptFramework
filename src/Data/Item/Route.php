@@ -13,6 +13,8 @@
 
 namespace Adept\Data\Item;
 
+use Adept\Application;
+
 defined('_ADEPT_INIT') or die();
 
 /**
@@ -30,37 +32,48 @@ class Route extends \Adept\Abstract\Data\Item
   protected string $table = 'Route';
   protected string $index = 'route';
 
-  protected array $uniqueKeys = [
+  protected array  $uniqueKeys = [
     'route'
   ];
+
+  /**
+   * The host or domain name associated with the route
+   *
+   * @var string
+   */
+  public string $host;
 
   /**
    * The route
    *
    * @param string
    */
-  public string $route = '';
+  public string $route;
+
+  public string $type;
 
   /**
    * The component
    *
    * @var string
    */
-  public string $component = '';
+  public string $component;
+
+  public string $area;
 
   /**
    * The component option aka what area of the component should be loaded
    *
    * @var string
    */
-  public string $view = '';
+  public string $view;
 
   /**
    * The view template
    *
    * @var string
    */
-  public string $template = '';
+  public string $template;
 
   /**
    * Allow access to the HTML component
@@ -146,6 +159,8 @@ class Route extends \Adept\Abstract\Data\Item
    */
   public bool $isCacheable = false;
 
+  public array $params;
+
   /**
    * State of the route, ie. Published|Unpublished
    *
@@ -158,26 +173,54 @@ class Route extends \Adept\Abstract\Data\Item
     // Remove the / from the begining and end of a string
     $this->route = trim($this->route, '/');
 
+    if (
+      !isset($this->originalData->route) ||
+      (isset($this->originalData->route) && $this->originalData->route != $this->route)
+    ) {
+      // Route changed or new route
+      //die('<pre>' . print_r($this, true));
+
+      if (empty($this->route)) {
+        // Route is empty
+        $this->setError('Failed', 'The route is empty');
+      } else if ($this->routeExists($this->route)) {
+        // Route or redirect already exists
+        $this->setError('Failed', 'The route already exists.');
+      }
+    }
+
     return parent::save();
   }
 
   public function formatSegment(string $segment): string
   {
+    // Step 1: Convert to lower case
     $segment = strtolower($segment);
-    $segment = preg_replace('/[^0-9a-z-]/', '-', $segment);
-    $segment = str_replace('--', '-', $segment);
+    // Step 2: Remove all symbols except for the dash
+    $segment = preg_replace('/[^a-z0-9\s\-]/', '', $segment);
 
-    $parts = explode('-', $segment);
-    $count = count($parts);
+    // Step 3: Replace spaces with a single minus sign
+    $segment = preg_replace('/\s+/', '-', $segment);
 
-    for ($i = 0; $i < $count; $i++) {
-      if (empty($parts[$i])) {
-        unset($parts[$i]);
-      }
-    }
+    // Step 4: Ensure there are no consecutive minus signs
+    $segment = preg_replace('/-+/', '-', $segment);
 
-    $segment = implode('-', $parts);
+    // Step 5: Trim leading or trailing minus signs
+    $segment = trim($segment, '-');
 
     return $segment;
+  }
+
+  public function routeExists(string $route): bool
+  {
+    $db = Application::getInstance()->db;
+
+    $id = $db->getInt("SELECT id FROM Route WHERE route = ?", [$route]);
+
+    if ($id == 0) {
+      $id = $db->getInt("SELECT id FROM Redirect WHERE route = ?", [$route]);
+    }
+
+    return ($id > 0);
   }
 }

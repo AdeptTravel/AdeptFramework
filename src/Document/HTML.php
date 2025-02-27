@@ -1,45 +1,24 @@
 <?php
 
-/**
- * \Adept\Document\HTML
- *
- * The document object
- *
- * @package    AdeptFramework
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
-
 namespace Adept\Document;
 
 defined('_ADEPT_INIT') or die();
 
 use Adept\Application;
 use Adept\Document\HTML\Head;
+use Adept\Document\HTML\Map;
+use Adept\Document\HTML\Menu;
+use Adept\Document\HTML\Module;
 
-/**
- * \Adept\Document\HTML
- *
- * The document object
- *
- * @package    AdeptFramework
- * @author     Brandon J. Yaniz (brandon@adept.travel)
- * @copyright  2021-2024 The Adept Traveler, Inc., All Rights Reserved.
- * @license    BSD 2-Clause; See LICENSE.txt
- */
 class HTML extends \Adept\Abstract\Document
 {
-  /**
-   * Undocumented variable
-   *
-   * @var \Adept\Document\HTML\Head
-   */
   public Head $head;
+  public Menu $menu;
+  public Map  $map;
 
   public function __construct()
   {
-    $app = \Adept\Application::getInstance();
+    $app = Application::getInstance();
 
     // Shortcuts
     $request  = &$app->session->request;
@@ -48,6 +27,7 @@ class HTML extends \Adept\Abstract\Document
     header('Content-type: ' . $request->url->mime);
 
     $this->head = new Head();
+    $this->menu = new Menu();
   }
 
   public function getBuffer(): string
@@ -59,6 +39,9 @@ class HTML extends \Adept\Abstract\Document
     $request   = &$session->request;
     $route     = &$request->route;
     $component = &$this->component;
+    $modules   = new Module();
+
+    $buffer = $app->debug->getBuffer();
 
     // HTML specific stuff
     $template = (!empty($route->template)) ? $route->template : $conf->site->template;
@@ -76,21 +59,20 @@ class HTML extends \Adept\Abstract\Document
 
     ob_start();
     include($file);
-    $buffer = ob_get_contents();
+    $buffer .= ob_get_contents();
     ob_end_clean();
+
 
     // Component
     $buffer = $this->replace('{{component}}', $component->getBuffer(), $buffer);
 
     // Title
     $buffer = $this->replace('{{title}}', $this->head->meta->title, $buffer);
-    //die('<pre>' . print_r($this->head->meta, true));
-    $pos  = 0;
 
-    // Factory class for modules
-    $modules = new \Adept\Document\HTML\Module();
+    $pos = 0;
 
     while (($start = strpos($buffer, '{{', $pos)) !== false) {
+
       $end = strpos($buffer, '}}', $start) + 2;
       $len = $end - $start;
 
@@ -99,14 +81,19 @@ class HTML extends \Adept\Abstract\Document
         break;
       }
 
-      $tag = substr($buffer, $start + 2, $len - 4);
+      $html  = '';
+      $tag   = substr($buffer, $start + 2, $len - 4);
+      $parts = explode(':', $tag);
 
-      if (substr($tag, 0, 6) != 'module') {
-        $pos = $end;
-        continue;
+      if (count($parts) >= 2) {
+        if ($parts[0] == 'area' || $parts[0] == 'module') {
+          $html = $modules->getBuffer($parts[0], $parts[1]);
+        }
       }
 
-      $buffer = substr($buffer, 0, $start) . $modules->getModule($tag) . substr($buffer, $end);
+      if ($parts[0] != 'head') {
+        $buffer = substr($buffer, 0, $start) . $html . substr($buffer, $end);
+      }
 
       $pos = $end;
     }

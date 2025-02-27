@@ -16,8 +16,8 @@ class Tabs extends \Adept\Abstract\Document\HTML\Element
 
     $app = Application::getInstance();
 
-    $app->html->head->css->addFile('tabs.css');
-    $app->html->head->javascript->addFile('tabs.js');
+    $app->html->head->css->addAsset('Core/Tabs');
+    $app->html->head->javascript->addAsset('Core/Tabs');
 
     $this->css[] = 'tabs';
   }

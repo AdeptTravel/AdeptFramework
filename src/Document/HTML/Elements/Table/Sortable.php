@@ -84,22 +84,26 @@ class Sortable extends Table
 	public function __construct(array $attr = [], array $data = [])
 	{
 		$app  = Application::getInstance();
-		$head = $app->html->head;
+		$get  = &$app->session->request->data->get;
+		$head = &$app->html->head;
 
 		$this->data    = $data;
 		$this->path    = '/' . $app->session->request->url->path;
-		$this->sort    = $app->session->request->data->get->getString('sort', '');
-		$this->sortDir = $app->session->request->data->get->getString('dir', 'asc');
+		$this->sort    = $get->getString('sort', '');
+		$this->sortDir = $get->getString('dir', 'asc');
 
 		parent::__construct($attr, []);
 
-		$head->css->addFile('table.css');
-		$head->javascript->addFile('form.ajax.js');
-		//$head->javascript->addFile('form.table.js');
-		$head->javascript->addFile('table.toggle.js');
+		$head->css->addAsset('Core/Table');
+		$head->javascript->addAsset('Core/Form/Ajax');
+		$head->javascript->addAsset('Core/Table/Toggle');
 
-		if ($this->reorder) {
-			$head->javascript->addFile('table.sortable.js');
+		if (
+			$this->reorder &&
+			(!$this->recursive ||
+				($this->recursive && $get->exists('level') && $get->getInt('level') == 0))
+		) {
+			$head->javascript->addAsset('Core/Table/Sortable');
 		}
 	}
 
@@ -135,10 +139,14 @@ class Sortable extends Table
 
 		$query = http_build_query($parts);
 
-		if ($this->reorder) {
+		if (
+			$this->reorder &&
+			(!$this->recursive ||
+				($this->recursive && $get->exists('level') && $get->getInt('level') == 0))
+		) {
 
 			$this->header = array_merge([(object)[
-				'column' 	=> 'displayOrder',
+				'column' 	=> 'sortOrder',
 				'title' 	=> '',
 				'edit' 		=> false,
 				'css' 		=> ['fa-solid', 'fa-grip-vertical', 'grab']
@@ -240,9 +248,14 @@ class Sortable extends Table
 				}
 			}
 
+
 			if ($col->column == 'id') {
 				$td->scope = 'row';
 				$td->html = '<input type="hidden" name="id" value="' . $row->$index . '">' . $row->$index;
+			} else if ($col->column == 'status') {
+				$td->css[] = 'status';
+				$td->css[] = $row->$index;
+				$td->html = $row->$index;
 			} else if (in_array('fa-solid', $col->css)) {
 				$td->html = '<i class="' . $col->column . ' ' . implode(' ', $col->css) . ' ' . (($row->$index == 1) ? 'on' : 'off') . '">';
 			} else {
@@ -251,9 +264,8 @@ class Sortable extends Table
 					$text = $row->$index;
 
 					if (!empty($row->level)) {
-						//$text = str_pad('', $row->level, '&nbsp;&nbsp;', STR_PAD_LEFT) . ' - ' . $text;
 						$text = '•&nbsp;&nbsp;' . $text;
-						//echo $row->level . ' - ';
+
 						for ($p = 0; $p < $row->level; $p++) {
 							$text = '&nbsp;&nbsp;' . $text;
 						}

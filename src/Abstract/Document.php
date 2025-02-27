@@ -13,6 +13,8 @@
 
 namespace Adept\Abstract;
 
+use Adept\Application;
+
 defined('_ADEPT_INIT') or die();
 
 /**
@@ -54,25 +56,23 @@ abstract class Document
 
   protected function getComponentNamespace(): string
   {
+    // Shortcuts
     $app = \Adept\Application::getInstance();
 
-    // Shortcuts
-    $session  = &$app->session;
-    $request  = &$session->request;
-    $route    = &$request->route;
-    $url      = &$request->url;
+    $namespace =
+      "Adept\\Component\\" .
+      $app->session->request->route->type . "\\" .
+      $app->session->request->route->component . "\\" .
+      $app->session->request->route->area . "\\" .
+      $app->session->request->url->type . "\\" .
+      $app->session->request->route->view;
 
-    // Used to determine the component, option, and format
-    $component  = $route->component;
-    $option     = $route->view;
-    $format     = $url->type;
-    $namespace  = null;
-
-    if (!class_exists($namespace = "\\Adept\\Component\\$component\\$format\\$option")) {
+    //if (!class_exists($namespace = "\\Adept\\Component\\$component\\$format\\$option")) {
+    if (!class_exists($namespace)) {
       // TODO: Remove die and allow for 404 to do it's thing
       die('Not found: ' . $namespace);
-      $namespace = "\\Adept\\Component\\Error\\$format\\Error";
-      $request->setStatus(404);
+      $namespace = "\\Adept\\Component\\Core\\Error\\Global\\" . $app->session->request->url->type . "\\Error";
+      $app->session->request->setStatus(404);
     }
 
     return $namespace;

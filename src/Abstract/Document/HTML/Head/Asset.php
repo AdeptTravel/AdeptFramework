@@ -2,10 +2,19 @@
 
 namespace Adept\Abstract\Document\HTML\Head;
 
+use Adept\Application;
+
 defined('_ADEPT_INIT') or die();
 
 class Asset
 {
+  /**
+   * List of assets to load
+   *
+   * @var array
+   */
+  protected array $asset;
+
   /**
    * Undocumented variable
    *
@@ -70,11 +79,13 @@ class Asset
    */
   public function __construct()
   {
-    $app       = \Adept\Application::getInstance();
+    $app       = Application::getInstance();
     $classname = get_class($this);
     $type      = substr($classname, strrpos($classname, '\\') + 1);
     $ext       = $this->extension;
+    $debug     = Application::getInstance()->debug;
 
+    $this->asset          = [];
     $this->files          = new \stdClass();
     $this->files->foreign = [];
     $this->files->local   = [];
@@ -83,10 +94,14 @@ class Asset
     $this->template       = $app->session->request->route->template;
     $this->conf           = $app->conf->assets->$ext;
 
+    $this->addAsset('Core/Global');
+    $this->addAsset('Template/Template');
+
     // Autoload base asset files files
     if ($this->conf->autoload) {
 
       if (file_exists($file = $this->path . 'template.' . strtolower($this->template) . '.' . $this->extension)) {
+        $debug->add('Autoload', 'Adding ' . $this->absToRel($file));
         $this->addFile($file);
       }
 
@@ -96,16 +111,96 @@ class Asset
         }
 
         if (preg_match('/^\d{2}-/', $file)) {
-          $this->addFile($this->path . $file);
+          $debug->add('Autoload', 'Adding ' . $this->absToRel($file));
+
+          //$this->addFile($this->path . $file);
+          $this->addFileInline($this->path . $file);
+        } else {
+          $debug->add('Autoload', 'Not Found ' . $this->absToRel($file));
         }
       }
 
+      //namespace Adept\Component\CMS\Media\Admin\HTML;
+
       $fileComponent = strtolower($this->path . 'component/' .
+        $app->session->request->route->type . '/' .
         $app->session->request->route->component . '/' .
+        $app->session->request->route->area . '/' .
         $app->session->request->route->view . '.' . $this->extension);
 
       if (file_exists($fileComponent)) {
-        $this->addFile(str_replace(FS_SITE, '', $fileComponent));
+        $debug->add('Autoload', 'Not Found ' . $this->absToRel($fileComponent));
+        //$this->addFile(str_replace(FS_SITE, '', $fileComponent));
+        $this->addFileInline(str_replace(FS_SITE, '', $fileComponent));
+      } else {
+        $debug->add('Autoload', 'Not Found ' . $this->absToRel($fileComponent));
+      }
+    }
+  }
+
+  public function addAsset(string $asset)
+  {
+    if (!array_key_exists($asset, $this->asset)) {
+      if (strpos($asset, '/') !== false) {
+        $app = Application::getInstance();
+        $parts = explode('/', $asset);
+
+        $route = $app->session->request->route;
+
+        // The order we look for is /css or /js, then the template on the site
+        // side, then the template on the core side
+        $dirs = [];
+
+        if ($this->type == 'CSS') {
+          $dirs[] = FS_CSS;
+        } else if ($this->type == 'JavaScript') {
+          $dirs[] = FS_JS;
+        }
+
+        if ($parts[0] == 'Template') {
+          $dirs[] = FS_SITE_TEMPLATE . $route->template . '/' . $this->type . '/';
+          $dirs[] = FS_CORE_TEMPLATE . $route->template . '/' . $this->type . '/';
+        }
+
+        // Next we check what type was specified
+        if ($parts[0] == 'Component') {
+          $dirs[] = FS_SITE_TEMPLATE . $route->template . '/' . $this->type . '/Component/' . $route->component;
+          $dirs[] = FS_CORE_TEMPLATE . $route->template . '/' . $this->type . '/Component/' . $route->component;
+          ///////
+          $dirs[] = FS_SITE_COMPONENT . $route->type . '/' . $route->component . '/' . $route->area . '/' . $this->type . '/';
+          $dirs[] = FS_CORE_COMPONENT . $route->type . '/' . $route->component . '/' . $route->area . '/HTML/Asset/' . $this->type . '/';
+          // src/Component/CMS/Media/Admin/HTML/Asset/CSS/Select.css
+          //die($asset . '<pre>' . print_r($dirs, true));
+        }
+
+        if ($parts[0] == 'Core') {
+          $dirs[] = FS_SITE_TEMPLATE . $route->template . '/' . $this->type . '/';
+          $dirs[] = FS_CORE_TEMPLATE . $route->template . '/' . $this->type . '/';
+
+          $dirs[] = FS_CORE_ASSET . $this->type . '/';
+        }
+
+        unset($parts[0]);
+
+        $asset = implode('/', $parts);
+
+        for ($i = 0; $i < count($dirs); $i++) {
+          $file = $dirs[$i] . $asset . '.' . $this->extension;
+
+          if ($i == 0) {
+            $file = strtolower($file);
+          }
+
+          if (file_exists($file)) {
+            $app->debug->add('Add Asset ' . $this->type, "Adding - $asset - " . $this->absToRel($file));
+            $this->asset[$asset] = $file;
+            $this->addFileInline($file);
+
+            break;
+          } else {
+            $app->debug->add('Add Asset ' . $this->type, "Not Found - $asset - " . $this->absToRel($file));
+          }
+        }
       }
     }
   }
@@ -117,14 +212,12 @@ class Asset
 
   public function addFile(string $file, array $args = [])
   {
-
-
-
     $absolute = (strpos($file, FS_SITE) !== false);
     $local    = (substr($file, 0, 4) != 'http' && substr($file, 0, 2) != '//');
 
-    if (!$absolute && $local) {
+    Application::getInstance()->debug->add('Add ' . $this->type . ' Asset File', "Seach for " . $file);
 
+    if (!$absolute && $local) {
       // Remove the first / if present
       if (substr($file, 0, 1) == '/') {
         $file = substr($file, 1);
@@ -138,6 +231,7 @@ class Asset
     }
 
     if (!empty($file)) {
+      Application::getInstance()->debug->add('Add ' . $this->type . ' Asset File', " Found " . $file);
       $asset = new \stdClass();
       $asset->file = $file;
 
@@ -151,6 +245,15 @@ class Asset
         $this->files->local[$file] = $asset;
       } else if (!$local && !array_key_exists($file, $this->files->foreign)) {
         $this->files->foreign[$file] = $asset;
+      }
+    }
+  }
+
+  public function addFileInline(string $file)
+  {
+    if (strpos($file, FS_SITE) !== false) {
+      if (file_exists($file)) {
+        $this->addInline(file_get_contents($file));
       }
     }
   }
@@ -230,30 +333,12 @@ class Asset
       $html .= $this->getFileTag($asset->file, $asset->args);
     }
 
-    // Add local assets
-    /*
-    if ($this->conf->combine) {
-      $file = $this->combine();
-      $file = $this->absToRel($file);
-      $html .= $this->getFileTag($file);
-    } else {
-    */
-
     foreach ($this->files->local as $asset) {
       $file = '/' . $this->absToRel($asset->file);
-
-      // The the position of the last occurance of a slash
-      //$pos = strrpos($file, '/') + 1;
-
-      // Remove load order 
-      //if (substr($file, $pos + 2, 1) == '-') {
-      //  $file = substr($file, 0, $pos) . substr($file, $pos + 3);
-      //}
 
       // Add local asset
       $html .= $this->getFileTag($file, $asset->args);
     }
-    //}
 
     if (count($this->inline) > 0) {
       $content = '';
